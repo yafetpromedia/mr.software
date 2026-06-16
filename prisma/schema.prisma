@@ -1,0 +1,398 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  DEVELOPER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  RESTRICTED
+  SUSPENDED
+  BANNED
+}
+
+/** How the product is sold */
+enum PricingModel {
+  FREE
+  ONE_TIME
+  SUBSCRIPTION
+}
+
+enum LicenseKind {
+  ONE_TIME
+  SUBSCRIPTION
+}
+
+enum PurchaseStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELED
+  REFUNDED
+}
+
+/** Workspace plan for deployment limits (not marketplace purchase) */
+enum Plan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+}
+
+enum DeploymentStatus {
+  PENDING
+  ACTIVE
+  FAILED
+}
+
+/** Marketplace product verticals (Mr.Software 2.0 catalog). */
+enum SoftwareCategory {
+  EDUCATION
+  HEALTHCARE
+  BUSINESS
+  FINANCE
+  ECOMMERCE
+  GOVERNMENT
+  AI_TOOLS
+  DEVELOPER_TOOLS
+  TEMPLATES
+  APIS
+}
+
+enum PaymentProvider {
+  STRIPE
+  CHAPA
+  TELEBIRR
+  DEV_GRANT
+}
+
+enum AcademyCourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+/** Visual theme for public developer storefronts. */
+enum StorefrontTheme {
+  CLASSIC
+  MINIMAL
+  BOLD
+  MIDNIGHT
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  /** Null for Google-only accounts */
+  password  String?
+  /** Google OAuth subject (`sub`); set when the user has signed in with Google */
+  googleId  String?    @unique
+  /** Stripe Customer id for Checkout / subscriptions */
+  stripeCustomerId String? @unique
+  /** Increment to invalidate all JWTs for this user */
+  sessionVersion Int    @default(1)
+  role      Role       @default(USER)
+  status    UserStatus @default(ACTIVE)
+  canUpload   Boolean @default(true)
+  canPublish  Boolean @default(true)
+  canWithdraw Boolean @default(true)
+  createdAt DateTime   @default(now())
+
+  softwareDeveloped Software[] @relation("DeveloperSoftware")
+  purchases         Purchase[]
+  deployments       Deployment[]
+  subscription      Subscription?
+  workspacePlanCheckouts WorkspacePlanCheckout[]
+  adminAuditLogs    AdminAuditLog[] @relation("AdminAuditAuthor")
+  generatedStartups GeneratedStartup[]
+  storefront          DeveloperStorefront?
+  storefrontFollows   StorefrontFollower[] @relation("StorefrontFollower")
+  academyProgress     AcademyProgress[]
+}
+
+/** Public developer identity at `/@handle` — core of the 2.0 ecosystem model. */
+model DeveloperStorefront {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /** URL slug: mr.software/@handle */
+  handle    String   @unique
+  tagline   String?
+  bio       String?  @db.Text
+  website   String?
+  theme     StorefrontTheme @default(CLASSIC)
+  /** Platform-verified creator badge (admin-granted) */
+  verified  Boolean         @default(false)
+  verifiedAt DateTime?
+  /** When true, lifetime sales total is shown on the public store */
+  showRevenuePublic Boolean @default(false)
+  /** Featured on marketplace / landing (e.g. YafetPromedia flagship) */
+  featured  Boolean  @default(false)
+  viewCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  followers StorefrontFollower[] @relation("StorefrontFollows")
+
+  @@index([featured])
+}
+
+/** Users following a developer storefront. */
+model StorefrontFollower {
+  id               String   @id @default(cuid())
+  storefrontUserId String
+  followerUserId   String
+  createdAt        DateTime @default(now())
+
+  storefront DeveloperStorefront @relation("StorefrontFollows", fields: [storefrontUserId], references: [userId], onDelete: Cascade)
+  follower   User                @relation("StorefrontFollower", fields: [followerUserId], references: [id], onDelete: Cascade)
+
+  @@unique([storefrontUserId, followerUserId])
+  @@index([followerUserId])
+}
+
+/** AI-generated startup package (MVP: builder → landing → dashboard preview). */
+model GeneratedStartup {
+  id            String   @id @default(cuid())
+  userId        String
+  idea          String   @db.Text
+  generatedJson Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+/** Immutable log of privileged admin actions (trust & safety / compliance). */
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      User     @relation("AdminAuditAuthor", fields: [adminId], references: [id], onDelete: Cascade)
+  action     String
+  targetType String
+  targetId   String?
+  detail     Json?
+  createdAt  DateTime @default(now())
+
+  @@index([adminId])
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}
+
+model Software {
+  id            String   @id @default(uuid())
+  name          String
+  description   String   @db.Text
+  /** Human-readable price label for UI, e.g. "Free", "$9.99", "$29/mo" */
+  price         String
+  pricingModel  PricingModel @default(ONE_TIME)
+  /** Minor units (e.g. cents). Used for Stripe and sorting; 0 for free */
+  priceCents    Int      @default(0)
+  currency      String   @default("usd")
+  /**
+   * Private asset location — never exposed in public API responses.
+   * @map preserves existing `downloadUrl` column name in the database.
+   */
+  assetUrl      String   @map("downloadUrl")
+  /** Stripe Price id (`price_...`) for Checkout line items */
+  stripePriceId String?
+  /** Cover image for marketplace cards and detail hero */
+  thumbnailUrl  String?
+  /** Optional Google Play listing for mobile apps */
+  playStoreUrl  String?
+  /** Optional Apple App Store listing for mobile apps */
+  appStoreUrl   String?
+  category      SoftwareCategory @default(DEVELOPER_TOOLS)
+  developerId   String
+  developer     User     @relation("DeveloperSoftware", fields: [developerId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  purchases Purchase[]
+  deployments Deployment[]
+}
+
+/**
+ * One entitlement row per user per software (subscription updates same row).
+ */
+model Purchase {
+  id         String   @id @default(uuid())
+  userId     String
+  softwareId String
+  licenseKind LicenseKind
+  status     PurchaseStatus @default(PENDING)
+  amountCents Int?
+  currency   String?
+  validFrom  DateTime @default(now())
+  /** For subscriptions: current period end. Null = perpetual one-time license */
+  validUntil DateTime?
+  stripeCheckoutSessionId String? @unique
+  stripePaymentIntentId   String?
+  stripeSubscriptionId    String? @unique
+  paymentProvider         PaymentProvider?
+  chapaTxRef              String?         @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  software Software @relation(fields: [softwareId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, softwareId])
+  @@index([userId])
+  @@index([softwareId])
+}
+
+/**
+ * User workspace billing plan (deployments quota). Separate from marketplace `Purchase`.
+ */
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String             @unique
+  plan      Plan               @default(FREE)
+  status    SubscriptionStatus @default(ACTIVE)
+  expiresAt DateTime?
+  stripeSubscriptionId String? @unique
+  paymentProvider      PaymentProvider?
+  billingCurrency      String?
+  amountCents          Int?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/** Workspace Pro checkout attempts (separate from marketplace purchases). */
+model WorkspacePlanCheckout {
+  id                      String           @id @default(cuid())
+  userId                  String
+  provider                PaymentProvider
+  status                  PurchaseStatus   @default(PENDING)
+  chapaTxRef              String?          @unique
+  stripeCheckoutSessionId String?          @unique
+  stripeSubscriptionId    String?
+  currency                String
+  amountCents             Int
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Deployment {
+  id           String            @id @default(cuid())
+  userId       String
+  softwareId   String?
+  name         String
+  /** URL-safe segment; unique per user */
+  slug         String
+  status       DeploymentStatus  @default(PENDING)
+  url          String?
+  errorMessage String?           @db.Text
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  software Software? @relation(fields: [softwareId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, slug])
+  @@index([userId])
+  @@index([status])
+}
+
+model SiteSettings {
+  id           Int      @id
+  logoUrl      String   @default("/brand/logo-mark.png")
+  partnersJson String   @default("[]") @db.Text
+  updatedAt    DateTime @updatedAt
+}
+
+enum TestimonialStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/** Visitor-submitted quotes; admin approves before landing display. */
+model Testimonial {
+  id           String             @id @default(cuid())
+  name         String
+  role         String?
+  company      String?
+  quote        String             @db.Text
+  /** 1–5 stars; optional */
+  rating       Int?
+  /** Contact only — never shown publicly */
+  email        String?
+  status       TestimonialStatus  @default(PENDING)
+  sortOrder    Int                @default(0)
+  submittedAt  DateTime           @default(now())
+  reviewedAt   DateTime?
+  reviewedById String?
+
+  @@index([status, sortOrder])
+  @@index([submittedAt])
+}
+
+/** Mr.Software Academy — learn and publish on the platform. */
+model AcademyCourse {
+  id              String             @id @default(cuid())
+  slug            String             @unique
+  title           String
+  description     String             @db.Text
+  level           AcademyCourseLevel @default(BEGINNER)
+  durationMinutes Int                @default(60)
+  published       Boolean            @default(true)
+  sortOrder       Int                @default(0)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  lessons  AcademyLesson[]
+  progress AcademyProgress[]
+
+  @@index([published, sortOrder])
+}
+
+model AcademyLesson {
+  id        String   @id @default(cuid())
+  courseId  String
+  title     String
+  content   String   @db.Text
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  course AcademyCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+}
+
+/** Per-user course completion tracking. */
+model AcademyProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  courseId    String
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  updatedAt   DateTime @updatedAt
+
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course AcademyCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+}

@@ -1,0 +1,19 @@
+# Optional: local PostgreSQL so Prisma Studio and the app can connect.
+# Usage: docker compose up -d
+# Then set DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mr_software?schema=public
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mr_software
+    ports:
+      - "5432:5432"
+    volumes:
+      - mr_software_pg:/var/lib/postgresql/data
+
+volumes:
+  mr_software_pg:
