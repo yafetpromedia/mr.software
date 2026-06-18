@@ -20,6 +20,10 @@ export default async function WorkspaceLayout({
     redirect(`/auth/login?next=${encodeURIComponent(pathname)}`);
   }
 
+  if (session.role === "ADMIN") {
+    redirect("/admin");
+  }
+
   return (
     <WorkspaceShell userName={session.name} userEmail={session.email} role={session.role}>
       {children}

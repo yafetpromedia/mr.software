@@ -2,9 +2,12 @@ import type { NextConfig } from "next";
 import os from "os";
 import path from "path";
 
-const webpackCacheDir = path.join(os.tmpdir(), "mr-software-webpack-cache");
+const webpackCacheDir = path.join(process.cwd(), "node_modules/.cache/webpack");
+/** OneDrive sync corrupts `.next` chunks during dev — keep build output under node_modules. */
+const devDistDir = "node_modules/.cache/next-dev";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NODE_ENV === "development" ? devDistDir : ".next",
   modularizeImports: {
     "lucide-react": {
       transform: "lucide-react/dist/esm/icons/{{ kebabCase member }}",

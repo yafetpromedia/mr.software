@@ -4,45 +4,84 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { AfricaGlobeCanvas } from "@/components/landing/africa-launch/africa-globe-canvas";
-import { useCinematicStory } from "@/components/landing/africa-launch/use-cinematic-story";
+import { useHeroIntro } from "@/components/landing/africa-launch/use-hero-intro";
+import { EthiopiaFlagIcon } from "@/components/icons/ethiopia-flag-icon";
+
+const REVEAL_EASE = [0.16, 1, 0.3, 1] as const;
 
 export function AfricaLaunchHero() {
   const reduce = useReducedMotion();
-  const story = useCinematicStory(!!reduce);
+  const intro = useHeroIntro(!!reduce);
 
   return (
-    <section className="relative isolate flex h-[calc(100dvh-3.5rem)] w-full flex-col overflow-x-clip bg-[#020204] sm:h-[calc(100dvh-4rem)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_130%_65%_at_50%_100%,rgba(255,122,26,0.16),transparent_68%)]" />
+    <section className="africa-launch-hero relative isolate flex h-[calc(100dvh-3.5rem)] w-full flex-col overflow-hidden sm:h-[calc(100dvh-4rem)]">
+      <div className="africa-hero-stars pointer-events-none absolute inset-0 opacity-[0.18]" aria-hidden />
+      <div className="africa-hero-noise pointer-events-none absolute inset-0 opacity-[0.035]" aria-hidden />
 
-      {/* Globe — flush to hero top; pole clearance handled in 3D */}
-      <div className="pointer-events-auto absolute inset-0 z-[1]">
+      <motion.div
+        className="africa-globe-scene-wrap pointer-events-auto absolute inset-0 z-[1]"
+        initial={false}
+        animate={
+          intro.globeRevealed && intro.globeReady
+            ? { opacity: 1, scale: 1, y: 0 }
+            : { opacity: 0, scale: 0.92, y: 20 }
+        }
+        transition={{ duration: 1.05, ease: REVEAL_EASE }}
+        style={{ visibility: intro.globeReady ? "visible" : "hidden" }}
+      >
+        {intro.globeRevealed ? (
+          <div className="africa-globe-soft-shadow pointer-events-none absolute inset-0" aria-hidden />
+        ) : null}
         <AfricaGlobeCanvas
           className="absolute inset-0 h-full w-full"
-          activeArcCount={story.activeArcs}
-          litCountries={story.litCountries}
           reduceMotion={!!reduce}
-          travel={null}
+          isLight={false}
+          energyPulse={intro.energyPulse}
+          introComplete={intro.globeRevealed}
+          onReady={() => intro.setGlobeReady(true)}
         />
+
+        {intro.globeRevealed ? (
+          <>
+            <div className="africa-globe-vignette pointer-events-none absolute inset-0" aria-hidden />
+            {intro.energyPulse ? (
+              <div className="africa-globe-pulse-ring pointer-events-none absolute inset-0" aria-hidden />
+            ) : null}
+          </>
+        ) : null}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#020204] via-[#020204]/70 to-transparent sm:h-28"
+          className="africa-launch-hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-24 sm:h-28"
           aria-hidden
         />
-      </div>
+      </motion.div>
 
-      {/* Copy — padded below nav */}
+      {!reduce ? (
+        <motion.div
+          className="africa-cinematic-veil pointer-events-none absolute inset-0 z-[4]"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: intro.veilVisible ? 1 : 0 }}
+          transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          aria-hidden
+        />
+      ) : null}
+
       <div className="pointer-events-none relative z-20 flex h-full flex-col px-4 pt-[clamp(1.5rem,4.5vh,2.75rem)] text-center">
         <motion.div
-          initial={reduce ? false : { opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mx-auto max-w-3xl"
+          initial={reduce ? false : { opacity: 0, y: 16 }}
+          animate={intro.copyVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+          transition={{ duration: 0.7, ease: REVEAL_EASE }}
+          className="pointer-events-none mx-auto max-w-3xl"
         >
-          <h1 className="font-display text-[clamp(2.25rem,7vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.04em] text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.8)]">
+          <p className="africa-hero-eyebrow mb-4 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.2em]">
+            <EthiopiaFlagIcon className="h-3.5 w-5 shrink-0 rounded-[2px] shadow-sm" />
+            Africa → World
+          </p>
+          <h1 className="africa-launch-hero-title font-display text-[clamp(2.35rem,7vw,4.35rem)] font-bold leading-[1.02] tracking-[-0.045em]">
             Build. Launch.{" "}
-            <span className="text-[#FF7A1A]">Monetize.</span>
+            <span className="africa-hero-accent">Monetize.</span>
           </h1>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-white/55 sm:mt-4 sm:text-base">
-            Software from Africa to the World — on Mr.Software.
+          <p className="africa-launch-hero-subtitle mx-auto mt-4 max-w-md text-[0.9375rem] leading-relaxed sm:text-base">
+            Software from Africa to the world — on Mr.Software.
           </p>
           <div className="pointer-events-auto mt-6 flex flex-col items-center justify-center gap-3 sm:mt-7 sm:flex-row">
             <Link href="/app/ai" className="africa-hero-cta-primary group">
@@ -55,9 +94,16 @@ export function AfricaLaunchHero() {
           </div>
         </motion.div>
 
-        <p className="pointer-events-none mt-auto pb-4 text-xs text-white/35 sm:pb-5">
-          {story.icon} {story.text} · drag the globe to rotate
-        </p>
+        <div className="min-h-0 flex-1 pointer-events-none" aria-hidden />
+
+        <motion.p
+          className="africa-launch-hero-hint pointer-events-none mt-auto pb-4 text-xs sm:pb-5"
+          initial={reduce ? false : { opacity: 0 }}
+          animate={intro.copyVisible ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.6, delay: 0.25, ease: REVEAL_EASE }}
+        >
+          Drag the globe to explore
+        </motion.p>
       </div>
     </section>
   );

@@ -5,7 +5,7 @@
  * Members (USER role) keep the consumer library shell.
  */
 export function shouldUseDeveloperShell(_pathname: string, role: string): boolean {
-  return role === "DEVELOPER" || role === "ADMIN";
+  return role === "DEVELOPER";
 }
 
 /** Routes where the top bar should search purchased/catalog software, not deploy projects. */

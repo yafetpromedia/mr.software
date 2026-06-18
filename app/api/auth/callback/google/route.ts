@@ -12,6 +12,7 @@ import { userFacingDbError } from "@/lib/db-errors";
 import { oauthPublicOrigin } from "@/lib/auth/oauth-public-origin";
 import { prisma } from "@/lib/prisma";
 import { safeInternalPath } from "@/lib/safe-redirect";
+import { postLoginPath } from "@/lib/auth/post-login-redirect";
 
 function redirectOAuthError(
   request: Request,
@@ -214,7 +215,7 @@ export async function GET(request: Request) {
     return redirectOAuthError(request, from, "unknown", next);
   }
 
-  const dest = new URL(safeInternalPath(next, "/app"), url.origin);
+  const dest = new URL(postLoginPath(user.role, next), url.origin);
   const res = NextResponse.redirect(dest);
   const cookie = buildAuthCookie(token);
   res.cookies.set(cookie.name, cookie.value, cookie.options);

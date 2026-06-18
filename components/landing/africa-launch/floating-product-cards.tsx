@@ -5,9 +5,10 @@ import { Check } from "lucide-react";
 import { HERO_PRODUCTS } from "@/lib/landing/africa-hero-data";
 
 const POSITIONS = [
-  "left-[4%] top-[20%]",
-  "right-[2%] top-[38%]",
-  "right-[8%] bottom-[18%]",
+  "left-[3%] top-[18%]",
+  "right-[2%] top-[32%]",
+  "right-[6%] bottom-[22%]",
+  "left-[5%] bottom-[28%]",
 ] as const;
 
 type Props = {
@@ -30,7 +31,7 @@ export function FloatingProductCards({ visibleCount }: Props) {
             scale: { delay: i * 0.3, duration: 0.45 },
             y: { delay: 1.2 + i * 0.5, duration: 3.5 + i, repeat: Infinity, ease: "easeInOut" },
           }}
-          className={`africa-product-card absolute ${POSITIONS[i % POSITIONS.length]} w-[11.5rem]`}
+          className={`africa-product-card absolute ${POSITIONS[i % POSITIONS.length]} w-[10.5rem]`}
         >
           <p className="font-display text-sm font-bold text-white">{product.name}</p>
           <ul className="mt-2 space-y-1 text-[11px] text-white/60">

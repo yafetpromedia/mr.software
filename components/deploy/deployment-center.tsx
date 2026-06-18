@@ -120,7 +120,13 @@ export function DeploymentCenter({
   const [importSoftwareId, setImportSoftwareId] = useState<string>("");
 
   const syncSource = useCallback(() => {
+    const listingId = searchParams.get("listing") ?? searchParams.get("softwareId");
     const param = searchParams.get("source");
+    if (listingId) {
+      setImportSoftwareId(listingId);
+      setSource("import");
+      return;
+    }
     if (param === "github" || param === "zip" || param === "import" || param === "ai") {
       setSource(param);
     }

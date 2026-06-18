@@ -1,28 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Stars } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import ThreeGlobe from "three-globe";
 import * as THREE from "three";
-import {
-  AFRICA_ORANGE,
-  COUNTRY_POINTS,
-  DEPLOYMENT_ARCS,
-  HUB,
-  type DeploymentArc,
-} from "@/lib/landing/africa-hero-data";
-import { GLOBE_TEXTURES } from "@/lib/landing/africa-glow-dots";
-import { GLOBE_RADIUS, latLngToVector3 } from "@/lib/landing/globe-math";
-import type { TravelState } from "@/components/landing/africa-launch/use-cinematic-story";
+import { AFRICA_VIEW, GLOBE_RADIUS, latLngToVector3 } from "@/lib/landing/globe-math";
+import { AfricaGlobeSpin } from "@/components/landing/africa-launch/africa-locked-spin";
+import { RealEarthGlobe } from "@/components/landing/africa-launch/real-earth-globe";
+import { GlobeArcFlow } from "@/components/landing/africa-launch/globe-arc-flow";
+import type { Group } from "three";
 
-/** Globe mesh sits lower; camera looks above it so the north pole clears the nav. */
-const GLOBE_Y = -118;
-const VIEW_FOCUS_Y = -76;
-const CAMERA_DISTANCE = GLOBE_RADIUS * 1.82;
+const GLOBE_Y = -40;
+const VIEW_FOCUS = new THREE.Vector3(8, 4, 0);
+const CAMERA_DISTANCE = GLOBE_RADIUS * 2.42;
+const AUTO_ROTATE_DELAY_MS = 1800;
 
-/** Pull camera back so you see a real spherical planet (Africa facing camera). */
+function cameraPositionForAfrica(): THREE.Vector3 {
+  return latLngToVector3(AFRICA_VIEW.lat, AFRICA_VIEW.lng, CAMERA_DISTANCE).add(VIEW_FOCUS);
+}
+
 function GlobeCamera({
   controlsRef,
 }: {
@@ -30,151 +27,147 @@ function GlobeCamera({
 }) {
   const { camera } = useThree();
 
-  useEffect(() => {
-    const camPos = latLngToVector3(8, 20, CAMERA_DISTANCE);
-    camPos.y += 30;
+  useLayoutEffect(() => {
+    const camPos = cameraPositionForAfrica();
     camera.position.copy(camPos);
-    camera.lookAt(0, VIEW_FOCUS_Y, 0);
+    camera.lookAt(VIEW_FOCUS);
     camera.updateProjectionMatrix();
-    if (controlsRef.current) {
-      controlsRef.current.target.set(0, VIEW_FOCUS_Y, 0);
-      controlsRef.current.update();
+
+    const controls = controlsRef.current;
+    if (controls) {
+      controls.target.copy(VIEW_FOCUS);
+      controls.object.position.copy(camPos);
+      controls.update();
     }
   }, [camera, controlsRef]);
 
   return null;
 }
 
-type GlobeMeshProps = {
-  activeArcCount: number;
-  litCountries: number;
-};
-
-function EarthGlobe({ activeArcCount, litCountries }: GlobeMeshProps) {
-  const globe = useMemo(() => {
-    const g = new ThreeGlobe({ animateIn: false, waitForGlobeReady: true })
-      .globeImageUrl(GLOBE_TEXTURES.globe)
-      .bumpImageUrl(GLOBE_TEXTURES.bump)
-      .showAtmosphere(true)
-      .atmosphereColor(AFRICA_ORANGE)
-      .atmosphereAltitude(0.26)
-      .showGraticules(false)
-      .arcsData([])
-      .arcStartLat("startLat")
-      .arcStartLng("startLng")
-      .arcEndLat("endLat")
-      .arcEndLng("endLng")
-      .arcColor(() => [AFRICA_ORANGE, "rgba(255,122,26,0.12)"])
-      .arcAltitude(0.25)
-      .arcStroke(0.55)
-      .arcDashLength(0.5)
-      .arcDashGap(0.15)
-      .arcDashAnimateTime(2200)
-      .pointsData([])
-      .pointLat("lat")
-      .pointLng("lng")
-      .pointAltitude("alt")
-      .pointRadius("size")
-      .pointColor((d: object) =>
-        "hub" in d && (d as { hub?: boolean }).hub ? AFRICA_ORANGE : "#ffaa66",
-      )
-      .pointsMerge(false);
-
-    const mat = g.globeMaterial();
-    if (mat instanceof THREE.MeshPhongMaterial) {
-      mat.emissive = new THREE.Color("#243852");
-      mat.emissiveIntensity = 0.28;
-      mat.shininess = 8;
-    }
-
-    return g;
-  }, []);
-
+function GlobeTone({ isLight }: { isLight: boolean }) {
+  const { gl } = useThree();
   useEffect(() => {
-    globe.arcsData(
-      DEPLOYMENT_ARCS.slice(0, activeArcCount).map((a) => ({
-        startLat: a.startLat,
-        startLng: a.startLng,
-        endLat: a.endLat,
-        endLng: a.endLng,
-      })),
-    );
-
-    globe.pointsData(
-      COUNTRY_POINTS.slice(0, litCountries).map((p, i) => ({
-        lat: p.lat,
-        lng: p.lng,
-        size: i === 0 ? 0.35 : 0.2,
-        alt: i === 0 ? 0.04 : 0.02,
-        hub: i === 0,
-      })),
-    );
-  }, [activeArcCount, litCountries, globe]);
-
-  return <primitive object={globe} />;
+    gl.toneMapping = THREE.ACESFilmicToneMapping;
+    gl.toneMappingExposure = isLight ? 1.2 : 1.48;
+  }, [gl, isLight]);
+  return null;
 }
 
 export type AfricaGlobeSceneProps = {
-  activeArcCount: number;
-  litCountries: number;
   reduceMotion: boolean;
-  travel: TravelState | null;
+  isLight?: boolean;
+  energyPulse?: boolean;
+  introComplete?: boolean;
+  onReady?: () => void;
   className?: string;
 };
 
 export function AfricaGlobeScene({
-  activeArcCount,
-  litCountries,
   reduceMotion,
+  isLight = false,
+  energyPulse = false,
+  introComplete = true,
+  onReady,
   className,
 }: AfricaGlobeSceneProps) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
+  const globeGroupRef = useRef<Group | null>(null);
+  const [spinning, setSpinning] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+  }, [isLight]);
+
+  useEffect(() => {
+    setSpinning(false);
+    const delay = introComplete && !reduceMotion ? AUTO_ROTATE_DELAY_MS + 2200 : AUTO_ROTATE_DELAY_MS;
+    const spinTimer = window.setTimeout(() => {
+      if (!reduceMotion) setSpinning(true);
+    }, delay);
+    return () => window.clearTimeout(spinTimer);
+  }, [introComplete, reduceMotion]);
+
+  const handleGlobeReady = () => {
+    setLoaded(true);
+    onReady?.();
+  };
+
+  const initialCam = useMemo(() => cameraPositionForAfrica(), []);
 
   return (
-    <div className={className}>
+    <div
+      className={`africa-globe-canvas-root ${isLight ? "africa-globe-canvas-root--light" : ""} ${loaded && introComplete ? "africa-globe-canvas-root--ready" : "africa-globe-canvas-root--loading"} ${className ?? ""}`}
+    >
       <Canvas
-        camera={{ position: [0, 0, 280], fov: 33 }}
+        camera={{ position: initialCam.toArray(), fov: 33 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         dpr={[1, 1.75]}
-        style={{ width: "100%", height: "100%", background: "transparent" }}
+        style={{ width: "100%", height: "100%", background: "transparent", touchAction: "none" }}
         onCreated={({ gl }) => {
-          gl.toneMappingExposure = 1.38;
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = isLight ? 1.2 : 1.48;
         }}
       >
-        <ambientLight intensity={1.15} />
-        <hemisphereLight args={["#4a6280", "#101018", 0.72]} />
-        <directionalLight position={[90, 90, 110]} intensity={2.1} color="#ffffff" />
-        <directionalLight position={[-70, 40, 80]} intensity={0.55} color="#ffe8d0" />
-        <group position={[0, GLOBE_Y, 0]}>
-          <pointLight
-            position={latLngToVector3(HUB.lat, HUB.lng, GLOBE_RADIUS * 1.5)}
-            intensity={1.05}
-            color={AFRICA_ORANGE}
-            distance={240}
+        <GlobeTone isLight={isLight} />
+        <ambientLight intensity={isLight ? 0.52 : 0.1} />
+        <hemisphereLight
+          args={isLight ? ["#e0f0ff", "#94a3b8", 0.58] : ["#1a2030", "#000000", 0.22]}
+        />
+        <directionalLight
+          position={[130, 110, 95]}
+          intensity={isLight ? 1.38 : 0.28}
+          color={isLight ? "#fffaf5" : "#c8d8f0"}
+        />
+        <group ref={globeGroupRef} position={[0, GLOBE_Y, 0]}>
+          <RealEarthGlobe
+            isLight={isLight}
+            energyPulse={energyPulse}
+            showDetails={loaded && introComplete}
+            onReady={handleGlobeReady}
           />
-          <EarthGlobe activeArcCount={activeArcCount} litCountries={litCountries} />
+          <GlobeArcFlow
+            show={loaded && introComplete}
+            reduceMotion={!!reduceMotion}
+            isLight={isLight}
+          />
         </group>
-        <Stars radius={300} depth={50} count={1200} factor={2.5} saturation={0} fade speed={0.15} />
+        {!isLight ? (
+          <Stars radius={260} depth={48} count={500} factor={1.8} saturation={0} fade speed={0.05} />
+        ) : null}
         <GlobeCamera controlsRef={controlsRef} />
+        <AfricaGlobeSpin
+          globeGroupRef={globeGroupRef}
+          controlsRef={controlsRef}
+          spinning={spinning && !reduceMotion}
+          dragging={dragging}
+          isLight={isLight}
+        />
         <OrbitControls
           ref={controlsRef}
           enablePan={false}
           enableZoom={false}
-          minDistance={CAMERA_DISTANCE - 15}
-          maxDistance={CAMERA_DISTANCE + 20}
-          minPolarAngle={Math.PI / 3}
-          maxPolarAngle={Math.PI / 1.85}
-          rotateSpeed={0.45}
-          autoRotate={!reduceMotion}
-          autoRotateSpeed={0.25}
+          minDistance={CAMERA_DISTANCE - 12}
+          maxDistance={CAMERA_DISTANCE + 16}
+          minPolarAngle={Math.PI / 3.2}
+          maxPolarAngle={Math.PI / 1.9}
+          rotateSpeed={0.55}
+          autoRotate={false}
           enableDamping
-          dampingFactor={0.06}
+          dampingFactor={0.08}
+          onStart={() => {
+            setDragging(true);
+            setSpinning(false);
+          }}
+          onEnd={() => {
+            setDragging(false);
+            if (!reduceMotion) {
+              window.setTimeout(() => setSpinning(true), 4000);
+            }
+          }}
         />
       </Canvas>
     </div>
   );
-}
-
-export function arcsForPhase(count: number): DeploymentArc[] {
-  return DEPLOYMENT_ARCS.slice(0, count);
 }

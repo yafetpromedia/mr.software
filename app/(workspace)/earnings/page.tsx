@@ -1,92 +1,101 @@
-import Link from "next/link";
 import { PurchaseStatus } from "@prisma/client";
+import { EarningsDashboard } from "@/components/app/earnings-dashboard";
 import { getSession } from "@/lib/auth/session";
 import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
 import { prisma } from "@/lib/prisma";
-import { formatMoneyAmount } from "@/lib/portal/format-amount";
 
-export const metadata = { title: "Earnings" };
+export const metadata = { title: "Revenue" };
+
+function buildRevenueTrend(
+  purchases: Array<{ createdAt: Date; amountCents: number | null }>,
+  days = 30,
+) {
+  const map = new Map<string, number>();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    map.set(d.toISOString().slice(0, 10), 0);
+  }
+
+  for (const purchase of purchases) {
+    const key = purchase.createdAt.toISOString().slice(0, 10);
+    if (!map.has(key)) continue;
+    map.set(key, (map.get(key) ?? 0) + (purchase.amountCents ?? 0));
+  }
+
+  return Array.from(map.entries()).map(([date, value]) => ({ date, value }));
+}
 
 export default async function EarningsPage() {
   const session = await getSession();
   if (!session) return null;
   assertDeveloperPortalUser(session);
 
-  const [rows, monthRows, total] = await Promise.all([
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+  const [rows, monthRows, total, listingCount] = await Promise.all([
     prisma.purchase.findMany({
       where: { software: { developerId: session.id }, status: PurchaseStatus.ACTIVE },
       include: { software: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
     }),
     prisma.purchase.findMany({
       where: {
         software: { developerId: session.id },
         status: PurchaseStatus.ACTIVE,
-        createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+        createdAt: { gte: monthStart },
       },
     }),
     prisma.purchase.aggregate({
       where: { software: { developerId: session.id }, status: PurchaseStatus.ACTIVE },
       _sum: { amountCents: true },
     }),
+    prisma.software.count({ where: { developerId: session.id } }),
   ]);
 
-  const bySoftware = new Map<string, { name: string; cents: number }>();
-  for (const p of rows) {
-    if (!p.software) continue;
-    const cur = bySoftware.get(p.softwareId) ?? { name: p.software.name, cents: 0 };
-    cur.cents += p.amountCents ?? 0;
-    bySoftware.set(p.softwareId, cur);
+  const bySoftware = new Map<string, { name: string; cents: number; saleCount: number }>();
+  for (const purchase of rows) {
+    if (!purchase.software) continue;
+    const current = bySoftware.get(purchase.softwareId) ?? {
+      name: purchase.software.name,
+      cents: 0,
+      saleCount: 0,
+    };
+    current.cents += purchase.amountCents ?? 0;
+    current.saleCount += 1;
+    bySoftware.set(purchase.softwareId, current);
   }
 
-  const monthCents = monthRows.reduce((a, p) => a + (p.amountCents ?? 0), 0);
+  const byProduct = Array.from(bySoftware.entries())
+    .map(([id, value]) => ({ id, ...value }))
+    .sort((a, b) => b.cents - a.cents);
+
+  const monthCents = monthRows.reduce((sum, purchase) => sum + (purchase.amountCents ?? 0), 0);
   const totalCents = total._sum.amountCents ?? 0;
-  const displayCurrency = rows.find((r) => r.currency)?.currency ?? "ETB";
+  const displayCurrency = (rows.find((row) => row.currency)?.currency ?? "ETB").toUpperCase();
+
+  const recentSales = rows.slice(0, 8).map((purchase) => ({
+    id: purchase.id,
+    productName: purchase.software?.name ?? "Unknown product",
+    amountCents: purchase.amountCents ?? 0,
+    currency: (purchase.currency ?? displayCurrency).toUpperCase(),
+    createdAt: purchase.createdAt.toISOString(),
+  }));
+
+  const revenueTrend = buildRevenueTrend(rows);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">Earnings</h1>
-        <p className="mt-2 text-sm text-[var(--muted)]">
-          Revenue from licenses sold on your listings (excludes tax and platform fees when those exist).
-        </p>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--muted)]">All time</p>
-          <p className="mt-1 text-2xl font-semibold text-[var(--foreground)]">
-            {formatMoneyAmount(totalCents, displayCurrency)}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--muted)]">This month (approx.)</p>
-          <p className="mt-1 text-2xl font-semibold text-[var(--foreground)]">
-            {formatMoneyAmount(monthCents, displayCurrency)}
-          </p>
-        </div>
-      </div>
-
-      <section>
-        <h2 className="text-sm font-semibold text-[var(--foreground)]">By product</h2>
-        {bySoftware.size === 0 ? (
-          <p className="mt-3 text-sm text-[var(--muted)]">No sales recorded yet. Publish a listing in My listings.</p>
-        ) : (
-          <ul className="mt-3 divide-y divide-[var(--border)] rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-            {Array.from(bySoftware.entries()).map(([id, v]) => (
-              <li key={id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <span className="font-medium text-[var(--foreground)]">{v.name}</span>
-                <span className="text-sm font-medium text-[var(--foreground)]">
-                  {formatMoneyAmount(v.cents, displayCurrency)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <p className="text-sm text-[var(--muted)]">
-        Payouts: <Link className="font-medium text-[var(--accent)] underline-offset-4 hover:underline" href="/payouts">withdraw via Chapa</Link> when connected.
-      </p>
-    </div>
+    <EarningsDashboard
+      totalCents={totalCents}
+      monthCents={monthCents}
+      currency={displayCurrency}
+      saleCount={rows.length}
+      monthSaleCount={monthRows.length}
+      listingCount={listingCount}
+      byProduct={byProduct}
+      recentSales={recentSales}
+      revenueTrend={revenueTrend}
+    />
   );
 }

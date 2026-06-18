@@ -14,7 +14,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex-1 overflow-x-hidden bg-[#020204]">
+    <div className="flex-1 overflow-x-hidden bg-[var(--background)]">
       <LandingHeroSection />
       <Suspense fallback={<LandingSectionPlaceholder className="h-[120vh]" />}>
         <LandingBelowFold />

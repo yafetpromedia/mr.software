@@ -305,22 +305,21 @@ export function AdminAccountSettings({ initial }: { initial: AccountSettingsInit
       </section>
 
       <section className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]/40 p-5 sm:p-6">
-        <h2 className="text-sm font-semibold text-[var(--foreground)]">More settings</h2>
+        <h2 className="text-sm font-semibold text-[var(--foreground)]">Platform shortcuts</h2>
         <ul className="mt-3 space-y-2 text-sm">
           <li>
-            <Link href="/admin" className="text-[var(--accent)] hover:underline">
-              Admin overview →
+            <Link href="/admin/storefronts" className="text-[var(--accent)] hover:underline">
+              Manage creator storefronts →
             </Link>
           </li>
           <li>
-            <Link href="/settings" className="text-[var(--accent)] hover:underline">
-              Developer storefront &amp; payouts →
+            <Link href="/admin/users" className="text-[var(--accent)] hover:underline">
+              Users &amp; roles →
             </Link>
-            <span className="ml-1 text-xs text-[var(--muted)]">(opens developer portal)</span>
           </li>
           <li>
-            <Link href="/app/settings" className="text-[var(--accent)] hover:underline">
-              Library &amp; consumer account →
+            <Link href="/admin/site" className="text-[var(--accent)] hover:underline">
+              Landing page &amp; site CMS →
             </Link>
           </li>
         </ul>

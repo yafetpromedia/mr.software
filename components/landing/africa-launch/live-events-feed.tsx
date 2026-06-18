@@ -25,7 +25,7 @@ export function LiveEventsFeed() {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
           <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
         </span>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 [data-theme='light']:text-[color-mix(in_srgb,var(--foreground)_45%,transparent)]">
           Live marketplace
         </p>
       </div>

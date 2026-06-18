@@ -132,7 +132,7 @@ export function ArcTraveler({
         <div className="africa-travel-card">
           {travel.arrived ? (
             <>
-              <span className="text-[10px] text-emerald-300">✓ New Customer</span>
+              <span className="text-[10px] font-semibold text-emerald-300">✓ SaaS Sold</span>
               <p className="font-display text-xs font-bold text-white">{travel.product}</p>
               <p className="text-[10px] text-white/50">
                 {travel.endFlag} {travel.endLabel}
@@ -150,10 +150,17 @@ export function ArcTraveler({
   );
 }
 
-export function ProductSatellites({ reduceMotion }: { reduceMotion: boolean }) {
+export function ProductSatellites({
+  reduceMotion,
+  visibleCount = 4,
+}: {
+  reduceMotion: boolean;
+  visibleCount?: number;
+}) {
+  const products = ORBIT_PRODUCTS.slice(0, visibleCount);
   return (
     <>
-      {ORBIT_PRODUCTS.map((p) => (
+      {products.map((p) => (
         <Satellite key={p.id} name={p.name} speed={p.speed} phase={p.phase} reduceMotion={reduceMotion} />
       ))}
     </>
@@ -172,14 +179,14 @@ function Satellite({
   reduceMotion: boolean;
 }) {
   const ref = useRef<THREE.Group>(null);
-  const orbitR = GLOBE_RADIUS * 1.38;
+  const orbitR = GLOBE_RADIUS * 1.42;
 
   useFrame(({ clock }) => {
     if (!ref.current || reduceMotion) return;
     const t = clock.elapsedTime * speed + phase;
     ref.current.position.set(
       Math.cos(t) * orbitR,
-      Math.sin(t * 0.65) * orbitR * 0.22,
+      Math.sin(t * 0.65) * orbitR * 0.28 + 8,
       Math.sin(t) * orbitR,
     );
     ref.current.lookAt(0, 0, 0);
@@ -188,11 +195,12 @@ function Satellite({
   return (
     <group ref={ref}>
       <mesh>
-        <boxGeometry args={[0.8, 0.8, 0.8]} />
-        <meshBasicMaterial color={AFRICA_ORANGE} wireframe />
+        <sphereGeometry args={[1.4, 10, 10]} />
+        <meshBasicMaterial color={AFRICA_ORANGE} transparent opacity={0.85} />
       </mesh>
-      <Html center distanceFactor={220} style={{ pointerEvents: "none" }} occlude>
-        <div className="africa-orbit-chip hidden md:block">{name}</div>
+      <pointLight color={AFRICA_ORANGE} intensity={0.6} distance={28} />
+      <Html center distanceFactor={200} style={{ pointerEvents: "none" }} occlude>
+        <div className="africa-orbit-chip">{name}</div>
       </Html>
     </group>
   );
@@ -200,15 +208,27 @@ function Satellite({
 
 export function CosmicNebula() {
   return (
-    <mesh position={[0, 0, -280]} renderOrder={-1}>
-      <planeGeometry args={[900, 900]} />
-      <meshBasicMaterial
-        color="#FF7A1A"
-        transparent
-        opacity={0.04}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-      />
-    </mesh>
+    <>
+      <mesh position={[0, 40, -320]} renderOrder={-2}>
+        <planeGeometry args={[1100, 1100]} />
+        <meshBasicMaterial
+          color="#FF7A1A"
+          transparent
+          opacity={0.06}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+      <mesh position={[-120, -60, -300]} renderOrder={-2}>
+        <planeGeometry args={[600, 600]} />
+        <meshBasicMaterial
+          color="#6b3fa0"
+          transparent
+          opacity={0.035}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+    </>
   );
 }

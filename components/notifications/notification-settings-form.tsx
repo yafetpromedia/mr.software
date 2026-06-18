@@ -149,14 +149,14 @@ export function NotificationSettingsForm({ settingsHref = "/app/settings" }: Pro
                   type="button"
                   disabled={saving}
                   onClick={() => toggleKind(kind)}
-                  className={`relative h-6 w-11 rounded-full transition ${
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 ${
                     muted ? "bg-[var(--border)]" : "bg-[var(--accent)]"
                   }`}
                   aria-pressed={!muted}
                   aria-label={`${NOTIFICATION_KIND_LABELS[kind]} notifications ${muted ? "off" : "on"}`}
                 >
                   <span
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${
+                    className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${
                       muted ? "left-0.5" : "left-[1.375rem]"
                     }`}
                   />
@@ -180,13 +180,14 @@ export function NotificationSettingsForm({ settingsHref = "/app/settings" }: Pro
             type="button"
             disabled={saving || !pushConfigured}
             onClick={() => void onPushToggle(!prefs.pushEnabled)}
-            className={`relative h-6 w-11 rounded-full transition ${
+            className={`relative h-7 w-12 shrink-0 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 ${
               prefs.pushEnabled ? "bg-[var(--accent)]" : "bg-[var(--border)]"
             } ${!pushConfigured ? "opacity-50" : ""}`}
             aria-pressed={prefs.pushEnabled}
+            aria-label="Browser push notifications"
           >
             <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${
+              className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${
                 prefs.pushEnabled ? "left-[1.375rem]" : "left-0.5"
               }`}
             />
@@ -209,32 +210,32 @@ export function NotificationSettingsForm({ settingsHref = "/app/settings" }: Pro
           <code className="text-[var(--foreground)]">RESEND_API_KEY</code> on the server.
         </p>
         <select
+          id="email-digest-frequency"
           value={prefs.emailDigest}
           disabled={saving}
           onChange={(e) => onDigestChange(e.target.value as EmailDigestFrequency)}
-          className="h-9 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--accent)]/25"
+          className="h-11 w-full max-w-xs rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 text-sm text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+          aria-label="Email digest frequency"
         >
           <option value="OFF">Off</option>
           <option value="DAILY">Daily</option>
           <option value="WEEKLY">Weekly</option>
         </select>
         <p className="text-xs text-[var(--muted)]">
-          Digests are sent by a scheduled job:{" "}
-          <code className="text-[var(--foreground)]">POST /api/cron/notification-digest</code> with{" "}
-          <code className="text-[var(--foreground)]">Authorization: Bearer CRON_SECRET</code>.
+          Summaries are sent to your account email when enabled on the server.
         </p>
       </div>
 
-      {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-      <p className="text-xs text-[var(--muted)]">
-        Real-time in-app alerts always use the bell in the top bar. Manage preferences at{" "}
-        <a href={settingsHref} className="text-[var(--accent)] hover:underline">
-          settings
-        </a>
-        .
-      </p>
+      {message ? (
+        <p className="text-sm text-emerald-600" role="status" aria-live="polite">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

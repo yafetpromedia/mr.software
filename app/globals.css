@@ -36,6 +36,13 @@
   --terminal-border: rgba(255, 255, 255, 0.08);
   --hero-glow: rgba(249, 115, 22, 0.12);
   --grid-line: rgba(9, 9, 11, 0.06);
+  --landing-hero-bg: #f8fafc;
+  --landing-hero-fade: #f8fafc;
+  --landing-hero-title: #09090b;
+  --landing-hero-subtitle: rgba(9, 9, 11, 0.62);
+  --landing-hero-hint: rgba(9, 9, 11, 0.42);
+  --landing-hero-glow: rgba(255, 122, 26, 0.1);
+  --landing-hero-title-shadow: 0 2px 24px rgba(255, 255, 255, 0.5);
 }
 
 /* —— Dark mode —— */
@@ -71,6 +78,13 @@
   --terminal-border: rgba(255, 255, 255, 0.08);
   --hero-glow: rgba(249, 115, 22, 0.2);
   --grid-line: rgba(251, 146, 60, 0.06);
+  --landing-hero-bg: #000000;
+  --landing-hero-fade: #000000;
+  --landing-hero-title: #ffffff;
+  --landing-hero-subtitle: rgba(255, 255, 255, 0.58);
+  --landing-hero-hint: rgba(255, 255, 255, 0.32);
+  --landing-hero-glow: transparent;
+  --landing-hero-title-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
 }
 
 @theme inline {
@@ -123,11 +137,11 @@ body {
 
 .africa-hero-stars {
   background-image:
-    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.35), transparent),
-    radial-gradient(1px 1px at 80px 120px, rgba(255, 255, 255, 0.25), transparent),
-    radial-gradient(1.5px 1.5px at 160px 60px, rgba(255, 122, 26, 0.35), transparent),
-    radial-gradient(1px 1px at 240px 180px, rgba(255, 255, 255, 0.2), transparent),
-    radial-gradient(1px 1px at 320px 90px, rgba(255, 255, 255, 0.3), transparent);
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.28), transparent),
+    radial-gradient(1px 1px at 80px 120px, rgba(255, 255, 255, 0.18), transparent),
+    radial-gradient(1px 1px at 160px 60px, rgba(255, 255, 255, 0.22), transparent),
+    radial-gradient(1px 1px at 240px 180px, rgba(255, 255, 255, 0.14), transparent),
+    radial-gradient(1px 1px at 320px 90px, rgba(255, 255, 255, 0.2), transparent);
   background-size: 360px 220px;
   animation: africa-stars-drift 90s linear infinite;
 }
@@ -193,13 +207,13 @@ body {
   justify-content: center;
   gap: 0.5rem;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   padding-left: 1.25rem;
   padding-right: 1.25rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.75);
+  color: color-mix(in srgb, var(--foreground) 78%, transparent);
   backdrop-filter: blur(12px);
   transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
@@ -207,7 +221,504 @@ body {
 .africa-hero-cta-secondary:hover {
   border-color: rgba(255, 122, 26, 0.35);
   background: rgba(255, 122, 26, 0.06);
-  color: white;
+  color: var(--foreground);
+}
+
+.africa-launch-hero {
+  --landing-hero-bg: #000000;
+  --landing-hero-fade: #000000;
+  --landing-hero-title: #ffffff;
+  --landing-hero-subtitle: rgba(255, 255, 255, 0.58);
+  --landing-hero-hint: rgba(255, 255, 255, 0.32);
+  --landing-hero-title-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+  background: #000000;
+  color-scheme: dark;
+}
+
+.africa-globe-scene-wrap {
+  transform: none;
+}
+
+.africa-globe-loading-placeholder {
+  height: min(48vw, 520px);
+  width: min(48vw, 520px);
+  border-radius: 9999px;
+  background: radial-gradient(circle at 32% 28%, #1a2840, #0a0e18 72%);
+  border: 1px solid rgba(255, 122, 26, 0.18);
+  box-shadow: 0 0 60px rgba(255, 122, 26, 0.12);
+  animation: africa-globe-loading-pulse 2s ease-in-out infinite;
+}
+
+@keyframes africa-globe-loading-pulse {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.africa-globe-canvas-root {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.africa-globe-canvas-root--ready {
+  opacity: 1;
+  pointer-events: auto;
+  filter:
+    drop-shadow(-10px -12px 22px rgba(255, 122, 26, 0.11))
+    drop-shadow(-6px -8px 40px rgba(255, 154, 90, 0.06))
+    drop-shadow(0 0 28px rgba(217, 139, 106, 0.025));
+}
+
+.africa-globe-soft-shadow {
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 26% 22% at 38% 45%,
+    rgba(255, 122, 26, 0.1) 0%,
+    rgba(255, 160, 90, 0.05) 42%,
+    rgba(217, 139, 106, 0.015) 68%,
+    transparent 82%
+  );
+  filter: blur(20px);
+  opacity: 0.7;
+}
+
+.africa-globe-canvas-root--loading {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.africa-cinematic-veil {
+  background: #000000;
+}
+
+.africa-globe-vignette {
+  background: radial-gradient(
+    ellipse 76% 58% at 54% 61%,
+    transparent 38%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+}
+
+.africa-globe-limb-haze {
+  display: none;
+}
+
+.africa-globe-outer-glow {
+  display: none;
+}
+
+.africa-globe-pulse-ring {
+  background: radial-gradient(
+    ellipse 36% 28% at 54% 61%,
+    transparent 56%,
+    rgba(255, 154, 90, 0.22) 61%,
+    rgba(255, 122, 26, 0.38) 63.5%,
+    rgba(255, 154, 90, 0.12) 66%,
+    transparent 70%
+  );
+  filter: blur(0.5px);
+  animation: africa-pulse-ring 1.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes africa-pulse-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  22% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.035);
+  }
+}
+
+.africa-hero-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+.africa-hero-accent {
+  background: linear-gradient(108deg, #ff7a1a 0%, #d98b6a 42%, #ff9a4d 78%, #ff7a1a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Ethiopia hub — integrated into globe */
+.ethiopia-hub-panel {
+  min-width: min(20rem, calc(100vw - 2rem));
+}
+
+.ethiopia-hub-panel-glow {
+  position: absolute;
+  inset: -20%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 122, 26, 0.2), transparent 70%);
+  filter: blur(12px);
+}
+
+.ethiopia-hub-panel-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 122, 26, 0.25);
+  box-shadow: 0 0 40px rgba(255, 122, 26, 0.15);
+}
+
+.ethiopia-hub-panel-core {
+  position: relative;
+  border-radius: 1.125rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  padding: 0.75rem 0.875rem;
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 16px 48px -12px rgba(255, 122, 26, 0.3),
+    inset 0 1px 0 color-mix(in srgb, white 30%, transparent);
+}
+
+.ethiopia-hub-panel-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ff7a1a;
+}
+
+.ethiopia-hub-panel-origin {
+  font-size: 0.68rem;
+  color: color-mix(in srgb, var(--foreground) 55%, transparent);
+}
+
+.ethiopia-hub-panel-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 122, 26, 0.3);
+  background: rgba(255, 122, 26, 0.1);
+  padding: 0.15rem 0.45rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ff7a1a;
+}
+
+.ethiopia-hub-panel-live-dot {
+  height: 0.35rem;
+  width: 0.35rem;
+  border-radius: 9999px;
+  background: #ff7a1a;
+  box-shadow: 0 0 8px rgba(255, 122, 26, 0.8);
+  animation: africa-hub-pulse 2s ease-out infinite;
+}
+
+.ethiopia-hub-panel-stats {
+  margin-top: 0.65rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.ethiopia-hub-panel-stats li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  background: color-mix(in srgb, var(--surface) 65%, transparent);
+  padding: 0.4rem 0.35rem;
+}
+
+.ethiopia-hub-panel-stat-value {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.ethiopia-hub-panel-stat-label {
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--foreground) 48%, transparent);
+}
+
+.africa-hero-orange-sweep {
+  display: none;
+}
+
+.africa-launch-hero-glow {
+  display: none;
+}
+
+.africa-launch-hero-fade {
+  background: linear-gradient(
+    to top,
+    var(--landing-hero-fade),
+    color-mix(in srgb, var(--landing-hero-fade) 70%, transparent),
+    transparent
+  );
+}
+
+.africa-launch-hero-title {
+  color: var(--landing-hero-title);
+  text-shadow: var(--landing-hero-title-shadow);
+  letter-spacing: -0.045em;
+}
+
+.africa-launch-hero-subtitle {
+  color: var(--landing-hero-subtitle);
+  font-weight: 400;
+}
+
+.africa-launch-hero-hint {
+  color: var(--landing-hero-hint);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.625rem;
+  font-weight: 500;
+}
+
+.africa-hero-eyebrow {
+  border: 1px solid rgba(217, 139, 106, 0.28);
+  background: linear-gradient(108deg, rgba(43, 22, 13, 0.72), rgba(92, 53, 37, 0.45));
+  color: rgba(255, 220, 190, 0.88);
+  backdrop-filter: blur(10px);
+}
+
+.africa-hub-badge {
+  display: flex;
+  max-width: min(18rem, calc(100vw - 2rem));
+  align-items: flex-start;
+  gap: 0.65rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  padding: 0.75rem 0.875rem;
+  text-align: left;
+  box-shadow:
+    0 12px 40px -12px rgba(255, 122, 26, 0.25),
+    inset 0 1px 0 color-mix(in srgb, white 35%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+.africa-hub-badge-pulse {
+  position: absolute;
+  left: 1.35rem;
+  top: 1.35rem;
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 9999px;
+  background: #ff7a1a;
+  box-shadow: 0 0 0 0 rgba(255, 122, 26, 0.55);
+  animation: africa-hub-pulse 2.2s ease-out infinite;
+}
+
+@keyframes africa-hub-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 122, 26, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 122, 26, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 122, 26, 0);
+  }
+}
+
+.africa-hub-badge-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.africa-hub-badge-label {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--foreground) 48%, transparent);
+}
+
+.africa-hub-badge-title {
+  display: block;
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.africa-hub-badge-sub {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--foreground) 58%, transparent);
+}
+
+.africa-hub-badge-live {
+  margin-left: auto;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 122, 26, 0.28);
+  background: rgba(255, 122, 26, 0.1);
+  padding: 0.2rem 0.45rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ff7a1a;
+}
+
+.ethio-emblem-orbit {
+  width: 9.5rem;
+}
+
+.ethio-emblem-rays,
+.ethio-emblem-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 1px dashed rgba(255, 122, 26, 0.22);
+}
+
+.ethio-emblem-rays {
+  inset: -0.35rem;
+  border-style: solid;
+  border-color: rgba(244, 196, 48, 0.12);
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 122, 26, 0.14),
+    transparent 25%,
+    rgba(244, 196, 48, 0.12),
+    transparent 50%,
+    rgba(255, 122, 26, 0.14),
+    transparent 75%,
+    rgba(244, 196, 48, 0.12),
+    transparent
+  );
+  mask-image: radial-gradient(circle, black 42%, transparent 72%);
+}
+
+.ethio-emblem-ring {
+  inset: 0.65rem;
+  border-color: rgba(255, 122, 26, 0.35);
+}
+
+.ethio-emblem-core {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.ethio-emblem-svg {
+  width: 5.5rem;
+  height: 5.5rem;
+  filter: drop-shadow(0 0 18px rgba(255, 122, 26, 0.45));
+}
+
+.ethio-emblem-caption {
+  margin-top: 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--foreground) 55%, transparent);
+}
+
+.ethio-orbit-stats {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ethio-orbit-stats li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  padding: 0.35rem 0.55rem;
+  backdrop-filter: blur(10px);
+}
+
+.ethio-orbit-stats-value {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ff7a1a;
+}
+
+.ethio-orbit-stats-label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--foreground) 50%, transparent);
+}
+
+[data-theme="light"] .africa-stat-card {
+  border-color: color-mix(in srgb, var(--foreground) 10%, transparent);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.1);
+}
+
+[data-theme="light"] .africa-stat-card p,
+[data-theme="light"] .africa-stat-card .text-white {
+  color: var(--foreground);
+}
+
+[data-theme="light"] .africa-stat-card .text-[#ffb07a] {
+  color: #c2410c;
+}
+[data-theme="light"] .africa-activity-card {
+  border-color: color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--foreground);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(255, 122, 26, 0.1);
+}
+
+[data-theme="light"] .africa-product-card p,
+[data-theme="light"] .africa-activity-card p {
+  color: var(--foreground);
+}
+
+[data-theme="light"] .africa-product-card ul {
+  color: color-mix(in srgb, var(--foreground) 62%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .africa-globe-pulse-ring {
+    animation: none;
+  }
+
+  .africa-hub-badge-pulse {
+    animation: none;
+  }
 }
 
 .africa-stat-card {
@@ -293,6 +804,39 @@ body {
   white-space: nowrap;
   box-shadow: 0 0 16px rgba(255, 122, 26, 0.25);
   backdrop-filter: blur(8px);
+}
+
+.globe-arc-dest-label {
+  min-width: 5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 154, 90, 0.22);
+  background: rgba(8, 6, 5, 0.72);
+  padding: 0.3rem 0.45rem;
+  text-align: center;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  transition: opacity 0.35s ease;
+}
+
+.globe-arc-dest-product {
+  display: block;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: rgba(255, 210, 170, 0.85);
+}
+
+.globe-arc-dest-place {
+  display: block;
+  margin-top: 0.08rem;
+  font-size: 0.5rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.globe-hub-spark-label {
+  display: none;
 }
 
 .africa-activity-card {

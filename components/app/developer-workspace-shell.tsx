@@ -155,18 +155,6 @@ function IconCard({ className }: { className?: string }) {
   );
 }
 
-function IconShield({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.825 10.29 9 11.623 5.175-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"
-      />
-    </svg>
-  );
-}
-
 function IconSpark({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
@@ -305,14 +293,14 @@ export function DeveloperWorkspaceShell({ children, userName, userEmail, role }:
     .slice(0, 2)
     .toUpperCase();
 
-  const roleLabel = role === "ADMIN" ? "Admin" : "Developer";
+  const roleLabel = "Developer";
 
   function linkClass(href: string) {
     const active = navActive(pathname, href);
     const base = sidebarMinimized ? "justify-center px-2" : "px-3";
-    return `group flex w-full items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition ${base} ${
+    return `group relative flex w-full items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition ${base} ${
       active
-        ? "bg-[var(--accent-muted)] text-[var(--foreground)]"
+        ? "bg-[var(--accent-muted)] text-[var(--foreground)] shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-[var(--accent)]"
         : "text-[var(--muted)] hover:bg-[var(--background)] hover:text-[var(--foreground)]"
     }`;
   }
@@ -425,17 +413,6 @@ export function DeveloperWorkspaceShell({ children, userName, userEmail, role }:
                 </Link>
               );
             })}
-            {showAdmin ? (
-              <Link
-                href="/admin"
-                className={`${linkClass("/admin")} mt-2`}
-                aria-current={pathname.startsWith("/admin") ? "page" : undefined}
-                title="Admin portal"
-              >
-                <IconShield className="h-5 w-5 shrink-0 opacity-80" />
-                <span className={sidebarMinimized ? "lg:sr-only" : ""}>Admin portal</span>
-              </Link>
-            ) : null}
           </div>
 
           <div className={`shrink-0 border-t border-[var(--border)] p-3 ${sidebarMinimized ? "lg:p-2" : ""}`}>

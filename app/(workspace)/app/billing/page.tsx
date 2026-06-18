@@ -1,12 +1,16 @@
-import { PurchaseStatus, LicenseKind } from "@prisma/client";
+import { LicenseKind, PurchaseStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
+import {
+  BillingDashboard,
+  type BillingSubscription,
+  type BillingTransaction,
+} from "@/components/app/billing-dashboard";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { formatMoneyAmount } from "@/lib/portal/format-amount";
 
-function statusText(status: PurchaseStatus, kind: LicenseKind): string {
+function statusLabel(status: PurchaseStatus, kind: LicenseKind): string {
   if (status === PurchaseStatus.ACTIVE) {
-    return kind === LicenseKind.SUBSCRIPTION ? "Active subscription" : "Paid (active)";
+    return kind === LicenseKind.SUBSCRIPTION ? "Active" : "Paid";
   }
   if (status === PurchaseStatus.PENDING) return "Pending";
   if (status === PurchaseStatus.EXPIRED) return "Expired";
@@ -15,87 +19,107 @@ function statusText(status: PurchaseStatus, kind: LicenseKind): string {
   return status;
 }
 
+function providerLabel(provider: string | null | undefined): string | null {
+  if (!provider) return null;
+  if (provider === "CHAPA") return "Chapa";
+  if (provider === "STRIPE") return "Stripe";
+  if (provider === "TELEBIRR") return "Telebirr";
+  if (provider === "DEV_GRANT") return "Dev grant";
+}
+
+export const metadata = { title: "Purchases & billing" };
+
 export default async function BillingPage() {
   const session = await getSession();
   if (!session) notFound();
 
-  const rows = await prisma.purchase.findMany({
-    where: { userId: session.id },
-    include: { software: { select: { name: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+  const [rows, workspaceSub] = await Promise.all([
+    prisma.purchase.findMany({
+      where: { userId: session.id },
+      include: { software: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.subscription.findUnique({
+      where: { userId: session.id },
+      select: {
+        plan: true,
+        status: true,
+        amountCents: true,
+        billingCurrency: true,
+        expiresAt: true,
+      },
+    }),
+  ]);
+
+  const completedRows = rows.filter(
+    (row) =>
+      row.status === PurchaseStatus.ACTIVE ||
+      row.status === PurchaseStatus.EXPIRED ||
+      row.status === PurchaseStatus.REFUNDED,
+  );
+
+  const totalSpentCents = completedRows.reduce((sum, row) => sum + (row.amountCents ?? 0), 0);
+  const monthSpentCents = completedRows
+    .filter((row) => row.createdAt >= monthStart)
+    .reduce((sum, row) => sum + (row.amountCents ?? 0), 0);
+
+  const activeLicenseCount = rows.filter((row) => row.status === PurchaseStatus.ACTIVE).length;
+  const subscriptionCount = rows.filter(
+    (row) => row.licenseKind === LicenseKind.SUBSCRIPTION && row.status === PurchaseStatus.ACTIVE,
+  ).length;
+
+  const displayCurrency = (
+    rows.find((row) => row.currency)?.currency ?? "ETB"
+  ).toUpperCase();
+
+  const transactions: BillingTransaction[] = rows.map((row) => ({
+    id: row.id,
+    softwareId: row.softwareId,
+    productName: row.software?.name ?? "Software",
+    amountCents: row.amountCents ?? 0,
+    currency: (row.currency ?? displayCurrency).toUpperCase(),
+    status: row.status,
+    statusLabel: statusLabel(row.status, row.licenseKind),
+    licenseKind: row.licenseKind,
+    provider: providerLabel(row.paymentProvider),
+    createdAt: row.createdAt.toISOString(),
+    validUntil: row.validUntil?.toISOString() ?? null,
+  }));
+
+  const subscriptions: BillingSubscription[] = rows
+    .filter((row) => row.licenseKind === LicenseKind.SUBSCRIPTION)
+    .map((row) => ({
+      id: row.id,
+      productName: row.software?.name ?? "Software",
+      status: row.status,
+      statusLabel: statusLabel(row.status, row.licenseKind),
+      validUntil: row.validUntil?.toISOString() ?? null,
+      amountCents: row.amountCents ?? 0,
+      currency: (row.currency ?? displayCurrency).toUpperCase(),
+    }));
+
+  const workspacePlan = workspaceSub
+    ? {
+        plan: workspaceSub.plan,
+        status: workspaceSub.status,
+        amountCents: workspaceSub.amountCents,
+        currency: workspaceSub.billingCurrency?.toUpperCase() ?? null,
+        expiresAt: workspaceSub.expiresAt?.toISOString() ?? null,
+      }
+    : null;
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">
-          Billing & payments
-        </h1>
-        <p className="mt-2 text-sm text-[var(--muted)]">
-          Purchases, subscriptions, and local payments (e.g. Chapa in ETB) will appear here as they are
-          completed.
-        </p>
-      </div>
-
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Payment methods</h2>
-        <p className="mt-2 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-4 text-sm text-[var(--muted)]">
-          Chapa and other methods will be saved here when checkout is fully wired. No card on file yet.
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Transactions</h2>
-        {rows.length === 0 ? (
-          <p className="mt-3 text-sm text-[var(--muted)]">No transactions yet.</p>
-        ) : (
-          <ul className="mt-3 divide-y divide-[var(--border)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-            {rows.map((p) => (
-              <li key={p.id} className="flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-medium text-[var(--foreground)]">{p.software?.name ?? "Software"}</p>
-                  <p className="text-xs text-[var(--muted)]">{new Date(p.createdAt).toLocaleString()}</p>
-                </div>
-                <div className="text-right sm:text-left">
-                  <p className="text-sm font-semibold text-[var(--foreground)]">
-                    {formatMoneyAmount(p.amountCents, p.currency ?? "USD")}
-                  </p>
-                  <p className="text-xs text-[var(--muted)]">
-                    {statusText(p.status, p.licenseKind)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Subscriptions</h2>
-        {rows.filter((p) => p.licenseKind === LicenseKind.SUBSCRIPTION).length === 0 ? (
-          <p className="mt-3 text-sm text-[var(--muted)]">No subscription rows yet.</p>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {rows
-              .filter((p) => p.licenseKind === LicenseKind.SUBSCRIPTION)
-              .map((p) => (
-                <li
-                  key={p.id}
-                  className="flex flex-col justify-between gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center"
-                >
-                  <span className="font-medium text-[var(--foreground)]">{p.software?.name}</span>
-                  <span className="text-sm text-[var(--muted)]">
-                    {p.validUntil
-                      ? `Next period ends ${new Date(p.validUntil).toLocaleDateString()}`
-                      : "No end date"}
-                    {" · "}
-                    {p.status}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        )}
-      </section>
-    </div>
+    <BillingDashboard
+      totalSpentCents={totalSpentCents}
+      monthSpentCents={monthSpentCents}
+      currency={displayCurrency}
+      activeLicenseCount={activeLicenseCount}
+      subscriptionCount={subscriptionCount}
+      transactions={transactions}
+      subscriptions={subscriptions}
+      workspacePlan={workspacePlan}
+    />
   );
 }

@@ -132,7 +132,7 @@ export function ConsumerWorkspaceShell({ children, userName, userEmail, role }: 
   const [sidebar, setSidebar] = useState<SidebarVisibility>("expanded");
   const [sidebarReady, setSidebarReady] = useState(false);
   const showAdmin = role === "ADMIN";
-  const showDevShortcut = role === "DEVELOPER" || role === "ADMIN";
+  const showDevShortcut = role === "DEVELOPER";
 
   useEffect(() => {
     setSidebar(loadSidebarVisibility(SIDEBAR_STORAGE_KEYS.library));
@@ -177,15 +177,14 @@ export function ConsumerWorkspaceShell({ children, userName, userEmail, role }: 
 
   function linkClass(href: string) {
     const active = navActive(pathname, href);
-    return `group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+    return `group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
       active
-        ? "bg-[var(--accent-muted)] text-[var(--foreground)]"
+        ? "bg-[var(--accent-muted)] text-[var(--foreground)] shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-[var(--accent)]"
         : "text-[var(--muted)] hover:bg-[var(--background)] hover:text-[var(--foreground)]"
     }`;
   }
 
-  const roleLabel =
-    role === "ADMIN" ? "Admin" : role === "DEVELOPER" ? "Developer" : "Member";
+  const roleLabel = role === "DEVELOPER" ? "Developer" : "Member";
 
   const navBlock = (items: NavItem[], keyPrefix: string) =>
     items.map((item) => {

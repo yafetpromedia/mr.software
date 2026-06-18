@@ -1,5 +1,10 @@
 export const AFRICA_ORANGE = "#FF7A1A";
 
+export const ARC_ANIMATE_MS = 3200;
+export const ARC_ALTITUDE = 0.2;
+/** Visible length of each moving energy packet (0–1 along arc). */
+export const ARC_TRAIL_LENGTH = 0.26;
+
 export const HUB = {
   lat: 9.032,
   lng: 38.746,
@@ -50,6 +55,16 @@ export const DEPLOYMENT_ARCS: DeploymentArc[] = [
     endFlag: "🇿🇦",
   },
   {
+    id: "campusone-eg",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: 30.044,
+    endLng: 31.235,
+    product: "CampusOne",
+    endLabel: "Egypt",
+    endFlag: "🇪🇬",
+  },
+  {
     id: "healthlink-de",
     startLat: HUB.lat,
     startLng: HUB.lng,
@@ -59,16 +74,6 @@ export const DEPLOYMENT_ARCS: DeploymentArc[] = [
     endLabel: "Germany",
     endFlag: "🇩🇪",
   },
-  {
-    id: "healthlink-us",
-    startLat: HUB.lat,
-    startLng: HUB.lng,
-    endLat: 40.713,
-    endLng: -74.006,
-    product: "HealthLink",
-    endLabel: "USA",
-    endFlag: "🇺🇸",
-  },
 ];
 
 export const ORBIT_PRODUCTS = [
@@ -76,6 +81,57 @@ export const ORBIT_PRODUCTS = [
   { id: "mr-invoice", name: "Mr.Invoice", speed: 0.17, phase: 1.4 },
   { id: "healthlink", name: "HealthLink", speed: 0.19, phase: 2.8 },
   { id: "educloud", name: "EduCloud", speed: 0.15, phase: 4.2 },
+];
+
+export const HERO_PRODUCTS = [
+  {
+    id: "campusone",
+    name: "CampusOne",
+    countries: 12,
+    metric: "$8.2k",
+    metricLabel: "MRR",
+    status: "Live",
+  },
+  {
+    id: "mr-invoice",
+    name: "Mr.Invoice",
+    countries: 24,
+    metric: "$12k",
+    metricLabel: "MRR",
+    status: "Scaling",
+  },
+  {
+    id: "healthlink",
+    name: "HealthLink",
+    countries: 8,
+    metric: "$4.1k",
+    metricLabel: "MRR",
+    status: "Deployed",
+  },
+  {
+    id: "educloud",
+    name: "EduCloud",
+    countries: 6,
+    metric: "$2.4k",
+    metricLabel: "MRR",
+    status: "Growing",
+  },
+];
+
+export type LiveEvent = {
+  id: string;
+  icon: string;
+  title: string;
+  detail: string;
+};
+
+export const LIVE_EVENTS: LiveEvent[] = [
+  { id: "deploy-ke", icon: "🚀", title: "New Deployment", detail: "CampusOne → Kenya" },
+  { id: "sale-de", icon: "💰", title: "New Sale", detail: "HealthLink · Germany" },
+  { id: "customer-us", icon: "🌍", title: "New Customer", detail: "CampusOne · USA" },
+  { id: "revenue", icon: "📈", title: "Revenue +$49", detail: "Mr.Invoice subscription" },
+  { id: "deploy-ng", icon: "🚀", title: "New Deployment", detail: "EduCloud → Nigeria" },
+  { id: "sale-za", icon: "💰", title: "SaaS Sold", detail: "Mr.Invoice · South Africa" },
 ];
 
 export type WorldActivity = {
@@ -140,67 +196,128 @@ export type LaunchStoryStep = {
   revenueBoost: number;
   travelArcId?: string;
   travelMs?: number;
+  energyPulse?: boolean;
+  showGlobe?: boolean;
+  orbitProducts?: number;
 };
 
 export const LAUNCH_STORY: LaunchStoryStep[] = [
-  { atMs: 0, icon: "🌍", text: "Africa glows — origin of software", activeArcs: 0, litCountries: 1, revenueBoost: 0 },
-  { atMs: 2000, icon: "📤", text: "Developer uploads software", activeArcs: 0, litCountries: 1, revenueBoost: 0 },
-  { atMs: 3500, icon: "🚀", text: "CampusOne published", activeArcs: 0, litCountries: 1, revenueBoost: 0 },
   {
-    atMs: 4500,
+    atMs: 0,
+    icon: "🌑",
+    text: "Initializing global platform…",
+    activeArcs: 0,
+    litCountries: 0,
+    revenueBoost: 0,
+    showGlobe: false,
+    orbitProducts: 0,
+  },
+  {
+    atMs: 1000,
+    icon: "🌍",
+    text: "Africa lights up — origin of software",
+    activeArcs: 0,
+    litCountries: 1,
+    revenueBoost: 0,
+    showGlobe: false,
+    orbitProducts: 0,
+  },
+  {
+    atMs: 2000,
     icon: "🛰️",
-    text: "Deployed to Kenya",
+    text: "Globe online — mission control active",
+    activeArcs: 0,
+    litCountries: 1,
+    revenueBoost: 0,
+    showGlobe: true,
+    orbitProducts: 1,
+  },
+  {
+    atMs: 3000,
+    icon: "⚡",
+    text: "Energy pulse from Ethiopia hub",
+    activeArcs: 0,
+    litCountries: 1,
+    revenueBoost: 0,
+    energyPulse: true,
+    showGlobe: true,
+    orbitProducts: 2,
+  },
+  {
+    atMs: 4000,
+    icon: "🚀",
+    text: "CampusOne launching…",
+    activeArcs: 0,
+    litCountries: 1,
+    revenueBoost: 0,
+    showGlobe: true,
+    orbitProducts: 2,
+    travelArcId: "campusone-ke",
+    travelMs: 2400,
+  },
+  {
+    atMs: 5000,
+    icon: "🇰🇪",
+    text: "Kenya reached · deployment live",
     activeArcs: 1,
     litCountries: 2,
     revenueBoost: 0,
-    travelArcId: "campusone-ke",
-    travelMs: 2800,
+    showGlobe: true,
+    orbitProducts: 3,
   },
   {
-    atMs: 7500,
-    icon: "💰",
-    text: "First subscription sold · +$29",
-    activeArcs: 1,
-    litCountries: 2,
-    revenueBoost: 29,
-  },
-  {
-    atMs: 8500,
-    icon: "🌍",
-    text: "Nigeria reached",
+    atMs: 6000,
+    icon: "🇩🇪",
+    text: "Germany reached · global sale",
     activeArcs: 2,
-    litCountries: 3,
+    litCountries: 4,
     revenueBoost: 29,
-    travelArcId: "campusone-ng",
+    showGlobe: true,
+    orbitProducts: 4,
+    travelArcId: "healthlink-de",
     travelMs: 2600,
   },
   {
-    atMs: 11500,
-    icon: "🇩🇪",
-    text: "Germany reached",
-    activeArcs: 4,
+    atMs: 7000,
+    icon: "💰",
+    text: "SaaS Sold · +$49 revenue",
+    activeArcs: 3,
     litCountries: 5,
-    revenueBoost: 78,
-    travelArcId: "healthlink-de",
-    travelMs: 3000,
+    revenueBoost: 49,
+    showGlobe: true,
+    orbitProducts: 4,
   },
   {
-    atMs: 14500,
+    atMs: 9000,
+    icon: "🇪🇬",
+    text: "Egypt customer acquired",
+    activeArcs: 4,
+    litCountries: 6,
+    revenueBoost: 120,
+    showGlobe: true,
+    orbitProducts: 4,
+    travelArcId: "campusone-eg",
+    travelMs: 2800,
+  },
+  {
+    atMs: 12000,
     icon: "📈",
     text: "Revenue climbing globally",
     activeArcs: 5,
-    litCountries: 6,
+    litCountries: 7,
     revenueBoost: 1200,
-    travelArcId: "healthlink-us",
-    travelMs: 3200,
+    showGlobe: true,
+    orbitProducts: 4,
   },
   {
-    atMs: 18000,
+    atMs: 16000,
     icon: "🌎",
     text: "One Platform. Infinite Possibilities.",
     activeArcs: 5,
     litCountries: 7,
     revenueBoost: 4500,
+    showGlobe: true,
+    orbitProducts: 4,
   },
 ];
 

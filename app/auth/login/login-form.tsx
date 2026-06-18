@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { postLoginPath } from "@/lib/auth/post-login-redirect";
 
 type Props = {
   redirectTo: string;
@@ -67,16 +68,17 @@ export function LoginForm({ redirectTo, initialOauthError }: Props) {
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });
-      const data: unknown = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        user?: { role?: string };
+      };
       if (!res.ok) {
-        const msg =
-          data && typeof data === "object" && "error" in data
-            ? String((data as { error: unknown }).error)
-            : "Sign-in failed";
+        const msg = data.error ?? "Sign-in failed";
         setError(msg);
         return;
       }
-      router.push(redirectTo);
+      const role = data.user?.role ?? "USER";
+      router.push(postLoginPath(role, redirectTo));
       router.refresh();
     } catch {
       setError("Something went wrong. Try again.");

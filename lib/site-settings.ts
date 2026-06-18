@@ -35,8 +35,10 @@ function normalizePartners(input: unknown): Partner[] {
 }
 
 function parsePartnersJson(partnersJson: string): Partner[] {
+  const raw = partnersJson.trim();
+  if (!raw) return defaultPartners;
   try {
-    const parsed = JSON.parse(partnersJson) as unknown;
+    const parsed = JSON.parse(raw) as unknown;
     return normalizePartners(parsed);
   } catch {
     return defaultPartners;

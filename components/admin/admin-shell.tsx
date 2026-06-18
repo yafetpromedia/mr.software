@@ -347,14 +347,14 @@ export function AdminShell({ children, userName, userEmail }: Props) {
 
         <div className="shrink-0 border-t border-[var(--border)] p-3">
           <Link
-            href="/app"
+            href="/"
             onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--accent-muted)] hover:text-[var(--foreground)]"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
             </svg>
-            User / dev portal
+            Back to site
           </Link>
         </div>
       </aside>

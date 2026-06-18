@@ -6,6 +6,7 @@ import {
   HEADER_USER_ID,
   HEADER_USER_ROLE,
 } from "@/lib/auth/constants";
+import { isDeveloperWorkspacePath } from "@/lib/auth/post-login-redirect";
 
 const INTERNAL_HEADER_PREFIX = "x-mr-software-";
 
@@ -58,8 +59,12 @@ export async function middleware(request: NextRequest) {
   if (publicStorefrontHandle && token && secret) {
     try {
       const key = new TextEncoder().encode(secret);
-      await jwtVerify(token, key, { algorithms: ["HS256"] });
+      const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
+      const role = payload.role;
       const handle = decodeURIComponent(publicStorefrontHandle);
+      if (role === "ADMIN") {
+        return NextResponse.redirect(new URL(`/store/${handle}`, request.url));
+      }
       return NextResponse.redirect(new URL(`/app/store/${handle}`, request.url));
     } catch {
       // Invalid token — show public storefront
@@ -100,6 +105,9 @@ export async function middleware(request: NextRequest) {
       headers.set(HEADER_USER_ROLE, role);
       if ((pathname === "/app" || pathname === "/app/") && role === "USER") {
         return NextResponse.redirect(new URL("/app/home", request.url));
+      }
+      if (role === "ADMIN" && status === "ACTIVE" && isDeveloperWorkspacePath(pathname)) {
+        return NextResponse.redirect(new URL("/admin", request.url));
       }
     }
 
@@ -161,6 +169,18 @@ export const config = {
     "/store/:path*",
     "/app",
     "/app/:path*",
+    "/deploy",
+    "/deploy/:path*",
+    "/projects",
+    "/projects/:path*",
+    "/settings",
+    "/settings/:path*",
+    "/listings",
+    "/listings/:path*",
+    "/earnings",
+    "/earnings/:path*",
+    "/payouts",
+    "/payouts/:path*",
     "/api/software/:path*",
     "/api/admin/:path*",
     "/admin",

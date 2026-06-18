@@ -15,15 +15,17 @@ export type TravelState = {
 export type CinematicState = LaunchStoryStep & {
   travel: TravelState | null;
   timelineIndex: number;
+  elapsedMs: number;
 };
 
-const LOOP_PAD_MS = 6000;
+const LOOP_PAD_MS = 8000;
 
 export function useCinematicStory(reduceMotion: boolean): CinematicState {
   const [state, setState] = useState<CinematicState>(() => ({
     ...LAUNCH_STORY[0]!,
     travel: null,
     timelineIndex: 0,
+    elapsedMs: 0,
   }));
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export function useCinematicStory(reduceMotion: boolean): CinematicState {
         ...LAUNCH_STORY[LAUNCH_STORY.length - 1]!,
         travel: null,
         timelineIndex: LAUNCH_STORY.length - 1,
+        elapsedMs: LAUNCH_STORY[LAUNCH_STORY.length - 1]!.atMs,
       });
       return;
     }
@@ -86,7 +89,7 @@ export function useCinematicStory(reduceMotion: boolean): CinematicState {
         }
       }
 
-      setState({ ...step, travel, timelineIndex: stepIndex });
+      setState({ ...step, travel, timelineIndex: stepIndex, elapsedMs: elapsed });
     }, 32);
 
     return () => window.clearInterval(id);
