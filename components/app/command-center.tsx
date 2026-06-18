@@ -2,7 +2,7 @@ import Link from "next/link";
 import { DeploymentStatus } from "@prisma/client";
 import { MiniAreaChart } from "@/components/admin/charts/mini-area-chart";
 import { SegmentBar } from "@/components/admin/charts/segment-bar";
-import { VerifiedBadge } from "@/components/storefront/verified-badge";
+import { StorefrontSummaryCard } from "@/components/app/storefront-summary-card";
 import { InfrastructureCard } from "@/components/ui/infrastructure-card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { formatMoneyAmount } from "@/lib/portal/format-amount";
@@ -251,14 +251,14 @@ export function CommandCenter({
           }
         />
         <KpiCard
-          label="Storefront views"
-          value={storefront ? String(storefront.viewCount) : "—"}
+          label="Product views"
+          value={storefront ? String(storefront.totalProductViews) : "—"}
           hint={
             storefront
               ? `${storefront.followerCount} follower${storefront.followerCount === 1 ? "" : "s"}`
               : "Set up your storefront"
           }
-          href={storefront ? `/@${storefront.handle}` : "/settings"}
+          href="/app/storefront"
           icon={
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
@@ -390,47 +390,27 @@ export function CommandCenter({
 
         <div className="space-y-6 lg:col-span-2">
           {storefront ? (
+            <StorefrontSummaryCard
+              storefront={storefront}
+              verified={storefrontVerified}
+              manageHref="/app/storefront"
+            />
+          ) : (
             <InfrastructureCard className="p-4 sm:p-5" hover={false}>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-stone-500 dark:text-[var(--muted)]">
-                    Your storefront
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <p className="font-display text-lg font-semibold text-stone-900 dark:text-[var(--foreground)]">
-                      @{storefront.handle}
-                    </p>
-                    {storefrontVerified ? <VerifiedBadge size="sm" /> : null}
-                  </div>
-                </div>
-                <Link
-                  href={`/@${storefront.handle}`}
-                  className="text-xs font-medium text-[var(--accent)] hover:underline"
-                >
-                  View live
-                </Link>
-              </div>
-              <dl className="mt-4 grid grid-cols-3 gap-3">
-                {[
-                  { label: "Views", value: storefront.viewCount },
-                  { label: "Followers", value: storefront.followerCount },
-                  { label: "Products", value: storefront.productCount },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-center"
-                  >
-                    <dt className="text-[0.6rem] font-semibold uppercase tracking-wider text-stone-500 dark:text-[var(--muted)]">
-                      {stat.label}
-                    </dt>
-                    <dd className="mt-1 text-lg font-semibold tabular-nums text-stone-900 dark:text-[var(--foreground)]">
-                      {stat.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              <p className="text-sm font-semibold text-stone-900 dark:text-[var(--foreground)]">
+                Your storefront
+              </p>
+              <p className="mt-1 text-xs text-stone-500 dark:text-[var(--muted)]">
+                Create a public creator store at your @handle.
+              </p>
+              <Link
+                href="/app/storefront"
+                className="mt-4 inline-flex text-sm font-medium text-[var(--accent)] hover:underline"
+              >
+                Set up storefront →
+              </Link>
             </InfrastructureCard>
-          ) : null}
+          )}
 
           <InfrastructureCard className="p-4 sm:p-5" hover={false}>
             <h2 className="text-sm font-semibold text-stone-900 dark:text-[var(--foreground)]">

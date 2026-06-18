@@ -3,8 +3,41 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { AdminTopBar } from "@/components/admin/admin-top-bar";
+import { SidebarToggleButton } from "@/components/ui/sidebar-toggle-button";
+import {
+  loadSidebarVisibility,
+  saveSidebarVisibility,
+  SIDEBAR_STORAGE_KEYS,
+  type SidebarVisibility,
+} from "@/lib/sidebar-state";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
+import { ChevronDown, LogOut, Settings } from "lucide-react";
+
+const PAGE_TITLES: Record<string, string> = {
+  "/admin": "Overview",
+  "/admin/users": "Users",
+  "/admin/software": "Software",
+  "/admin/deployments": "Deployments",
+  "/admin/payments": "Payments",
+  "/admin/reports": "Reports",
+  "/admin/moderation": "Moderation",
+  "/admin/system": "System",
+  "/admin/site": "Site",
+  "/admin/testimonials": "Testimonials",
+  "/admin/storefronts": "Storefronts",
+  "/admin/audit": "Audit log",
+  "/admin/settings": "Settings",
+};
+
+function pageTitle(pathname: string): string {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  const match = Object.entries(PAGE_TITLES)
+    .filter(([path]) => path !== "/admin")
+    .sort((a, b) => b[0].length - a[0].length)
+    .find(([path]) => pathname.startsWith(`${path}/`));
+  return match?.[1] ?? "Admin";
+}
 
 const nav: { href: string; label: string; icon: ReactNode }[] = [
   {
@@ -144,10 +177,107 @@ type Props = {
   userEmail: string;
 };
 
+function AccountMenu({
+  userName,
+  userEmail,
+  initials,
+  onLogout,
+  align = "right",
+}: {
+  userName: string;
+  userEmail: string;
+  initials: string;
+  onLogout: () => void;
+  align?: "left" | "right";
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex h-10 items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] py-1 pl-1 pr-2.5 text-left transition hover:border-[var(--accent)]/30 sm:pr-3"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-white">
+          {initials}
+        </span>
+        <span className="hidden max-w-[7rem] truncate text-sm font-medium text-[var(--foreground)] sm:block">
+          {userName}
+        </span>
+        <ChevronDown className="hidden h-3.5 w-3.5 text-[var(--muted)] sm:block" aria-hidden />
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-40"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className={`absolute top-full z-50 mt-2 w-60 rounded-xl border border-[var(--border)] bg-[var(--surface)] py-1 shadow-xl ${
+              align === "right" ? "right-0" : "left-0"
+            }`}
+          >
+            <div className="border-b border-[var(--border)] px-3 py-2.5">
+              <p className="truncate text-sm font-medium text-[var(--foreground)]">{userName}</p>
+              <p className="truncate text-xs text-[var(--muted)]">{userEmail}</p>
+            </div>
+            <Link
+              href="/admin/settings"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--foreground)] transition hover:bg-[var(--accent-muted)]"
+              onClick={() => setOpen(false)}
+            >
+              <Settings className="h-4 w-4 text-[var(--muted)]" aria-hidden />
+              Profile settings
+            </Link>
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 transition hover:bg-red-500/8"
+              onClick={() => void onLogout()}
+            >
+              <LogOut className="h-4 w-4" aria-hidden />
+              Log out
+            </button>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 export function AdminShell({ children, userName, userEmail }: Props) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [sidebar, setSidebar] = useState<SidebarVisibility>("expanded");
+  const [sidebarReady, setSidebarReady] = useState(false);
+  const title = pageTitle(pathname);
+
+  useEffect(() => {
+    setSidebar(loadSidebarVisibility(SIDEBAR_STORAGE_KEYS.admin));
+    setSidebarReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!sidebarReady) return;
+    saveSidebarVisibility(SIDEBAR_STORAGE_KEYS.admin, sidebar);
+  }, [sidebar, sidebarReady]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  const sidebarExpanded = sidebar === "expanded";
+
+  function toggleSidebarDesktop() {
+    setSidebar((current) => (current === "expanded" ? "closed" : "expanded"));
+  }
+
+  function toggleSidebarMobile() {
+    setMobileOpen((open) => !open);
+  }
 
   const initials = userName
     .split(/\s+/)
@@ -162,7 +292,7 @@ export function AdminShell({ children, userName, userEmail }: Props) {
   }
 
   return (
-    <div className="flex min-h-dvh w-full bg-[var(--background)]">
+    <div className="flex h-dvh w-full overflow-hidden bg-[var(--background)]">
       <div
         className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity lg:hidden ${
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
@@ -172,11 +302,11 @@ export function AdminShell({ children, userName, userEmail }: Props) {
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,88vw)] flex-col border-r border-[var(--border)] bg-[var(--surface)] shadow-2xl transition-transform duration-300 ease-out dark:bg-[var(--surface-elevated)] lg:static lg:z-0 lg:w-64 lg:translate-x-0 lg:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,88vw)] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--surface)] shadow-2xl transition-transform duration-300 ease-out dark:bg-[var(--surface-elevated)] lg:static lg:z-0 lg:h-full lg:w-64 lg:translate-x-0 lg:shadow-none ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${!sidebarExpanded ? "lg:hidden" : ""}`}
       >
-        <div className="flex h-14 items-center gap-2 border-b border-[var(--border)] px-4 lg:h-16">
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-[var(--border)] px-4 lg:h-16">
           <LogoMark size="md" rounded="xl" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-[var(--foreground)]">Operations</p>
@@ -194,7 +324,7 @@ export function AdminShell({ children, userName, userEmail }: Props) {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
+        <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2">
           {nav.map((item) => {
             const active = navActive(pathname, item.href);
             return (
@@ -215,7 +345,7 @@ export function AdminShell({ children, userName, userEmail }: Props) {
           })}
         </nav>
 
-        <div className="border-t border-[var(--border)] p-3">
+        <div className="shrink-0 border-t border-[var(--border)] p-3">
           <Link
             href="/app"
             onClick={() => setMobileOpen(false)}
@@ -229,122 +359,35 @@ export function AdminShell({ children, userName, userEmail }: Props) {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex min-h-14 flex-col gap-3 border-b border-[var(--border)] bg-[var(--background)]/90 px-4 py-2 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--background)]/75 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 lg:min-h-16 lg:px-8">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-2 text-[var(--foreground)] shadow-sm lg:hidden"
-              onClick={() => setMobileOpen(true)}
-              aria-label="Open menu"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-              </svg>
-            </button>
-            <div className="min-w-0 sm:hidden">
-              <p className="truncate text-sm font-semibold text-[var(--foreground)]">{userName}</p>
-              <p className="truncate text-xs text-[var(--muted)]">{userEmail}</p>
-            </div>
-            <div className="hidden min-w-0 sm:block">
-              <p className="text-xs font-medium uppercase tracking-wider text-[var(--muted)]">Admin</p>
-              <p className="truncate text-sm font-semibold text-[var(--foreground)]">{userName}</p>
-            </div>
-            <div className="relative sm:hidden">
-              <button
-                type="button"
-                onClick={() => setAccountMenuOpen((open) => !open)}
-                aria-expanded={accountMenuOpen}
-                className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] p-0.5 pl-1 pr-2 text-left text-sm shadow-sm"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-white">
-                  {initials}
-                </span>
-              </button>
-              {accountMenuOpen ? (
-                <>
-                  <button
-                    type="button"
-                    className="fixed inset-0 z-40"
-                    aria-label="Close account menu"
-                    onClick={() => setAccountMenuOpen(false)}
-                  />
-                  <div className="absolute left-0 top-full z-50 mt-2 w-56 rounded-xl border border-[var(--border)] bg-[var(--surface)] py-1 shadow-xl">
-                    <p className="border-b border-[var(--border)] px-3 py-2 text-xs text-[var(--muted)]">
-                      {userEmail}
-                    </p>
-                    <Link
-                      href="/admin/settings"
-                      className="block px-3 py-2 text-sm hover:bg-[var(--accent-muted)]"
-                      onClick={() => setAccountMenuOpen(false)}
-                    >
-                      Profile settings
-                    </Link>
-                    <button
-                      type="button"
-                      className="w-full px-3 py-2 text-left text-sm text-red-600"
-                      onClick={() => void logout()}
-                    >
-                      Log out
-                    </button>
-                  </div>
-                </>
-              ) : null}
-            </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-30 flex h-14 shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--background)]/90 px-3 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--background)]/75 sm:gap-4 sm:px-5 lg:h-16 lg:px-6">
+          <SidebarToggleButton
+            expanded={mobileOpen}
+            onClick={toggleSidebarMobile}
+            mobile
+          />
+          <SidebarToggleButton
+            expanded={sidebarExpanded}
+            onClick={toggleSidebarDesktop}
+          />
+
+          <div className="hidden min-w-0 shrink-0 sm:block lg:w-36">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Admin</p>
+            <p className="truncate text-sm font-semibold text-[var(--foreground)]">{title}</p>
           </div>
+
           <AdminTopBar />
-          <div className="hidden items-center gap-2 sm:flex">
-            <span className="shrink-0 rounded-full border border-[var(--accent)]/30 bg-[var(--accent-muted)] px-2.5 py-0.5 text-xs font-semibold text-[var(--accent)]">
-              Admin
-            </span>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setAccountMenuOpen((open) => !open)}
-                aria-expanded={accountMenuOpen}
-                className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] p-0.5 pl-1 pr-2 text-left text-sm shadow-sm"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-white">
-                  {initials}
-                </span>
-                <span className="max-w-[10rem] truncate text-xs font-medium text-[var(--foreground)]">
-                  {userName}
-                </span>
-              </button>
-              {accountMenuOpen ? (
-                <>
-                  <button
-                    type="button"
-                    className="fixed inset-0 z-40"
-                    aria-label="Close account menu"
-                    onClick={() => setAccountMenuOpen(false)}
-                  />
-                  <div className="absolute right-0 top-full z-50 mt-2 w-60 rounded-xl border border-[var(--border)] bg-[var(--surface)] py-1 shadow-xl">
-                    <p className="border-b border-[var(--border)] px-3 py-2 text-xs text-[var(--muted)]">
-                      {userEmail}
-                    </p>
-                    <Link
-                      href="/admin/settings"
-                      className="block px-3 py-2 text-sm hover:bg-[var(--accent-muted)]"
-                      onClick={() => setAccountMenuOpen(false)}
-                    >
-                      Profile settings
-                    </Link>
-                    <button
-                      type="button"
-                      className="w-full px-3 py-2 text-left text-sm text-red-600"
-                      onClick={() => void logout()}
-                    >
-                      Log out
-                    </button>
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </div>
+
+          <AccountMenu
+            userName={userName}
+            userEmail={userEmail}
+            initials={initials}
+            onLogout={logout}
+            align="right"
+          />
         </header>
 
-        <div className="flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
           <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">{children}</div>
         </div>
       </div>

@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { PortalTopBar } from "@/components/app/portal-top-bar";
+import { SidebarToggleButton } from "@/components/ui/sidebar-toggle-button";
+import {
+  loadSidebarVisibility,
+  saveSidebarVisibility,
+  SIDEBAR_STORAGE_KEYS,
+  type SidebarVisibility,
+} from "@/lib/sidebar-state";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, Suspense, type ComponentType, type ReactNode, type SVGProps } from "react";
 
@@ -121,8 +128,26 @@ export function ConsumerWorkspaceShell({ children, userName, userEmail, role }: 
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebar, setSidebar] = useState<SidebarVisibility>("expanded");
+  const [sidebarReady, setSidebarReady] = useState(false);
   const showAdmin = role === "ADMIN";
   const showDevShortcut = role === "DEVELOPER" || role === "ADMIN";
+
+  useEffect(() => {
+    setSidebar(loadSidebarVisibility(SIDEBAR_STORAGE_KEYS.library));
+    setSidebarReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!sidebarReady) return;
+    saveSidebarVisibility(SIDEBAR_STORAGE_KEYS.library, sidebar);
+  }, [sidebar, sidebarReady]);
+
+  const sidebarExpanded = sidebar === "expanded";
+
+  function toggleSidebarDesktop() {
+    setSidebar((current) => (current === "expanded" ? "closed" : "expanded"));
+  }
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -180,7 +205,7 @@ export function ConsumerWorkspaceShell({ children, userName, userEmail, role }: 
 
   const navBody = (
     <>
-      <div className="px-2 pb-4">
+      <div className="shrink-0 px-2 pb-4">
         <Link
           href="/app/home"
           className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm font-semibold tracking-tight text-[var(--foreground)]"
@@ -191,7 +216,7 @@ export function ConsumerWorkspaceShell({ children, userName, userEmail, role }: 
         <p className="px-2 pt-1 text-xs text-[var(--muted)]">Your software library</p>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 px-2" aria-label="Account">
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2" aria-label="Account">
         {navBlock(libraryNav, "lib")}
         {showDevShortcut ? (
           <div className="mt-4 border-t border-[var(--border)] pt-3">
@@ -221,7 +246,7 @@ export function ConsumerWorkspaceShell({ children, userName, userEmail, role }: 
         ) : null}
       </nav>
 
-      <div className="mt-auto border-t border-[var(--border)] p-3">
+      <div className="mt-auto shrink-0 border-t border-[var(--border)] p-3">
         <div className="flex items-center justify-between gap-2 rounded-xl bg-[var(--background)] px-2 py-2">
           <div className="min-w-0">
             <p className="truncate text-xs font-medium text-[var(--foreground)]">{userName}</p>
@@ -233,7 +258,7 @@ export function ConsumerWorkspaceShell({ children, userName, userEmail, role }: 
   );
 
   return (
-    <div className="flex min-h-dvh bg-[var(--background)]">
+    <div className="flex h-dvh overflow-hidden bg-[var(--background)]">
       {mobileNavOpen ? (
         <button
           type="button"
@@ -244,33 +269,25 @@ export function ConsumerWorkspaceShell({ children, userName, userEmail, role }: 
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(17rem,100vw-3rem)] flex-col border-r border-[var(--border)] bg-[var(--surface)] transition-transform duration-200 ease-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(17rem,100vw-3rem)] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--surface)] transition-transform duration-200 ease-out lg:static lg:h-full lg:translate-x-0 ${
           mobileNavOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        } ${!sidebarExpanded ? "lg:hidden" : ""}`}
         aria-label="App navigation"
       >
         {navBody}
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-[var(--border)] bg-[var(--background)]/90 px-2 backdrop-blur-md supports-[backdrop-filter]:bg-[var(--background)]/75 sm:gap-3 sm:px-4 lg:px-6">
-          <button
-            type="button"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--foreground)] transition hover:bg-[var(--surface)] lg:hidden"
-            onClick={() => setMobileNavOpen((o) => !o)}
-            aria-expanded={mobileNavOpen}
-            aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
-          >
-            {mobileNavOpen ? (
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
-              </svg>
-            )}
-          </button>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-30 flex h-14 shrink-0 items-center gap-2 border-b border-[var(--border)] bg-[var(--background)]/90 px-2 backdrop-blur-md supports-[backdrop-filter]:bg-[var(--background)]/75 sm:gap-3 sm:px-4 lg:px-6">
+          <SidebarToggleButton
+            expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((open) => !open)}
+            mobile
+          />
+          <SidebarToggleButton
+            expanded={sidebarExpanded}
+            onClick={toggleSidebarDesktop}
+          />
           <Suspense fallback={<div className="min-w-0 flex-1" aria-hidden />}>
             <PortalTopBar />
           </Suspense>

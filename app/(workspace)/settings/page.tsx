@@ -3,10 +3,7 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
 import { prisma } from "@/lib/prisma";
-import { getOwnStorefront } from "@/lib/storefront/storefront";
 import { PortalSettingsForm } from "@/components/app/portal-settings-form";
-import { StorefrontSettingsForm } from "@/components/app/storefront-settings-form";
-import { StorefrontAnalyticsPanel } from "@/components/storefront/storefront-client";
 
 export const metadata = { title: "Developer settings" };
 
@@ -19,14 +16,13 @@ export default async function DeveloperSettingsPage() {
     where: { id: session.id },
     select: { password: true, googleId: true, stripeCustomerId: true },
   });
-  const storefront = await getOwnStorefront(session.id);
   const googleOnly = Boolean(user?.googleId && !user?.password);
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">Settings</h1>
-        <p className="mt-2 text-sm text-[var(--muted)]">Account, payouts, storefront, and security — one workspace.</p>
+        <p className="mt-2 text-sm text-[var(--muted)]">Account, security, and workspace preferences.</p>
       </div>
 
       <section className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
@@ -46,22 +42,14 @@ export default async function DeveloperSettingsPage() {
         ) : null}
       </section>
 
-      <section className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
-        <div>
-          <h2 className="text-sm font-semibold text-[var(--foreground)]">Developer storefront</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            Your public store at <code className="text-xs">mr.software/@handle</code> — products,
-            brand, and future customer tools.
-          </p>
-        </div>
-        <StorefrontSettingsForm initial={storefront} />
-        <div className="mt-6 border-t border-[var(--border)] pt-6">
-          <h3 className="text-sm font-semibold text-[var(--foreground)]">Store analytics</h3>
-          <p className="mt-1 text-xs text-[var(--muted)]">Views, followers, and recent activity.</p>
-          <div className="mt-4">
-            <StorefrontAnalyticsPanel />
-          </div>
-        </div>
+      <section className="space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+        <h2 className="text-sm font-semibold text-[var(--foreground)]">Creator storefront</h2>
+        <p className="text-sm text-[var(--muted)]">
+          Brand, handle, theme, and store analytics are managed on the dedicated storefront page.
+        </p>
+        <Link href="/app/storefront" className="inline-flex text-sm font-medium text-[var(--accent)] hover:underline">
+          Open storefront →
+        </Link>
       </section>
 
       <section className="space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">

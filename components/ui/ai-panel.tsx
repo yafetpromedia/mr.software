@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CommandInput } from "@/components/ui/command-input";
+import { PanelSectionControls } from "@/components/ui/panel-section-controls";
 
 const SUGGESTIONS = [
   "Generate a SaaS landing page",
@@ -10,36 +11,58 @@ const SUGGESTIONS = [
   "Create marketplace listing",
 ] as const;
 
-export function AiPanel({ onClose }: { onClose?: () => void }) {
+type Props = {
+  minimized?: boolean;
+  onMinimize?: () => void;
+  onClose?: () => void;
+  onRestore?: () => void;
+};
+
+export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: Props) {
   const [input, setInput] = useState("");
+
+  if (minimized) {
+    return (
+      <aside
+        className="flex w-10 shrink-0 flex-col border-l border-[var(--border)] bg-[var(--surface)]"
+        aria-label="Mr.Software AI Copilot"
+      >
+        <button
+          type="button"
+          onClick={onRestore}
+          className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-[var(--muted)] transition hover:bg-[var(--accent-muted)] hover:text-[var(--foreground)]"
+          aria-label="Expand AI panel"
+          title="Expand AI panel"
+        >
+          <span className="text-sm text-[var(--accent)]" aria-hidden>
+            ✦
+          </span>
+          <span className="text-[0.6rem] font-semibold uppercase tracking-wider [writing-mode:vertical-rl]">
+            AI
+          </span>
+        </button>
+      </aside>
+    );
+  }
 
   return (
     <aside
-      className="flex w-80 shrink-0 flex-col border-l border-[var(--border)] bg-[var(--surface)]"
+      className="flex h-full w-80 shrink-0 flex-col border-l border-[var(--border)] bg-[var(--surface)]"
       aria-label="Mr.Software AI Copilot"
     >
-      <div className="flex h-14 items-center justify-between border-b border-[var(--border)] px-4">
-        <div>
+      <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-[var(--border)] px-4">
+        <div className="min-w-0">
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
             Copilot
           </p>
-          <p className="text-sm font-medium text-[var(--foreground)]">Mr.Software AI</p>
+          <p className="truncate text-sm font-medium text-[var(--foreground)]">Mr.Software AI</p>
         </div>
-        {onClose ? (
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-[var(--muted)] hover:bg-[var(--accent-muted)]"
-            aria-label="Close"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
+        {onMinimize || onClose ? (
+          <PanelSectionControls side="right" onMinimize={onMinimize ?? (() => undefined)} onClose={onClose ?? (() => undefined)} />
         ) : null}
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
           <p className="text-sm font-medium text-[var(--foreground)]">Startup command center</p>
           <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
@@ -65,7 +88,7 @@ export function AiPanel({ onClose }: { onClose?: () => void }) {
         </ul>
       </div>
 
-      <div className="border-t border-[var(--border)] p-3">
+      <div className="shrink-0 border-t border-[var(--border)] p-3">
         <CommandInput
           value={input}
           onChange={setInput}

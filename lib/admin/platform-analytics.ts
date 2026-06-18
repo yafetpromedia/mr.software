@@ -4,6 +4,7 @@ import {
   Role,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { sumAllProductViews } from "@/lib/software/product-views";
 
 export type DailyPoint = { date: string; value: number };
 
@@ -38,7 +39,7 @@ export type PlatformAnalytics = {
   deployBreakdown: { status: DeploymentStatus; count: number }[];
   topProducts: TopProduct[];
   recentPurchases: RecentPurchase[];
-  totalStorefrontViews: number;
+  totalProductViews: number;
 };
 
 function startOfDay(d: Date) {
@@ -102,7 +103,7 @@ export async function getPlatformAnalytics(days = 30): Promise<PlatformAnalytics
     deployGroups,
     topPurchaseGroups,
     recentPurchaseRows,
-    storefrontViews,
+    productViews,
   ] = await Promise.all([
     prisma.user.findMany({
       where: { createdAt: { gte: priorStart } },
@@ -160,7 +161,7 @@ export async function getPlatformAnalytics(days = 30): Promise<PlatformAnalytics
         software: { select: { name: true } },
       },
     }),
-    prisma.developerStorefront.aggregate({ _sum: { viewCount: true } }),
+    sumAllProductViews(),
   ]);
 
   const usersCurrent = usersInRange.filter((u) => u.createdAt >= currentStart);
@@ -213,7 +214,7 @@ export async function getPlatformAnalytics(days = 30): Promise<PlatformAnalytics
       status: p.status,
       createdAt: p.createdAt.toISOString(),
     })),
-    totalStorefrontViews: storefrontViews._sum.viewCount ?? 0,
+    totalProductViews: productViews,
   };
 }
 

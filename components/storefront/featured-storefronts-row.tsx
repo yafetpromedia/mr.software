@@ -72,9 +72,6 @@ export async function FeaturedStorefrontsRow({
                   <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 dark:border-[var(--border)] dark:bg-[var(--surface-elevated)]">
                     {store.followerCount} followers
                   </span>
-                  <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 dark:border-[var(--border)] dark:bg-[var(--surface-elevated)]">
-                    {store.viewCount} views
-                  </span>
                 </div>
               </div>
             </Link>

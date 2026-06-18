@@ -11,7 +11,7 @@ export type HeroFeaturedStore = {
   verified: boolean;
   productCount: number;
   followerCount: number;
-  viewCount: number;
+  totalProductViews: number;
 };
 
 const SPARKLINE = [4, 7, 5, 9, 8, 12, 10, 14, 11, 16];
@@ -122,7 +122,7 @@ export function LandingHeroLiveStack({
               Storefront
             </p>
             <span className="rounded-md bg-[var(--surface-elevated)] px-1.5 py-0.5 text-[0.55rem] font-semibold tabular-nums text-[var(--muted)]">
-              {store.viewCount > 0 ? `${store.viewCount} views` : "New"}
+              {store.productCount} products
             </span>
           </div>
           <div className="mt-2.5 flex items-center gap-2.5">

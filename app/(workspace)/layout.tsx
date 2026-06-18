@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { WorkspaceShell } from "@/components/app/workspace-shell";
 import { getSession } from "@/lib/auth/session";
@@ -15,7 +16,8 @@ export default async function WorkspaceLayout({
 }>) {
   const session = await getSession();
   if (!session) {
-    redirect("/auth/login?next=/app");
+    const pathname = (await headers()).get("x-mr-pathname") ?? "/app";
+    redirect(`/auth/login?next=${encodeURIComponent(pathname)}`);
   }
 
   return (

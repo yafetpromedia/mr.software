@@ -16,7 +16,7 @@ export function LandingMetricsStrip() {
 
   return (
     <section
-      className="relative border-b border-[var(--border)] py-10 sm:py-12"
+      className="relative border-b border-[var(--border)] bg-[var(--background)] py-10 sm:py-12"
       aria-label="Platform highlights"
     >
       <motion.div

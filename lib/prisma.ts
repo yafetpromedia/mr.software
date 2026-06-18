@@ -2,8 +2,12 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 
+/** Bump when Prisma schema changes so dev HMR picks up a fresh client. */
+const PRISMA_CLIENT_GENERATION = "2026-06-17-software-viewCount";
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  prismaGeneration?: string;
 };
 
 function createPrismaClient(): PrismaClient {
@@ -16,6 +20,17 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+function getPrismaClient(): PrismaClient {
+  if (
+    globalForPrisma.prisma &&
+    globalForPrisma.prismaGeneration === PRISMA_CLIENT_GENERATION
+  ) {
+    return globalForPrisma.prisma;
+  }
+  const client = createPrismaClient();
+  globalForPrisma.prisma = client;
+  globalForPrisma.prismaGeneration = PRISMA_CLIENT_GENERATION;
+  return client;
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export const prisma = getPrismaClient();

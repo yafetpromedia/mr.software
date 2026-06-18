@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SoftwareDetailView } from "@/components/software/software-detail-view";
-import { getSoftwareById, getSoftwareDetailBundle } from "@/lib/data/software";
+import { getSoftwareById, getSoftwareDetailBundle, recordSoftwareView } from "@/lib/data/software";
 import { userHasDownloadEntitlement } from "@/lib/monetization/entitlement";
 import { isStripeConfigured } from "@/lib/monetization/stripe-server";
 import { isChapaConfigured, isTelebirrEnabled } from "@/lib/payments/chapa";
@@ -29,15 +29,21 @@ export default async function SoftwareDetailPage({ params }: Props) {
   const bundle = await getSoftwareDetailBundle(id);
   if (!bundle) notFound();
 
-  const { item, software } = bundle;
+  const { item: rawItem, software } = bundle;
   const session = await getSession();
+
+  const isOwner = session?.id === software.developerId;
+  let item = rawItem;
+  if (!isOwner) {
+    await recordSoftwareView(id, session?.id);
+    item = { ...rawItem, viewCount: (rawItem.viewCount ?? 0) + 1 };
+  }
 
   const entitled = await userHasDownloadEntitlement({
     user: session ? { id: session.id, status: session.status } : null,
     software,
   });
 
-  const isOwner = session?.id === software.developerId;
   const developerVerified = software.developer.storefront?.verified ?? false;
 
   const stripeConfigured = isStripeConfigured();

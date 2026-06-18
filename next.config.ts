@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
+import os from "os";
 import path from "path";
 
+const webpackCacheDir = path.join(os.tmpdir(), "mr-software-webpack-cache");
+
 const nextConfig: NextConfig = {
+  modularizeImports: {
+    "lucide-react": {
+      transform: "lucide-react/dist/esm/icons/{{ kebabCase member }}",
+    },
+  },
+  serverExternalPackages: ["bcrypt", "@aws-sdk/client-s3"],
   async headers() {
     return [
       {
@@ -41,12 +50,16 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(process.cwd()),
   },
-  // Webpack's persistent file cache lives under `.next/dev/cache/webpack`. On Windows,
-  // cloud sync (e.g. OneDrive) can interrupt renames (ENOENT … 0.pack.gz_ → 0.pack.gz),
-  // which surfaces as flaky "Internal Server Error" in dev. Memory-only cache avoids that.
+  // OneDrive can break webpack cache under `.next`. Store cache in OS temp instead.
   webpack: (config, { dev }) => {
     if (dev) {
-      config.cache = false;
+      config.cache = {
+        type: "filesystem",
+        cacheDirectory: webpackCacheDir,
+        buildDependencies: {
+          config: [path.join(process.cwd(), "next.config.ts")],
+        },
+      };
     }
     return config;
   },

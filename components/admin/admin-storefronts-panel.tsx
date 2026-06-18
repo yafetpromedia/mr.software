@@ -106,7 +106,7 @@ export function AdminStorefrontsPanel() {
                     {row.followerCount} followers
                   </span>
                   <span className="rounded-full border border-[var(--border)] px-2 py-0.5">
-                    {row.viewCount} views
+                    {row.totalProductViews.toLocaleString()} product views
                   </span>
                   {row.showRevenuePublic ? (
                     <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-700 dark:text-emerald-400">

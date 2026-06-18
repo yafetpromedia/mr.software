@@ -50,6 +50,11 @@ export function SoftwareCard({ item, featured, hideDeveloper }: Props) {
           <span className="rounded-lg bg-black/40 px-2 py-0.5 text-xs font-medium text-white ring-1 ring-white/20 backdrop-blur-sm">
             {item.category}
           </span>
+          {(item.viewCount ?? 0) > 0 ? (
+            <span className="rounded-lg bg-black/40 px-2 py-0.5 text-xs font-medium text-white ring-1 ring-white/20 backdrop-blur-sm">
+              {(item.viewCount ?? 0).toLocaleString()} views
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -87,6 +92,9 @@ export function SoftwareCard({ item, featured, hideDeveloper }: Props) {
               <span>Commercial license</span>
             )}
             {hasMobileStores(item) ? <ProductPlatformBadges platforms={item} /> : null}
+            {(item.viewCount ?? 0) > 0 ? (
+              <span className="tabular-nums">{(item.viewCount ?? 0).toLocaleString()} views</span>
+            ) : null}
           </span>
           <Link
             href={`/software/${item.id}`}

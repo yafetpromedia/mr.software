@@ -10,7 +10,7 @@ export async function LandingHeroSection() {
     productCount: 3,
     tagline: undefined,
     followerCount: 0,
-    viewCount: 0,
+    totalProductViews: 0,
   };
 
   return (
@@ -22,7 +22,7 @@ export async function LandingHeroSection() {
         verified: featured.verified,
         productCount: featured.productCount,
         followerCount: featured.followerCount,
-        viewCount: featured.viewCount,
+        totalProductViews: featured.totalProductViews ?? 0,
       }}
     />
   );

@@ -219,6 +219,8 @@ model Software {
   category      SoftwareCategory @default(DEVELOPER_TOOLS)
   developerId   String
   developer     User     @relation("DeveloperSoftware", fields: [developerId], references: [id], onDelete: Cascade)
+  /** Product detail page views */
+  viewCount     Int      @default(0)
   createdAt     DateTime @default(now())
 
   purchases Purchase[]

@@ -121,6 +121,25 @@ body {
   opacity: 0.85;
 }
 
+@keyframes landing-globe-spin {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.landing-globe-map-track {
+  animation: landing-globe-spin 52s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-globe-map-track {
+    animation: none;
+  }
+}
+
 .landing-hero-mesh {
   background:
     radial-gradient(ellipse 90% 60% at 15% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 55%),

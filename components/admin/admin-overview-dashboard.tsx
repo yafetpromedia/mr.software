@@ -198,7 +198,7 @@ export function AdminOverviewDashboard({
         <KpiCard
           label="New signups"
           value={String(analytics.signups)}
-          sub={`${analytics.totalStorefrontViews.toLocaleString()} storefront views`}
+          sub={`${analytics.totalProductViews.toLocaleString()} product views`}
           trend={{ current: analytics.signups, prior: analytics.signupsPrior }}
           href="/admin/users"
         />

@@ -38,12 +38,33 @@ function jsonMessage(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
+function withPathname(headers: Headers, pathname: string): Headers {
+  const next = new Headers(headers);
+  next.set("x-mr-pathname", pathname);
+  return next;
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const method = request.method;
   const headers = stripInternalHeaders(request.headers);
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const secret = process.env.JWT_SECRET;
+
+  const publicStorefrontHandle =
+    pathname.match(/^\/store\/([^/]+)\/?$/)?.[1] ??
+    pathname.match(/^\/@([^/]+)\/?$/)?.[1];
+
+  if (publicStorefrontHandle && token && secret) {
+    try {
+      const key = new TextEncoder().encode(secret);
+      await jwtVerify(token, key, { algorithms: ["HS256"] });
+      const handle = decodeURIComponent(publicStorefrontHandle);
+      return NextResponse.redirect(new URL(`/app/store/${handle}`, request.url));
+    } catch {
+      // Invalid token — show public storefront
+    }
+  }
 
   const isAdminPath = pathname.startsWith("/api/admin");
   const isAdminUi = pathname.startsWith("/admin");
@@ -60,7 +81,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!token || !secret) {
-    return NextResponse.next({ request: { headers } });
+    return NextResponse.next({
+      request: { headers: withPathname(headers, pathname) },
+    });
   }
 
   try {
@@ -115,7 +138,9 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    return NextResponse.next({ request: { headers } });
+    return NextResponse.next({
+      request: { headers: withPathname(headers, pathname) },
+    });
   } catch {
     if (isAdminPath) {
       return jsonMessage("Unauthorized", 401);
@@ -125,14 +150,17 @@ export async function middleware(request: NextRequest) {
       login.searchParams.set("next", pathname);
       return NextResponse.redirect(login);
     }
-    return NextResponse.next({ request: { headers } });
+    return NextResponse.next({
+      request: { headers: withPathname(headers, pathname) },
+    });
   }
 }
 
 export const config = {
   matcher: [
+    "/store/:path*",
     "/app",
-    "/app/",
+    "/app/:path*",
     "/api/software/:path*",
     "/api/admin/:path*",
     "/admin",

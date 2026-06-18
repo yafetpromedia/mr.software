@@ -4,6 +4,7 @@ import { mapSoftwareToItem } from "@/lib/data/software";
 import type { SoftwareItem } from "@/lib/software-item";
 import { normalizeHandle, validateHandle } from "@/lib/storefront/handles";
 import { getDeveloperRevenueSummary } from "@/lib/storefront/revenue";
+import { sumProductViewsForDeveloper, sumProductViewsByDeveloper } from "@/lib/software/product-views";
 
 export type PublicStorefront = {
   handle: string;
@@ -15,7 +16,6 @@ export type PublicStorefront = {
   verified: boolean;
   featured: boolean;
   productCount: number;
-  viewCount: number;
   followerCount: number;
   isFollowing?: boolean;
   publicRevenueCents?: number;
@@ -37,7 +37,7 @@ export type OwnStorefront = {
 
 export type StorefrontAnalytics = {
   handle: string;
-  viewCount: number;
+  totalProductViews: number;
   followerCount: number;
   productCount: number;
   totalRevenueCents: number;
@@ -79,21 +79,12 @@ async function toPublicStorefront(
     verified: storefront.verified,
     featured: storefront.featured,
     productCount: products.length,
-    viewCount: storefront.viewCount,
     followerCount: storefront._count?.followers ?? 0,
     isFollowing: options?.isFollowing,
     publicRevenueCents,
     revenueCurrency,
     products: products.map((row) => mapSoftwareToItem(row)),
   };
-}
-
-export async function recordStorefrontView(rawHandle: string): Promise<void> {
-  const handle = normalizeHandle(rawHandle);
-  await prisma.developerStorefront.updateMany({
-    where: { handle },
-    data: { viewCount: { increment: 1 } },
-  });
 }
 
 export async function getStorefrontByHandle(
@@ -232,7 +223,7 @@ export async function listFeaturedStorefronts(limit = 6): Promise<
     verified: boolean;
     productCount: number;
     followerCount: number;
-    viewCount: number;
+    totalProductViews: number;
   }>
 > {
   const rows = await prisma.developerStorefront.findMany({
@@ -241,6 +232,7 @@ export async function listFeaturedStorefronts(limit = 6): Promise<
     include: {
       user: {
         select: {
+          id: true,
           name: true,
           _count: { select: { softwareDeveloped: true } },
         },
@@ -250,6 +242,8 @@ export async function listFeaturedStorefronts(limit = 6): Promise<
     orderBy: { updatedAt: "desc" },
   });
 
+  const viewsByDeveloper = await sumProductViewsByDeveloper();
+
   return rows.map((row) => ({
     handle: row.handle,
     name: row.user.name,
@@ -257,7 +251,7 @@ export async function listFeaturedStorefronts(limit = 6): Promise<
     verified: row.verified,
     productCount: row.user._count.softwareDeveloped,
     followerCount: row._count.followers,
-    viewCount: row.viewCount,
+    totalProductViews: viewsByDeveloper.get(row.user.id) ?? 0,
   }));
 }
 
@@ -338,11 +332,14 @@ export async function getStorefrontAnalytics(
   });
   if (!storefront) return null;
 
-  const revenue = await getDeveloperRevenueSummary(userId);
+  const [revenue, totalProductViews] = await Promise.all([
+    getDeveloperRevenueSummary(userId),
+    sumProductViewsForDeveloper(userId),
+  ]);
 
   return {
     handle: storefront.handle,
-    viewCount: storefront.viewCount,
+    totalProductViews,
     followerCount: storefront._count.followers,
     productCount: storefront.user._count.softwareDeveloped,
     totalRevenueCents: revenue.totalCents,

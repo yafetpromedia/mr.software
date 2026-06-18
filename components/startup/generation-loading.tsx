@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Sparkles } from "lucide-react";
 
 const STEPS = [
   "Understanding your idea…",
@@ -15,27 +16,33 @@ export function GenerationLoading({ step = 0 }: { step?: number }) {
 
   return (
     <motion.div
-      className="glass-panel flex flex-col items-center justify-center gap-6 rounded-2xl p-10"
+      className="relative flex h-full min-h-[22rem] flex-col items-center justify-center gap-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-10 shadow-[var(--shadow-card)] sm:min-h-[26rem]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <motion.div className="relative h-14 w-14">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_30%,var(--accent-muted),transparent_65%)]"
+        aria-hidden
+      />
+
+      <motion.div className="relative h-16 w-16">
         <motion.div
-          className="absolute inset-0 rounded-full border-2 border-[var(--accent)]/40"
+          className="absolute inset-0 rounded-full border-2 border-[var(--accent)]/30"
           animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
         />
         <motion.div
           className="absolute inset-2 rounded-full bg-[var(--accent-muted)]"
-          animate={{ scale: [1, 1.08, 1] }}
-          transition={{ duration: 1.2, repeat: Infinity }}
+          animate={{ scale: [1, 1.06, 1] }}
+          transition={{ duration: 1.4, repeat: Infinity }}
         />
-        <span className="absolute inset-0 flex items-center justify-center text-lg text-[var(--accent)]">
-          ✦
+        <span className="absolute inset-0 flex items-center justify-center text-[var(--accent)]">
+          <Sparkles className="h-6 w-6" aria-hidden />
         </span>
       </motion.div>
-      <div className="text-center">
-        <p className="text-sm font-semibold text-[var(--foreground)]">AI assisting…</p>
+
+      <div className="relative text-center">
+        <p className="text-sm font-semibold text-[var(--foreground)]">AI is drafting your startup</p>
         <motion.p
           key={label}
           initial={{ opacity: 0, y: 4 }}
@@ -45,13 +52,16 @@ export function GenerationLoading({ step = 0 }: { step?: number }) {
           {label}
         </motion.p>
       </div>
-      <div className="flex gap-1">
+
+      <div className="relative flex gap-1.5">
         {STEPS.map((_, i) => (
-          <div
+          <motion.div
             key={i}
-            className={`h-1 w-6 rounded-full transition ${
-              i <= step ? "bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)]" : "bg-[var(--border)]"
+            className={`h-1 rounded-full transition-all ${
+              i <= step ? "w-8 bg-[var(--accent)] shadow-[0_0_10px_var(--accent-glow)]" : "w-5 bg-[var(--border)]"
             }`}
+            animate={i <= step ? { opacity: [0.7, 1, 0.7] } : {}}
+            transition={{ duration: 1.2, repeat: Infinity }}
           />
         ))}
       </div>

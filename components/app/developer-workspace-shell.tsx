@@ -5,7 +5,19 @@ import { LogoMark } from "@/components/brand/logo-mark";
 import { DeveloperTopBar } from "@/components/app/developer-top-bar";
 import { PortalTopBar } from "@/components/app/portal-top-bar";
 import { AiPanel } from "@/components/ui/ai-panel";
+import {
+  PanelRestoreTab,
+  PanelSectionControls,
+} from "@/components/ui/panel-section-controls";
+import { SidebarToggleButton } from "@/components/ui/sidebar-toggle-button";
 import { isLibrarySurface } from "@/lib/auth/workspace-surface";
+import {
+  DEFAULT_WORKSPACE_PANELS,
+  loadWorkspacePanels,
+  saveWorkspacePanels,
+  type WorkspacePanelSide,
+  type WorkspacePanelState,
+} from "@/lib/workspace-panels";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, Suspense, type ComponentType, type ReactNode, type SVGProps } from "react";
 
@@ -163,9 +175,23 @@ function IconSpark({ className }: { className?: string }) {
   );
 }
 
+function IconStorefront({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13.5 21v-7.5a.75.75 0 0 0-.75-.75h-9A.75.75 0 0 0 3 13.5V21m0 0h18M2.25 10.5V4.125c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v2.25M2.25 10.5h18M9 6.75h6.75M9 3.75h6.75"
+      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75h6" />
+    </svg>
+  );
+}
+
 const studioNav: NavItem[] = [
   { href: "/app/builder", label: "AI Builder", icon: IconSpark },
   { href: "/app", label: "Command center", icon: IconOverview },
+  { href: "/app/storefront", label: "Storefront", icon: IconStorefront },
   { href: "/deploy", label: "Cloud deploy", icon: IconDeploy },
   { href: "/projects", label: "Projects", icon: IconFolder },
   { href: "/earnings", label: "Revenue", icon: IconCurrency },
@@ -188,6 +214,9 @@ function navActive(pathname: string, href: string): boolean {
   if (href === "/app/home") {
     return pathname === "/app/home" || pathname === "/app/home/";
   }
+  if (href === "/app/storefront") {
+    return pathname === "/app/storefront" || pathname.startsWith("/app/storefront/");
+  }
   if (href === "/admin") {
     return pathname.startsWith("/admin");
   }
@@ -206,7 +235,47 @@ export function DeveloperWorkspaceShell({ children, userName, userEmail, role }:
   const libraryMode = isLibrarySurface(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [panels, setPanels] = useState<WorkspacePanelState>(DEFAULT_WORKSPACE_PANELS);
+  const [panelsReady, setPanelsReady] = useState(false);
   const showAdmin = role === "ADMIN";
+
+  useEffect(() => {
+    setPanels(loadWorkspacePanels());
+    setPanelsReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!panelsReady) return;
+    saveWorkspacePanels(panels);
+  }, [panels, panelsReady]);
+
+  function setPanel(side: WorkspacePanelSide, state: WorkspacePanelState[WorkspacePanelSide]) {
+    setPanels((current) => ({ ...current, [side]: state }));
+  }
+
+  function minimizePanel(side: WorkspacePanelSide) {
+    setPanel(side, "minimized");
+  }
+
+  function closePanel(side: WorkspacePanelSide) {
+    setPanel(side, "closed");
+  }
+
+  function expandPanel(side: WorkspacePanelSide) {
+    setPanel(side, "expanded");
+  }
+
+  function toggleSidebarDesktop() {
+    if (panels.left === "expanded") {
+      closePanel("left");
+    } else {
+      expandPanel("left");
+    }
+  }
+
+  const sidebarMinimized = panels.left === "minimized";
+  const sidebarClosedDesktop = panels.left === "closed";
+  const sidebarExpandedDesktop = panels.left === "expanded";
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -237,15 +306,23 @@ export function DeveloperWorkspaceShell({ children, userName, userEmail, role }:
 
   function linkClass(href: string) {
     const active = navActive(pathname, href);
-    return `group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+    const base = sidebarMinimized ? "justify-center px-2" : "px-3";
+    return `group flex w-full items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition ${base} ${
       active
         ? "bg-[var(--accent-muted)] text-[var(--foreground)]"
         : "text-[var(--muted)] hover:bg-[var(--background)] hover:text-[var(--foreground)]"
     }`;
   }
 
+  const sidebarWidthClass = sidebarMinimized
+    ? "lg:w-14"
+    : "w-[min(17rem,100vw-3rem)]";
+
   return (
-    <div className="flex min-h-dvh bg-[var(--background)]">
+    <div className="relative flex h-dvh overflow-hidden bg-[var(--background)]">
+      {panels.right === "closed" ? (
+        <PanelRestoreTab side="right" label="AI" onClick={() => expandPanel("right")} />
+      ) : null}
       {mobileNavOpen ? (
         <button
           type="button"
@@ -256,99 +333,141 @@ export function DeveloperWorkspaceShell({ children, userName, userEmail, role }:
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(17rem,100vw-3rem)] flex-col border-r border-[var(--border)] bg-[var(--surface)] transition-transform duration-200 ease-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex ${sidebarWidthClass} shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--surface)] transition-[width,transform] duration-200 ease-out lg:static lg:h-full lg:translate-x-0 ${
           mobileNavOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        } ${sidebarClosedDesktop ? "lg:hidden" : ""}`}
         aria-label="Developer"
       >
-        <div className="px-2 pb-3 pt-0">
-          <Link
-            href="/app"
-            className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm font-semibold tracking-tight text-[var(--foreground)]"
-          >
-            <LogoMark size="sm" rounded="lg" />
-            Mr.Software
-          </Link>
-          <p className="px-2 pt-1 text-xs text-[var(--muted)]">One account · build, buy &amp; sell</p>
-        </div>
-
-        <nav className="flex flex-1 flex-col gap-0.5 px-2" aria-label="Developer">
-          <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
-            Studio
-          </p>
-          {studioNav.map((item) => {
-            const Icon = item.icon;
-            return (
+          <div className={`shrink-0 px-2 pb-2 pt-2 ${sidebarMinimized ? "lg:px-1" : ""}`}>
+            <div className="flex items-start justify-between gap-1">
               <Link
-                key={item.href}
-                href={item.href}
-                className={linkClass(item.href)}
-                aria-current={navActive(pathname, item.href) ? "page" : undefined}
+                href="/app"
+                className={`flex items-center rounded-xl py-1.5 text-sm font-semibold tracking-tight text-[var(--foreground)] ${
+                  sidebarMinimized ? "lg:justify-center lg:px-1 lg:py-2" : "gap-2.5 px-2"
+                }`}
+                title="Mr.Software"
+                onClick={
+                  sidebarMinimized
+                    ? (event) => {
+                        event.preventDefault();
+                        expandPanel("left");
+                      }
+                    : undefined
+                }
               >
-                <Icon className="h-5 w-5 shrink-0 opacity-80" />
-                <span className="flex-1 text-left">{item.label}</span>
+                <LogoMark size="sm" rounded="lg" />
+                <span className={sidebarMinimized ? "lg:sr-only" : ""}>Mr.Software</span>
               </Link>
-            );
-          })}
-        </nav>
+              <PanelSectionControls
+                side="left"
+                onMinimize={() => minimizePanel("left")}
+                onClose={() => closePanel("left")}
+                className={`hidden shrink-0 lg:flex ${sidebarMinimized ? "lg:hidden" : ""}`}
+              />
+            </div>
+            <p className={`px-2 pt-1 text-xs text-[var(--muted)] ${sidebarMinimized ? "lg:sr-only" : ""}`}>
+              One account · build, buy &amp; sell
+            </p>
+          </div>
 
-        <div className="mt-auto space-y-1 border-t border-[var(--border)] px-2 py-3">
-          <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Library</p>
-          {libraryNav.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={linkClass(item.href)}
-                aria-current={navActive(pathname, item.href) ? "page" : undefined}
-              >
-                <Icon className="h-5 w-5 shrink-0 opacity-80" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-          {showAdmin ? (
-            <Link
-              href="/admin"
-              className={`${linkClass("/admin")} mt-2`}
-              aria-current={pathname.startsWith("/admin") ? "page" : undefined}
+          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2" aria-label="Developer">
+            <p
+              className={`px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)] ${
+                sidebarMinimized ? "lg:sr-only" : ""
+              }`}
             >
-              <IconShield className="h-5 w-5 shrink-0 opacity-80" />
-              <span>Admin portal</span>
-            </Link>
-          ) : null}
-        </div>
+              Studio
+            </p>
+            {studioNav.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={linkClass(item.href)}
+                  aria-current={navActive(pathname, item.href) ? "page" : undefined}
+                  title={item.label}
+                >
+                  <Icon className="h-5 w-5 shrink-0 opacity-80" />
+                  <span className={`flex-1 text-left ${sidebarMinimized ? "lg:sr-only" : ""}`}>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
 
-        <div className="border-t border-[var(--border)] p-3">
-          <div className="flex items-center justify-between gap-2 rounded-xl bg-[var(--background)] px-2 py-2">
-            <div className="min-w-0">
-              <p className="truncate text-xs font-medium text-[var(--foreground)]">{userName}</p>
-              <p className="text-[10px] text-[var(--muted)]">{roleLabel}</p>
+          <div
+            className={`mt-auto shrink-0 space-y-1 border-t border-[var(--border)] px-2 py-3 ${
+              sidebarMinimized ? "lg:px-1" : ""
+            }`}
+          >
+            <p
+              className={`px-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)] ${
+                sidebarMinimized ? "lg:sr-only" : ""
+              }`}
+            >
+              Library
+            </p>
+            {libraryNav.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={linkClass(item.href)}
+                  aria-current={navActive(pathname, item.href) ? "page" : undefined}
+                  title={item.label}
+                >
+                  <Icon className="h-5 w-5 shrink-0 opacity-80" />
+                  <span className={sidebarMinimized ? "lg:sr-only" : ""}>{item.label}</span>
+                </Link>
+              );
+            })}
+            {showAdmin ? (
+              <Link
+                href="/admin"
+                className={`${linkClass("/admin")} mt-2`}
+                aria-current={pathname.startsWith("/admin") ? "page" : undefined}
+                title="Admin portal"
+              >
+                <IconShield className="h-5 w-5 shrink-0 opacity-80" />
+                <span className={sidebarMinimized ? "lg:sr-only" : ""}>Admin portal</span>
+              </Link>
+            ) : null}
+          </div>
+
+          <div className={`shrink-0 border-t border-[var(--border)] p-3 ${sidebarMinimized ? "lg:p-2" : ""}`}>
+            <div
+              className={`flex items-center justify-between gap-2 rounded-xl bg-[var(--background)] ${
+                sidebarMinimized ? "lg:justify-center lg:px-1 lg:py-2" : "px-2 py-2"
+              }`}
+            >
+              <div className={`min-w-0 ${sidebarMinimized ? "lg:sr-only" : ""}`}>
+                <p className="truncate text-xs font-medium text-[var(--foreground)]">{userName}</p>
+                <p className="text-[10px] text-[var(--muted)]">{roleLabel}</p>
+              </div>
+              <span
+                className={`hidden h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-white ${
+                  sidebarMinimized ? "lg:flex" : ""
+                }`}
+                title={userName}
+              >
+                {initials}
+              </span>
             </div>
           </div>
-        </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-[var(--border)] bg-[var(--background)]/90 px-2 backdrop-blur-md sm:gap-3 sm:px-4 lg:px-6">
-          <button
-            type="button"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--foreground)] transition hover:bg-[var(--surface)] lg:hidden"
-            onClick={() => setMobileNavOpen((o) => !o)}
-            aria-expanded={mobileNavOpen}
-            aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
-          >
-            {mobileNavOpen ? (
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
-              </svg>
-            )}
-          </button>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-30 flex h-14 shrink-0 items-center gap-2 border-b border-[var(--border)] bg-[var(--background)]/90 px-2 backdrop-blur-md sm:gap-3 sm:px-4 lg:px-6">
+          <SidebarToggleButton
+            expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((open) => !open)}
+            mobile
+          />
+          <SidebarToggleButton
+            expanded={sidebarExpandedDesktop}
+            onClick={toggleSidebarDesktop}
+          />
           <Suspense fallback={<div className="min-w-0 flex-1" aria-hidden />}>
             {libraryMode ? <PortalTopBar /> : <DeveloperTopBar />}
           </Suspense>
@@ -399,12 +518,19 @@ export function DeveloperWorkspaceShell({ children, userName, userEmail, role }:
         </header>
 
         <main className="flex min-h-0 flex-1 overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</div>
           </div>
-          <div className="hidden xl:block">
-            <AiPanel />
-          </div>
+          {panels.right !== "closed" ? (
+            <div className="hidden h-full xl:block">
+              <AiPanel
+                minimized={panels.right === "minimized"}
+                onMinimize={() => minimizePanel("right")}
+                onClose={() => closePanel("right")}
+                onRestore={() => expandPanel("right")}
+              />
+            </div>
+          ) : null}
         </main>
       </div>
     </div>

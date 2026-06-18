@@ -14,5 +14,6 @@ export function isLibrarySurface(pathname: string): boolean {
   if (pathname === "/app/marketplace" || pathname.startsWith("/app/marketplace/")) return true;
   if (pathname === "/app/my-software" || pathname.startsWith("/app/my-software/")) return true;
   if (pathname === "/app/billing" || pathname.startsWith("/app/billing/")) return true;
+  if (pathname.startsWith("/app/store/")) return true;
   return false;
 }

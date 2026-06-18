@@ -21,4 +21,6 @@ export type SoftwareItem = {
   appStoreUrl?: string | null;
   /** Only on detail fetches — checkout wiring */
   stripePriceId?: string | null;
+  /** Product detail page views */
+  viewCount?: number;
 };

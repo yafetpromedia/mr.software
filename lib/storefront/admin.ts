@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { sumProductViewsByDeveloper } from "@/lib/software/product-views";
 import { normalizeHandle } from "@/lib/storefront/handles";
 
 export type AdminStorefrontRow = {
@@ -10,7 +11,7 @@ export type AdminStorefrontRow = {
   featured: boolean;
   theme: string;
   showRevenuePublic: boolean;
-  viewCount: number;
+  totalProductViews: number;
   productCount: number;
   followerCount: number;
   createdAt: string;
@@ -21,6 +22,7 @@ export async function listStorefrontsForAdmin(): Promise<AdminStorefrontRow[]> {
     include: {
       user: {
         select: {
+          id: true,
           name: true,
           email: true,
           _count: { select: { softwareDeveloped: true } },
@@ -31,6 +33,8 @@ export async function listStorefrontsForAdmin(): Promise<AdminStorefrontRow[]> {
     orderBy: [{ verified: "desc" }, { featured: "desc" }, { updatedAt: "desc" }],
   });
 
+  const viewsByDeveloper = await sumProductViewsByDeveloper();
+
   return rows.map((row) => ({
     handle: row.handle,
     name: row.user.name,
@@ -40,7 +44,7 @@ export async function listStorefrontsForAdmin(): Promise<AdminStorefrontRow[]> {
     featured: row.featured,
     theme: row.theme,
     showRevenuePublic: row.showRevenuePublic,
-    viewCount: row.viewCount,
+    totalProductViews: viewsByDeveloper.get(row.user.id) ?? 0,
     productCount: row.user._count.softwareDeveloped,
     followerCount: row._count.followers,
     createdAt: row.createdAt.toISOString(),

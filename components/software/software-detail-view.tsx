@@ -109,9 +109,9 @@ export function SoftwareDetailView({
 
             <div className="grid gap-3 sm:grid-cols-3">
               {[
+                { label: "Views", value: (item.viewCount ?? 0).toLocaleString() },
                 { label: "License", value: isFree ? "Free to use" : isSubscription ? "Monthly" : "One-time" },
                 { label: "Platforms", value: platformSummary(item) },
-                { label: "Payments", value: "Stripe · Chapa" },
               ].map((chip) => (
                 <div
                   key={chip.label}

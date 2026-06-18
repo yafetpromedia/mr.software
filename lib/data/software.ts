@@ -33,6 +33,7 @@ export function mapSoftwareToItem(
     thumbnailUrl: resolveThumbnailUrl(row.thumbnailUrl, row.id),
     playStoreUrl: row.playStoreUrl,
     appStoreUrl: row.appStoreUrl,
+    viewCount: row.viewCount,
   };
   if (options?.includeStripe) {
     return { ...base, stripePriceId: row.stripePriceId };
@@ -54,6 +55,22 @@ export async function getSoftwareById(id: string): Promise<SoftwareItem | null> 
     include: { developer: { include: { storefront: true } } },
   });
   return row ? mapSoftwareToItem(row, { includeStripe: true }) : null;
+}
+
+export async function recordSoftwareView(
+  softwareId: string,
+  viewerUserId?: string,
+): Promise<void> {
+  const software = await prisma.software.findUnique({
+    where: { id: softwareId },
+    select: { developerId: true },
+  });
+  if (!software) return;
+  if (viewerUserId && software.developerId === viewerUserId) return;
+
+  await prisma.$executeRaw`
+    UPDATE "Software" SET "viewCount" = "viewCount" + 1 WHERE id = ${softwareId}
+  `;
 }
 
 /** Single query for detail page (entitlement checks need the full `Software` row). */

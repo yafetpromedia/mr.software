@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { StorefrontTheme } from "@prisma/client";
 import { normalizeHandle } from "@/lib/storefront/handles";
 import { STOREFRONT_THEMES } from "@/lib/storefront/themes";
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function StorefrontSettingsForm({ initial }: Props) {
+  const router = useRouter();
   const [handle, setHandle] = useState(initial?.handle ?? "");
   const [tagline, setTagline] = useState(initial?.tagline ?? "");
   const [bio, setBio] = useState(initial?.bio ?? "");
@@ -72,6 +74,7 @@ export function StorefrontSettingsForm({ initial }: Props) {
       setTheme(data.storefront.theme);
       setShowRevenuePublic(data.storefront.showRevenuePublic);
       setStatus("Storefront saved. Your public page is live.");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {

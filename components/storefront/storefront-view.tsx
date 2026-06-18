@@ -56,9 +56,11 @@ export function StorefrontView({
       : null;
 
   const metrics = [
-    { label: "Views", value: store.viewCount.toLocaleString() },
-    { label: "Followers", value: store.followerCount.toLocaleString() },
-    { label: "Products", value: store.productCount },
+    {
+      label: store.followerCount === 1 ? "Follower" : "Followers",
+      value: store.followerCount.toLocaleString(),
+    },
+    { label: store.productCount === 1 ? "Product" : "Products", value: store.productCount },
     ...(revenueLabel ? [{ label: "Earned", value: revenueLabel }] : []),
   ];
 
@@ -106,7 +108,7 @@ export function StorefrontView({
           </Link>
           {isStoreOwner ? (
             <Link
-              href="/settings"
+              href="/app/storefront"
               className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold transition ${
                 isMidnight
                   ? "border-zinc-600 bg-zinc-800 text-zinc-100 hover:border-violet-500/40"

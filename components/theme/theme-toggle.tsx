@@ -1,19 +1,30 @@
 "use client";
 
 import { useTheme } from "@/components/theme/theme-provider";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const { theme, toggleTheme } = useTheme();
+  const hydrated = useHydrated();
 
   return (
     <button
       type="button"
       onClick={toggleTheme}
+      suppressHydrationWarning
       className={`theme-toggle inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] shadow-sm transition hover:border-[var(--accent)]/35 hover:bg-[var(--accent-muted)] hover:text-[var(--foreground)] ${className}`}
-      aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
-      title={theme === "light" ? "Dark mode" : "Light mode"}
+      aria-label={
+        !hydrated
+          ? "Toggle color theme"
+          : theme === "light"
+            ? "Switch to dark mode"
+            : "Switch to light mode"
+      }
+      title={
+        !hydrated ? "Toggle color theme" : theme === "light" ? "Dark mode" : "Light mode"
+      }
     >
-      {theme === "light" ? (
+      {!hydrated || theme === "light" ? (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
             d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"

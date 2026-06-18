@@ -38,7 +38,7 @@ export function SiteHeader() {
 
   return (
     <motion.header
-      initial={reduce ? false : { y: -8, opacity: 0 }}
+      initial={false}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className={`sticky top-0 z-50 border-b transition-[box-shadow,background-color,border-color] duration-300 ${

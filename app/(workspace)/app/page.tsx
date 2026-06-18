@@ -44,14 +44,11 @@ export default async function DeveloperOverviewPage() {
 
   const [
     deployments,
-    activeCount,
+    deploymentStatusCounts,
     plan,
     usedSlots,
     earningsAgg,
     listingCount,
-    totalDeploys,
-    pendingCount,
-    failedCount,
     recentDeployRows,
     storefront,
     storefrontRecord,
@@ -62,8 +59,10 @@ export default async function DeveloperOverviewPage() {
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
-    prisma.deployment.count({
-      where: { userId: session.id, status: DeploymentStatus.ACTIVE },
+    prisma.deployment.groupBy({
+      by: ["status"],
+      where: { userId: session.id },
+      _count: { _all: true },
     }),
     getUserPlan(session.id),
     countQuotaDeployments(session.id),
@@ -75,13 +74,6 @@ export default async function DeveloperOverviewPage() {
       _sum: { amountCents: true },
     }),
     prisma.software.count({ where: { developerId: session.id } }),
-    prisma.deployment.count({ where: { userId: session.id } }),
-    prisma.deployment.count({
-      where: { userId: session.id, status: DeploymentStatus.PENDING },
-    }),
-    prisma.deployment.count({
-      where: { userId: session.id, status: DeploymentStatus.FAILED },
-    }),
     prisma.deployment.findMany({
       where: { userId: session.id, createdAt: { gte: sevenDaysAgo } },
       select: { createdAt: true },
@@ -96,6 +88,17 @@ export default async function DeveloperOverviewPage() {
       select: { plan: true, status: true },
     }),
   ]);
+
+  const countByStatus = (status: DeploymentStatus) =>
+    deploymentStatusCounts.find((row) => row.status === status)?._count._all ?? 0;
+
+  const activeCount = countByStatus(DeploymentStatus.ACTIVE);
+  const pendingCount = countByStatus(DeploymentStatus.PENDING);
+  const failedCount = countByStatus(DeploymentStatus.FAILED);
+  const totalDeploys = deploymentStatusCounts.reduce(
+    (sum, row) => sum + row._count._all,
+    0,
+  );
 
   const proActive = sub?.status === SubscriptionStatus.ACTIVE && sub.plan === Plan.PRO;
   const freeLimit = plan === Plan.FREE && !proActive;

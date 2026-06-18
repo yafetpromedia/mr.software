@@ -7,7 +7,7 @@ import { FadeIn, LandingContainer, SectionLabel } from "@/components/landing/lan
 const BENTO = [
   {
     id: "flow",
-    span: "lg:col-span-2 lg:row-span-2",
+    span: "lg:col-span-2",
     title: "Idea → Build → Deploy",
     desc: "Describe your product. AI suggests structure and UI drafts. You choose beginner guidance or full developer control before anything ships.",
     steps: ["Idea", "Draft", "Review", "Deploy"],
@@ -62,19 +62,19 @@ export function LandingBento() {
   const reduce = useReducedMotion();
 
   return (
-    <section className="border-t border-[var(--border)] bg-[var(--surface-elevated)] py-20 sm:py-24">
-      <LandingContainer>
-        <FadeIn className="max-w-2xl">
+    <section className="border-t border-[var(--border)] bg-[var(--surface-elevated)]/55 py-14 sm:py-18 lg:py-20">
+      <LandingContainer className="max-w-7xl">
+        <FadeIn className="max-w-3xl">
           <SectionLabel>Platform</SectionLabel>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.02em] sm:text-4xl">
+          <h2 className="mt-3 text-balance font-display text-3xl font-bold tracking-[-0.03em] sm:text-4xl lg:text-[2.6rem]">
             Built for real builders
           </h2>
-          <p className="mt-3 text-[var(--muted)]">
+          <p className="mt-3 max-w-2xl text-[0.98rem] leading-relaxed text-[var(--muted)] sm:text-base">
             AI assistance without the hype — full ownership of code, hosting, and monetization.
           </p>
         </FadeIn>
 
-        <ul className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 lg:gap-4">
+        <ul className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {BENTO.map((item, i) => (
             <motion.li
               key={item.id}
@@ -82,21 +82,30 @@ export function LandingBento() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ delay: i * 0.06, duration: 0.45 }}
-              className={`bento-cell group ${item.span} ${"featured" in item && item.featured ? "bento-cell-featured" : ""}`}
+              className={`bento-cell group ${item.span} ${
+                "featured" in item && item.featured ? "bento-cell-featured" : ""
+              } relative overflow-hidden p-5 sm:p-6`}
             >
+              {"featured" in item && item.featured ? (
+                <div
+                  className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[var(--accent)]/10 blur-3xl"
+                  aria-hidden
+                />
+              ) : null}
               {"icon" in item && item.icon ? (
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
                   <BentoIcon type={item.icon} />
                 </span>
               ) : null}
 
-              <h3 className="mt-4 font-semibold tracking-tight text-[var(--foreground)]">
+              <h3 className="mt-4 text-[1.06rem] font-semibold tracking-tight text-[var(--foreground)] sm:text-lg">
                 {item.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{item.desc}</p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)] sm:text-[0.95rem]">{item.desc}</p>
 
               {"steps" in item && item.steps ? (
-                <div className="mt-6 flex flex-wrap gap-2">
+                <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--surface)]/70 p-3 sm:p-3.5">
+                  <div className="flex flex-wrap gap-2">
                   {item.steps.map((s, j) => (
                     <span
                       key={s}
@@ -111,16 +120,17 @@ export function LandingBento() {
                       ) : null}
                     </span>
                   ))}
+                  </div>
                 </div>
               ) : null}
             </motion.li>
           ))}
         </ul>
 
-        <FadeIn className="mt-12 flex justify-center" delay={0.15}>
+        <FadeIn className="mt-9 flex justify-center sm:mt-10" delay={0.15}>
           <Link
             href="/app/builder"
-            className="btn-brand btn-brand-shine inline-flex h-11 items-center rounded-lg px-7 text-sm font-semibold"
+            className="btn-brand btn-brand-shine inline-flex h-11 items-center rounded-xl px-6 text-sm font-semibold sm:h-12 sm:px-7"
           >
             Start building →
           </Link>
