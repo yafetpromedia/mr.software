@@ -35,6 +35,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/dashboard", destination: "/app", permanent: false },
       { source: "/dashboard/:path*", destination: "/app", permanent: false },
+      { source: "/app/builder", destination: "/app/ai/blueprint", permanent: false },
     ];
   },
   async rewrites() {

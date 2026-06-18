@@ -118,7 +118,7 @@ export function MvpFlow() {
           transition={{ delay: 0.3 }}
         >
           <Link
-            href="/app/builder"
+            href="/app/ai/blueprint"
             className="btn-brand btn-brand-shine inline-flex h-12 items-center justify-center rounded-xl px-8 text-sm font-semibold"
           >
             Open builder workspace

@@ -1,14 +1,15 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CommandInput } from "@/components/ui/command-input";
 import { PanelSectionControls } from "@/components/ui/panel-section-controls";
 
 const SUGGESTIONS = [
-  "Generate a SaaS landing page",
-  "Draft startup positioning",
-  "Plan deployment pipeline",
-  "Create marketplace listing",
+  "Analyze a school management SaaS idea",
+  "Plan a fitness tracker startup",
+  "Draft marketplace listing copy",
+  "Design deployment architecture",
 ] as const;
 
 type Props = {
@@ -19,7 +20,15 @@ type Props = {
 };
 
 export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: Props) {
+  const router = useRouter();
   const [input, setInput] = useState("");
+
+  function goToAdvisor(idea: string) {
+    const trimmed = idea.trim();
+    if (!trimmed) return;
+    const params = new URLSearchParams({ idea: trimmed });
+    router.push(`/app/ai/startup-advisor?${params.toString()}`);
+  }
 
   if (minimized) {
     return (
@@ -64,10 +73,10 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
-          <p className="text-sm font-medium text-[var(--foreground)]">Startup command center</p>
+          <p className="text-sm font-medium text-[var(--foreground)]">Mr.Software AI Engine</p>
           <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-            Generate, deploy, and analyze from one intelligent panel. Infrastructure-ready for
-            agent integrations.
+            Advisor, Architect, and Launchpad workflows — one intelligent layer across your
+            workspace.
           </p>
         </div>
         <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--muted)]">
@@ -78,7 +87,7 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
             <li key={s}>
               <button
                 type="button"
-                onClick={() => setInput(s)}
+                onClick={() => goToAdvisor(s)}
                 className="w-full rounded-lg border border-[var(--border)] px-3 py-2 text-left text-xs text-[var(--foreground)] transition hover:border-[var(--accent)]/30 hover:bg-[var(--accent-muted)]"
               >
                 {s}
@@ -92,8 +101,8 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
         <CommandInput
           value={input}
           onChange={setInput}
-          placeholder="Ask AI to build…"
-          onSubmit={() => undefined}
+          placeholder="Ask Mr.Software AI…"
+          onSubmit={() => goToAdvisor(input)}
         />
       </div>
     </aside>

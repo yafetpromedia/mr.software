@@ -6,8 +6,8 @@ import { FadeIn, LandingContainer, SectionLabel } from "@/components/landing/lan
 
 const FEATURES = [
   {
-    href: "/app/builder",
-    title: "AI Builder",
+    href: "/app/ai/blueprint",
+    title: "SaaS Blueprint",
     desc: "Draft startups with AI — review every output before you ship.",
     cta: "Open builder",
   },

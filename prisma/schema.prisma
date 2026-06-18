@@ -117,6 +117,7 @@ model User {
   workspacePlanCheckouts WorkspacePlanCheckout[]
   adminAuditLogs    AdminAuditLog[] @relation("AdminAuditAuthor")
   generatedStartups GeneratedStartup[]
+  aiConversations   AiConversation[]
   storefront          DeveloperStorefront?
   storefrontFollows   StorefrontFollower[] @relation("StorefrontFollower")
   academyProgress     AcademyProgress[]
@@ -175,6 +176,45 @@ model GeneratedStartup {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+/** Mr.Software AI product surface (Advisor, Architect, Launchpad, etc.). */
+enum AiProduct {
+  STARTUP_ADVISOR
+  ARCHITECT
+  LAUNCHPAD
+  COPILOT
+  MARKETPLACE_ASSISTANT
+}
+
+/** Saved AI workspace conversation. */
+model AiConversation {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   AiProduct @default(STARTUP_ADVISOR)
+  title     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  messages AiMessage[]
+
+  @@index([userId, product])
+  @@index([createdAt])
+}
+
+model AiMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  /** user | assistant | system */
+  role           String
+  content        String   @db.Text
+  /** Structured AI output (analysis JSON, blueprint, etc.) */
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId, createdAt])
 }
 
 /** Immutable log of privileged admin actions (trust & safety / compliance). */

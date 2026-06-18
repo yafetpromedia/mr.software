@@ -3,7 +3,8 @@ import { LogoMark } from "@/components/brand/logo-mark";
 
 const product = [
   { href: "/marketplace", label: "Explore marketplace" },
-  { href: "/app/builder", label: "AI Builder" },
+  { href: "/app/ai", label: "Mr.Software AI" },
+  { href: "/app/ai/blueprint", label: "SaaS Blueprint" },
   { href: "/#features", label: "Features" },
   { href: "/app", label: "Workspace" },
 ] as const;

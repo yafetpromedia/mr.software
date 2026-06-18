@@ -101,6 +101,7 @@ function IconSpark({ className }: { className?: string }) {
 
 const libraryNav: NavItem[] = [
   { href: "/app/home", label: "Home", icon: IconHome },
+  { href: "/app/ai", label: "Mr.Software AI", icon: IconSpark },
   { href: "/app/marketplace", label: "Marketplace", icon: IconStore },
   { href: "/app/my-software", label: "My software", icon: IconPackage },
   { href: "/app/billing", label: "Billing", icon: IconCard },

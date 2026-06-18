@@ -189,7 +189,7 @@ function IconStorefront({ className }: { className?: string }) {
 }
 
 const studioNav: NavItem[] = [
-  { href: "/app/builder", label: "AI Builder", icon: IconSpark },
+  { href: "/app/ai", label: "Mr.Software AI", icon: IconSpark },
   { href: "/app", label: "Command center", icon: IconOverview },
   { href: "/app/storefront", label: "Storefront", icon: IconStorefront },
   { href: "/deploy", label: "Cloud deploy", icon: IconDeploy },
@@ -213,6 +213,9 @@ function navActive(pathname: string, href: string): boolean {
   }
   if (href === "/app/home") {
     return pathname === "/app/home" || pathname === "/app/home/";
+  }
+  if (href === "/app/ai") {
+    return pathname === "/app/ai" || pathname.startsWith("/app/ai/");
   }
   if (href === "/app/storefront") {
     return pathname === "/app/storefront" || pathname.startsWith("/app/storefront/");

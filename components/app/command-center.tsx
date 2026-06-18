@@ -201,7 +201,7 @@ export function CommandCenter({
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             <Link
-              href="/app/builder"
+              href="/app/ai/blueprint"
               className="btn-brand inline-flex h-10 items-center rounded-xl px-5 text-sm font-semibold shadow-sm"
             >
               AI-assisted builder
@@ -418,7 +418,7 @@ export function CommandCenter({
             </h2>
             <div className="mt-3 grid gap-2">
               <QuickAction
-                href="/app/builder"
+                href="/app/ai/blueprint"
                 title="AI-assisted builder"
                 description="Draft structure and copy with copilot"
                 icon={

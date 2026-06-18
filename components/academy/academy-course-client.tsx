@@ -192,7 +192,7 @@ export function AcademyCourseClient({
               </button>
             ) : (
               <Link
-                href="/app/builder"
+                href="/app/ai/blueprint"
                 className="inline-flex h-11 items-center rounded-xl bg-orange-600 px-5 text-sm font-semibold text-white shadow-md shadow-orange-600/20 transition hover:bg-orange-500 dark:bg-[var(--accent)]"
               >
                 Open builder →

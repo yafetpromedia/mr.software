@@ -52,7 +52,7 @@ export function StartupDashboardPreview({ payload, startupId }: Props) {
               Landing page
             </Link>
             <Link
-              href="/app/builder"
+              href="/app/ai/blueprint"
               className="rounded-lg px-3 py-1.5 text-xs font-medium text-white"
               style={{ background: accent }}
             >

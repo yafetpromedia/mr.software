@@ -129,7 +129,7 @@ export function LandingBento() {
 
         <FadeIn className="mt-9 flex justify-center sm:mt-10" delay={0.15}>
           <Link
-            href="/app/builder"
+            href="/app/ai/blueprint"
             className="btn-brand btn-brand-shine inline-flex h-11 items-center rounded-xl px-6 text-sm font-semibold sm:h-12 sm:px-7"
           >
             Start building →

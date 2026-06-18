@@ -22,7 +22,7 @@ export function LandingCtaBand() {
             </p>
             <div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
-                href="/app/builder"
+                href="/app/ai/blueprint"
                 className="btn-brand inline-flex h-11 items-center justify-center rounded-lg px-7 text-sm font-semibold"
               >
                 Try the builder

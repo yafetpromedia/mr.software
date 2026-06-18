@@ -103,7 +103,7 @@ export function AiStartupBuilder() {
             )}
           </ul>
           <Link
-            href="/app/builder"
+            href="/app/ai/blueprint"
             className="btn-brand btn-brand-shine mt-8 inline-flex h-11 items-center rounded-xl px-6 text-sm font-semibold"
           >
             Try AI-assisted builder

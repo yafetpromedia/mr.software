@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { generateStartupWithAi } from "@/lib/ai/landing-generator";
 import { getSession } from "@/lib/auth/session";
-import { generateStartupFromIdea } from "@/lib/startup/generate";
 import { saveGeneratedStartup } from "@/lib/startup/db";
 import { generateStartupBodySchema, generatedStartupPayloadSchema } from "@/lib/startup/schema";
 import { getClientIp } from "@/lib/security/client-ip";
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   }
 
   const { idea, save } = parsed.data;
-  const payload = generateStartupFromIdea(idea);
+  const payload = await generateStartupWithAi(idea);
   const validated = generatedStartupPayloadSchema.safeParse(payload);
   if (!validated.success) {
     return NextResponse.json({ error: "Generation failed" }, { status: 500 });

@@ -14,7 +14,7 @@ const NAV = [
   { href: "/#partners", label: "Partners" },
   { href: "/#testimonials", label: "Stories" },
   { href: "/#team", label: "Team" },
-  { href: "/app/builder", label: "Builder" },
+  { href: "/app/ai", label: "Mr.Software AI" },
 ] as const;
 
 export function SiteHeader() {

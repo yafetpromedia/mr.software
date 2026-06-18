@@ -96,7 +96,7 @@ export function LandingHero({ featuredStore }: Props) {
 
           <p className="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-white/45 sm:text-base">
 
-            Deploy, sell, and scale digital products — from Africa to the world.
+            Design, build, deploy, and monetize software with AI-assisted workflows.
 
           </p>
 
@@ -106,7 +106,7 @@ export function LandingHero({ featuredStore }: Props) {
 
             <Link
 
-              href="/app/builder"
+              href="/app/ai"
 
               className="inline-flex h-11 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-[#0a0a0a] shadow-[0_0_40px_rgba(255,255,255,0.08)] transition hover:bg-white/90 sm:h-12"
 
