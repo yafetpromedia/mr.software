@@ -11,6 +11,15 @@ export type StartupLandingSection =
       headline: string;
       subheadline: string;
       cta: string;
+      imageUrl?: string;
+      imageAlt?: string;
+    }
+  | {
+      type: "showcase";
+      title: string;
+      caption: string;
+      imageUrl: string;
+      imageAlt?: string;
     }
   | {
       type: "features";
@@ -38,6 +47,8 @@ export type GeneratedStartupPayload = {
   brand: {
     primaryHue: number;
     label: string;
+    enable3d?: boolean;
+    visualStyle?: "modern" | "minimal" | "bold";
   };
 };
 

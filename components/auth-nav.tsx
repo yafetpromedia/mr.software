@@ -27,6 +27,13 @@ export function AuthNav() {
     window.location.href = "/";
   }
 
+  const workspaceHref =
+    me?.role === "ADMIN" && me?.status === "ACTIVE"
+      ? "/admin"
+      : me?.role === "USER"
+        ? "/app/home"
+        : "/app";
+
   if (me === undefined) {
     return (
       <span
@@ -66,7 +73,7 @@ export function AuthNav() {
         </Link>
       ) : (
         <Link
-          href="/app"
+          href={workspaceHref}
           className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--accent-muted)] hover:text-[var(--foreground)]"
         >
           Workspace

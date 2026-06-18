@@ -192,7 +192,7 @@ const studioNav: NavItem[] = [
   { href: "/app/ai", label: "Mr.Software AI", icon: IconSpark },
   { href: "/app", label: "Command center", icon: IconOverview },
   { href: "/app/storefront", label: "Storefront", icon: IconStorefront },
-  { href: "/deploy", label: "Cloud deploy", icon: IconDeploy },
+  { href: "/deploy", label: "Deploy", icon: IconDeploy },
   { href: "/projects", label: "Projects", icon: IconFolder },
   { href: "/earnings", label: "Revenue", icon: IconCurrency },
   { href: "/listings", label: "My listings", icon: IconListings },

@@ -100,6 +100,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Only .zip archives are allowed" }, { status: 400 });
   }
 
+  const softwareIdRaw = form.get("softwareId");
+  const softwareId =
+    typeof softwareIdRaw === "string" && softwareIdRaw.trim() ? softwareIdRaw.trim() : null;
+
+  if (softwareId) {
+    const software = await prisma.software.findFirst({
+      where: { id: softwareId, developerId: session.id },
+      select: { id: true },
+    });
+    if (!software) {
+      return NextResponse.json({ error: "Invalid marketplace product" }, { status: 400 });
+    }
+  }
+
   const buf = Buffer.from(await file.arrayBuffer());
 
   let baseSlug = slugifyProjectName(name);
@@ -120,6 +134,7 @@ export async function POST(request: Request) {
       name,
       slug,
       status: DeploymentStatus.PENDING,
+      ...(softwareId ? { softwareId } : {}),
     },
   });
 

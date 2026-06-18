@@ -54,3 +54,13 @@ export async function listGeneratedStartupsForUser(
   });
   return rows.map((r) => parseRecord(r)).filter((r): r is GeneratedStartupRecord => r !== null);
 }
+
+export async function deleteGeneratedStartup(userId: string, id: string): Promise<boolean> {
+  const existing = await prisma.generatedStartup.findFirst({
+    where: { id, userId },
+    select: { id: true },
+  });
+  if (!existing) return false;
+  await prisma.generatedStartup.delete({ where: { id } });
+  return true;
+}

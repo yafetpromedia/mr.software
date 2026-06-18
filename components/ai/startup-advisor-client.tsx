@@ -18,7 +18,7 @@ import {
 import { GenerationLoading } from "@/components/startup/generation-loading";
 import type { StartupAdvisorAnalysis } from "@/lib/ai/schema";
 
-type AdvisorResponse = StartupAdvisorAnalysis & { source?: "ai" | "offline" };
+type AdvisorResponse = StartupAdvisorAnalysis & { source?: "ai" };
 
 type ConversationListItem = {
   id: string;
@@ -70,7 +70,6 @@ export function StartupAdvisorClient() {
   const [error, setError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AdvisorResponse | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [aiEnabled, setAiEnabled] = useState<boolean | null>(null);
   const [recent, setRecent] = useState<ConversationListItem[]>([]);
   const [savingLaunch, setSavingLaunch] = useState(false);
 
@@ -120,7 +119,6 @@ export function StartupAdvisorClient() {
       }
       setAnalysis(data.analysis as AdvisorResponse);
       setConversationId(typeof data.conversation?.id === "string" ? data.conversation.id : null);
-      setAiEnabled(Boolean(data.aiEnabled));
       void loadRecent();
     } catch {
       setError("Network error. Try again.");
@@ -170,27 +168,29 @@ export function StartupAdvisorClient() {
         >
           ← Mr.Software AI
         </Link>
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
-          Startup Advisor
-        </p>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
-          Turn ideas into deployable software businesses
-        </h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-[var(--muted)]">
-          Describe your product idea. Mr.Software AI returns business analysis, feature planning,
-          technical architecture, and a path to save it in your workspace.
-        </p>
-        {aiEnabled === false ? (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200/90">
-            Add <code className="font-mono">AI_API_KEY</code> to{" "}
-            <code className="font-mono">.env.local</code> for live Mr.Software AI. Offline blueprint
-            mode is active.
-          </p>
-        ) : null}
+        <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 sm:p-8">
+          <div
+            className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[var(--accent)]/10 blur-3xl"
+            aria-hidden
+          />
+          <div className="relative">
+            <p className="inline-flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+              Startup Advisor
+            </p>
+            <h1 className="mt-3 font-display text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
+              Turn ideas into deployable software businesses
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--muted)]">
+              Describe your product idea. Mr.Software AI returns business analysis, feature planning,
+              technical architecture, and a path to save it in your workspace.
+            </p>
+          </div>
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-        <div className="space-y-4">
+        <div className="modern-card space-y-4 p-5 sm:p-6">
           <label className="block space-y-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
               Your idea
@@ -199,7 +199,7 @@ export function StartupAdvisorClient() {
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
               rows={5}
-              className="w-full resize-none rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--foreground)] outline-none ring-[var(--accent)]/30 placeholder:text-[var(--muted)] focus:border-[var(--accent)]/40 focus:ring-2"
+              className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3.5 text-sm leading-relaxed text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)]/45 focus:ring-2 focus:ring-[var(--ring)]"
               placeholder="I want to build a school management SaaS for private schools in East Africa…"
             />
           </label>
@@ -208,10 +208,13 @@ export function StartupAdvisorClient() {
             type="button"
             onClick={() => void handleAnalyze()}
             disabled={loading || idea.trim().length < 3}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-brand btn-brand-shine group inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold disabled:opacity-50"
           >
             <Sparkles className="h-4 w-4" aria-hidden />
-            Analyze with Mr.Software AI
+            {loading ? "Analyzing…" : "Analyze with Mr.Software AI"}
+            {!loading ? (
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+            ) : null}
           </button>
 
           {error ? (

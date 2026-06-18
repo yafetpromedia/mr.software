@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState, Suspense } from "react";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 function SearchForm() {
   const router = useRouter();
@@ -46,15 +47,7 @@ export function AdminTopBar() {
       <Suspense fallback={<div className="h-10 min-w-0 flex-1 rounded-full bg-[var(--surface)]" />}>
         <SearchForm />
       </Suspense>
-      <button
-        type="button"
-        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] transition hover:border-[var(--accent)]/30 hover:text-[var(--foreground)]"
-        aria-label="Alerts"
-        title="Alerting not connected yet"
-        disabled
-      >
-        <Bell className="h-4 w-4" aria-hidden />
-      </button>
+      <NotificationBell />
     </div>
   );
 }

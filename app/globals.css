@@ -121,6 +121,200 @@ body {
   opacity: 0.85;
 }
 
+.africa-hero-stars {
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 80px 120px, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1.5px 1.5px at 160px 60px, rgba(255, 122, 26, 0.35), transparent),
+    radial-gradient(1px 1px at 240px 180px, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(1px 1px at 320px 90px, rgba(255, 255, 255, 0.3), transparent);
+  background-size: 360px 220px;
+  animation: africa-stars-drift 90s linear infinite;
+}
+
+@keyframes africa-stars-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-120px, 40px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .africa-hero-stars {
+    animation: none;
+  }
+}
+
+/* —— Africa launch hero (modern) —— */
+.africa-hero-aurora {
+  background:
+    radial-gradient(ellipse 60% 45% at 15% 20%, rgba(255, 122, 26, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 75%, rgba(255, 122, 26, 0.08), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255, 122, 26, 0.1), transparent 60%);
+}
+
+.africa-hero-grid-modern {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 20%, transparent 75%);
+}
+
+.africa-hero-cta-primary {
+  display: inline-flex;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #ff7a1a 0%, #ff9a3d 50%, #ff7a1a 100%);
+  background-size: 200% 100%;
+  padding-left: 1.75rem;
+  padding-right: 1.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  box-shadow: 0 0 40px rgba(255, 122, 26, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: background-position 0.4s ease, transform 0.2s ease;
+}
+
+.africa-hero-cta-primary:hover {
+  background-position: 100% 0;
+  transform: translateY(-1px);
+}
+
+.africa-hero-cta-secondary {
+  display: inline-flex;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.africa-hero-cta-secondary:hover {
+  border-color: rgba(255, 122, 26, 0.35);
+  background: rgba(255, 122, 26, 0.06);
+  color: white;
+}
+
+.africa-stat-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  padding: 0.875rem 1rem;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.africa-product-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.875rem;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 122, 26, 0.08);
+}
+
+.africa-hero-story-pill {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 122, 26, 0.2);
+  background: linear-gradient(135deg, rgba(255, 122, 26, 0.08), rgba(255, 122, 26, 0.02));
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: rgba(255, 220, 180, 0.95);
+  backdrop-filter: blur(12px);
+}
+
+.africa-globe-frame {
+  isolation: isolate;
+}
+
+.africa-nebula-layer {
+  background:
+    radial-gradient(ellipse 100% 70% at 50% 75%, rgba(255, 122, 26, 0.22), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 25% 25%, rgba(255, 90, 30, 0.1), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 85% 20%, rgba(100, 60, 180, 0.07), transparent 45%);
+}
+
+.africa-cosmic-dust {
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(255, 180, 100, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 70% 40%, rgba(255, 122, 26, 0.35), transparent),
+    radial-gradient(1px 1px at 40% 80%, rgba(255, 255, 255, 0.25), transparent);
+  background-size: 420px 320px;
+  animation: africa-stars-drift 120s linear infinite;
+  opacity: 0.5;
+}
+
+.africa-hud-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.45);
+  padding: 0.625rem 0.875rem;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.africa-travel-card {
+  min-width: 6.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 122, 26, 0.45);
+  background: rgba(0, 0, 0, 0.75);
+  padding: 0.5rem 0.625rem;
+  text-align: center;
+  box-shadow: 0 0 24px rgba(255, 122, 26, 0.45);
+  backdrop-filter: blur(12px);
+}
+
+.africa-orbit-chip {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 122, 26, 0.35);
+  background: rgba(0, 0, 0, 0.65);
+  padding: 0.2rem 0.55rem;
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 220, 180, 0.95);
+  white-space: nowrap;
+  box-shadow: 0 0 16px rgba(255, 122, 26, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.africa-activity-card {
+  border-radius: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.5rem 0.625rem;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 122, 26, 0.08);
+  animation: africa-activity-float 4s ease-in-out infinite;
+}
+
+@keyframes africa-activity-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 @keyframes landing-globe-spin {
   from {
     transform: translateX(0);

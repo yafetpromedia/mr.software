@@ -62,3 +62,93 @@ export async function getUserConversation(userId: string, conversationId: string
     },
   });
 }
+
+export async function deleteUserConversation(userId: string, conversationId: string) {
+  const existing = await prisma.aiConversation.findFirst({
+    where: { id: conversationId, userId },
+    select: { id: true },
+  });
+  if (!existing) return false;
+  await prisma.aiConversation.delete({ where: { id: conversationId } });
+  return true;
+}
+
+export async function listCopilotConversations(userId: string, limit = 15) {
+  return prisma.aiConversation.findMany({
+    where: { userId, product: AiProduct.COPILOT },
+    orderBy: { updatedAt: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      title: true,
+      updatedAt: true,
+      messages: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { content: true, role: true },
+      },
+      _count: { select: { messages: true } },
+    },
+  });
+}
+
+export async function getCopilotConversation(userId: string, conversationId: string) {
+  return prisma.aiConversation.findFirst({
+    where: { id: conversationId, userId, product: AiProduct.COPILOT },
+    include: {
+      messages: { orderBy: { createdAt: "asc" } },
+    },
+  });
+}
+
+export async function getLatestCopilotConversation(userId: string) {
+  return prisma.aiConversation.findFirst({
+    where: { userId, product: AiProduct.COPILOT },
+    orderBy: { updatedAt: "desc" },
+    include: {
+      messages: { orderBy: { createdAt: "asc" } },
+    },
+  });
+}
+
+export async function appendCopilotExchange(
+  userId: string,
+  userMessage: string,
+  assistantReply: string,
+  conversationId?: string,
+) {
+  if (conversationId) {
+    const existing = await prisma.aiConversation.findFirst({
+      where: { id: conversationId, userId, product: AiProduct.COPILOT },
+    });
+    if (existing) {
+      await prisma.aiMessage.createMany({
+        data: [
+          { conversationId, role: "user", content: userMessage },
+          { conversationId, role: "assistant", content: assistantReply },
+        ],
+      });
+      await prisma.aiConversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() },
+      });
+      return existing.id;
+    }
+  }
+
+  const created = await prisma.aiConversation.create({
+    data: {
+      userId,
+      product: AiProduct.COPILOT,
+      title: titleFromIdea(userMessage),
+      messages: {
+        create: [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: assistantReply },
+        ],
+      },
+    },
+  });
+  return created.id;
+}
+

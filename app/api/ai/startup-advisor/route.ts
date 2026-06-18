@@ -2,47 +2,23 @@ import { NextResponse } from "next/server";
 import { analyzeStartupIdea } from "@/lib/ai/startup-advisor";
 import { isAiConfigured } from "@/lib/ai/config";
 import { createAdvisorConversation } from "@/lib/ai/conversations";
+import { notifyAiSaved } from "@/lib/notifications/events";
 import { startupAdvisorRequestSchema } from "@/lib/ai/schema";
-import { generateStartupFromIdea } from "@/lib/startup/generate";
 import { getSession } from "@/lib/auth/session";
 import { getClientIp } from "@/lib/security/client-ip";
 import { checkRateLimit } from "@/lib/security/rate-limit";
-
-function offlineAdvisorFallback(idea: string) {
-  const payload = generateStartupFromIdea(idea);
-  return {
-    projectName: payload.name,
-    problem: `Teams struggle to launch and monetize ${idea.trim().slice(0, 80)} efficiently.`,
-    solution: payload.tagline,
-    targetUsers: ["Founders", "Developers", "Small business operators"],
-    features: payload.features,
-    pricingIdeas: payload.pricing.map((plan) => ({
-      name: plan.name,
-      price: plan.price,
-      rationale: plan.description ?? "Suggested tier for early validation.",
-    })),
-    marketOpportunities: [
-      "Underserved vertical workflows",
-      "Regional pricing for emerging markets",
-      "Integration with existing Mr.Software marketplace distribution",
-    ],
-    businessModel: "Subscription SaaS with a free tier for validation and paid plans for teams.",
-    technicalArchitecture: {
-      frontend: "Next.js",
-      backend: "NestJS or Next.js API routes",
-      database: "PostgreSQL",
-      modules: payload.features.slice(0, 6),
-    },
-    deploymentPlan: "Deploy on Mr.Software cloud infrastructure with staging and production environments.",
-    monetizationStrategy: "Freemium entry, Pro subscription, and optional marketplace listing revenue.",
-    source: "offline" as const,
-  };
-}
 
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Sign in to use Mr.Software Advisor" }, { status: 401 });
+  }
+
+  if (!isAiConfigured()) {
+    return NextResponse.json(
+      { error: "Mr.Software AI is not configured. Add AI_API_KEY to your .env file." },
+      { status: 503 },
+    );
   }
 
   const ip = getClientIp(request);
@@ -70,12 +46,16 @@ export async function POST(request: Request) {
   const { idea, save } = parsed.data;
 
   try {
-    const analysis = isAiConfigured()
-      ? { ...(await analyzeStartupIdea(idea)), source: "ai" as const }
-      : offlineAdvisorFallback(idea);
+    const analysis = { ...(await analyzeStartupIdea(idea)), source: "ai" as const };
 
     if (save) {
       const conversation = await createAdvisorConversation(session.id, idea, analysis);
+      await notifyAiSaved({
+        userId: session.id,
+        productLabel: "Startup Advisor",
+        title: conversation.title,
+        href: "/app/builder?tab=advisor",
+      }).catch((e) => console.error("advisor notification", e));
       return NextResponse.json({
         analysis,
         conversation: {
@@ -83,11 +63,11 @@ export async function POST(request: Request) {
           title: conversation.title,
           createdAt: conversation.createdAt.toISOString(),
         },
-        aiEnabled: isAiConfigured(),
+        aiEnabled: true,
       });
     }
 
-    return NextResponse.json({ analysis, aiEnabled: isAiConfigured() });
+    return NextResponse.json({ analysis, aiEnabled: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Analysis failed";
     return NextResponse.json({ error: message }, { status: 502 });

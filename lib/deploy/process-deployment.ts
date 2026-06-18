@@ -2,6 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { DeploymentStatus } from "@prisma/client";
+import { notifyDeploymentResult } from "@/lib/notifications/events";
 import { logSecurityEvent } from "@/lib/security/log";
 import { prisma } from "@/lib/prisma";
 import { MAX_ZIP_BYTES } from "./constants";
@@ -31,6 +32,31 @@ async function findIndexHtml(root: string): Promise<string | null> {
   return walk(root);
 }
 
+async function notifyDeployOutcome(deploymentId: string) {
+  const row = await prisma.deployment.findUnique({
+    where: { id: deploymentId },
+    select: { id: true, userId: true, name: true, status: true, url: true, errorMessage: true },
+  });
+  if (!row) return;
+  if (row.status === DeploymentStatus.ACTIVE) {
+    await notifyDeploymentResult({
+      userId: row.userId,
+      deploymentId: row.id,
+      name: row.name,
+      success: true,
+      url: row.url,
+    }).catch((e) => console.error("deploy notification", e));
+  } else if (row.status === DeploymentStatus.FAILED) {
+    await notifyDeploymentResult({
+      userId: row.userId,
+      deploymentId: row.id,
+      name: row.name,
+      success: false,
+      errorMessage: row.errorMessage,
+    }).catch((e) => console.error("deploy notification", e));
+  }
+}
+
 export async function processDeploymentZip(input: {
   deploymentId: string;
   zipBuffer: Buffer;
@@ -46,6 +72,7 @@ export async function processDeploymentZip(input: {
         errorMessage: `ZIP exceeds ${MAX_ZIP_BYTES} bytes`,
       },
     });
+    await notifyDeployOutcome(deploymentId);
     return;
   }
 
@@ -78,6 +105,7 @@ export async function processDeploymentZip(input: {
             "No index.html found in the archive (static sites must include index.html).",
         },
       });
+      await notifyDeployOutcome(deploymentId);
       return;
     }
 
@@ -102,6 +130,7 @@ export async function processDeploymentZip(input: {
         errorMessage: null,
       },
     });
+    await notifyDeployOutcome(deploymentId);
   } catch (e) {
     console.error("processDeploymentZip", e);
     await prisma.deployment.update({
@@ -112,6 +141,7 @@ export async function processDeploymentZip(input: {
           e instanceof Error ? e.message : "Deployment processing failed",
       },
     });
+    await notifyDeployOutcome(deploymentId);
   } finally {
     await rm(tmpRoot, { recursive: true, force: true }).catch(() => {});
   }

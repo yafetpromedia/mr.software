@@ -121,6 +121,10 @@ model User {
   storefront          DeveloperStorefront?
   storefrontFollows   StorefrontFollower[] @relation("StorefrontFollower")
   academyProgress     AcademyProgress[]
+  githubConnection    GitHubConnection?
+  notifications       Notification[]
+  notificationPreferences NotificationPreferences?
+  pushSubscriptions   PushSubscription[]
 }
 
 /** Public developer identity at `/@handle` — core of the 2.0 ecosystem model. */
@@ -176,6 +180,77 @@ model GeneratedStartup {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+/** GitHub OAuth link for deploy-from-repo (separate from Google login). */
+model GitHubConnection {
+  userId      String   @id
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  githubId    Int
+  login       String
+  accessToken String   @db.Text
+  scope       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum NotificationKind {
+  DEPLOYMENT
+  AI
+  MARKETPLACE
+  BILLING
+  STOREFRONT
+  SYSTEM
+}
+
+enum EmailDigestFrequency {
+  OFF
+  DAILY
+  WEEKLY
+}
+
+/** Per-user notification delivery preferences. */
+model NotificationPreferences {
+  userId       String               @id
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mutedKinds   NotificationKind[]
+  pushEnabled  Boolean              @default(false)
+  emailDigest  EmailDigestFrequency @default(OFF)
+  lastDigestAt DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+/** Browser Web Push subscription (VAPID). */
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/** In-app notification delivered in real time via SSE. */
+model Notification {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind         NotificationKind
+  title        String
+  body         String           @db.Text
+  href         String?
+  readAt       DateTime?
+  digestSentAt DateTime?
+  createdAt    DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([userId, digestSentAt])
 }
 
 /** Mr.Software AI product surface (Advisor, Architect, Launchpad, etc.). */

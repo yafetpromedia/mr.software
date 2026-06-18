@@ -5,6 +5,7 @@ import { shouldUseDeveloperShell } from "@/lib/auth/workspace-surface";
 import { ConsumerWorkspaceShell } from "@/components/app/consumer-workspace-shell";
 import { DeveloperWorkspaceShell } from "@/components/app/developer-workspace-shell";
 import type { ReactNode } from "react";
+import { NotificationPushSync } from "@/components/notifications/notification-push-sync";
 
 type Props = {
   children: ReactNode;
@@ -21,12 +22,14 @@ export function WorkspaceShell({ children, userName, userEmail, role }: Props) {
   if (shouldUseDeveloperShell(pathname, role)) {
     return (
       <DeveloperWorkspaceShell userName={userName} userEmail={userEmail} role={role}>
+        <NotificationPushSync />
         {children}
       </DeveloperWorkspaceShell>
     );
   }
   return (
     <ConsumerWorkspaceShell userName={userName} userEmail={userEmail} role={role}>
+      <NotificationPushSync />
       {children}
     </ConsumerWorkspaceShell>
   );

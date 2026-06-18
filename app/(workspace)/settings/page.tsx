@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
 import { prisma } from "@/lib/prisma";
 import { PortalSettingsForm } from "@/components/app/portal-settings-form";
+import { NotificationSettingsForm } from "@/components/notifications/notification-settings-form";
 
 export const metadata = { title: "Developer settings" };
 
@@ -84,6 +85,11 @@ export default async function DeveloperSettingsPage() {
             Purchases &amp; billing
           </Link>
         </div>
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+        <h2 className="text-sm font-semibold text-[var(--foreground)]">Notifications</h2>
+        <NotificationSettingsForm settingsHref="/settings" />
       </section>
 
       <section className="space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">

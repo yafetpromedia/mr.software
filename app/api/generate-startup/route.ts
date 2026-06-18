@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { generateStartupWithAi } from "@/lib/ai/landing-generator";
+import { AiGenerationError, generateStartupWithAi } from "@/lib/ai/landing-generator";
+import { isAiConfigured } from "@/lib/ai/config";
 import { getSession } from "@/lib/auth/session";
 import { saveGeneratedStartup } from "@/lib/startup/db";
-import { generateStartupBodySchema, generatedStartupPayloadSchema } from "@/lib/startup/schema";
+import { notifyAiSaved } from "@/lib/notifications/events";
+import { generateStartupBodySchema } from "@/lib/startup/schema";
 import { getClientIp } from "@/lib/security/client-ip";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 
@@ -10,6 +12,13 @@ export async function POST(request: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Sign in to generate startups" }, { status: 401 });
+  }
+
+  if (!isAiConfigured()) {
+    return NextResponse.json(
+      { error: "Mr.Software AI is not configured. Add AI_API_KEY to your .env file." },
+      { status: 503 },
+    );
   }
 
   const ip = getClientIp(request);
@@ -35,23 +44,37 @@ export async function POST(request: Request) {
   }
 
   const { idea, save } = parsed.data;
-  const payload = await generateStartupWithAi(idea);
-  const validated = generatedStartupPayloadSchema.safeParse(payload);
-  if (!validated.success) {
-    return NextResponse.json({ error: "Generation failed" }, { status: 500 });
-  }
 
-  if (save) {
-    const record = await saveGeneratedStartup(session.id, idea, validated.data);
-    return NextResponse.json({
-      startup: {
-        id: record.id,
-        idea: record.idea,
-        payload: record.payload,
-        createdAt: record.createdAt.toISOString(),
-      },
-    });
-  }
+  try {
+    const payload = await generateStartupWithAi(idea);
 
-  return NextResponse.json({ payload: validated.data });
+    if (save) {
+      const record = await saveGeneratedStartup(session.id, idea, payload);
+      await notifyAiSaved({
+        userId: session.id,
+        productLabel: "SaaS Blueprint",
+        title: record.idea,
+        href: `/startup/${record.id}/dashboard-preview`,
+      }).catch((e) => console.error("blueprint notification", e));
+      return NextResponse.json({
+        source: "ai",
+        startup: {
+          id: record.id,
+          idea: record.idea,
+          payload: record.payload,
+          createdAt: record.createdAt.toISOString(),
+        },
+      });
+    }
+
+    return NextResponse.json({ source: "ai", payload });
+  } catch (err) {
+    const message =
+      err instanceof AiGenerationError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : "Generation failed";
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 }

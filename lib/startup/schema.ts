@@ -13,6 +13,15 @@ const landingSectionSchema = z.discriminatedUnion("type", [
     headline: z.string().min(1).max(200),
     subheadline: z.string().min(1).max(400),
     cta: z.string().min(1).max(80),
+    imageUrl: z.string().url().optional(),
+    imageAlt: z.string().max(120).optional(),
+  }),
+  z.object({
+    type: z.literal("showcase"),
+    title: z.string().min(1).max(120),
+    caption: z.string().min(1).max(300),
+    imageUrl: z.string().url(),
+    imageAlt: z.string().max(120).optional(),
   }),
   z.object({
     type: z.literal("features"),
@@ -37,10 +46,12 @@ export const generatedStartupPayloadSchema = z.object({
   tagline: z.string().min(1).max(200),
   features: z.array(z.string().min(1).max(200)).min(2).max(8),
   pricing: z.array(pricingPlanSchema).min(1).max(4),
-  landingSections: z.array(landingSectionSchema).min(3).max(8),
+  landingSections: z.array(landingSectionSchema).min(3).max(10),
   brand: z.object({
     primaryHue: z.number().min(0).max(360),
     label: z.string().min(1).max(40),
+    enable3d: z.boolean().optional(),
+    visualStyle: z.enum(["modern", "minimal", "bold"]).optional(),
   }),
 });
 

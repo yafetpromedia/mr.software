@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { userCanDeploy } from "@/lib/auth/user-can-deploy";
 import { prisma } from "@/lib/prisma";
 import { PortalSettingsForm } from "@/components/app/portal-settings-form";
+import { NotificationSettingsForm } from "@/components/notifications/notification-settings-form";
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -56,11 +57,9 @@ export default async function SettingsPage() {
         <PortalSettingsForm />
       </section>
 
-      <section className="space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+      <section className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
         <h2 className="text-sm font-semibold text-[var(--foreground)]">Notifications</h2>
-        <p className="text-sm text-[var(--muted)]">
-          In-app and email notification preferences will live here. Nothing to configure yet.
-        </p>
+        <NotificationSettingsForm settingsHref="/app/settings" />
       </section>
     </div>
   );

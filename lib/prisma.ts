@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 
 /** Bump when Prisma schema changes so dev HMR picks up a fresh client. */
-const PRISMA_CLIENT_GENERATION = "2026-06-17-ai-conversations";
+const PRISMA_CLIENT_GENERATION = "2026-06-18-notification-prefs";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

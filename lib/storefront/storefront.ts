@@ -1,4 +1,5 @@
 import type { DeveloperStorefront, Software, StorefrontTheme, User } from "@prisma/client";
+import { notifyNewStorefrontFollower } from "@/lib/notifications/events";
 import { prisma } from "@/lib/prisma";
 import { mapSoftwareToItem } from "@/lib/data/software";
 import type { SoftwareItem } from "@/lib/software-item";
@@ -270,12 +271,27 @@ export async function followStorefront(
   const handle = normalizeHandle(rawHandle);
   const storefront = await prisma.developerStorefront.findUnique({
     where: { handle },
-    select: { userId: true },
+    select: { userId: true, handle: true },
   });
   if (!storefront) throw new Error("Storefront not found");
   if (storefront.userId === followerUserId) {
     throw new Error("You cannot follow your own storefront");
   }
+
+  const follower = await prisma.user.findUnique({
+    where: { id: followerUserId },
+    select: { name: true },
+  });
+
+  const wasFollowing = await prisma.storefrontFollower.findUnique({
+    where: {
+      storefrontUserId_followerUserId: {
+        storefrontUserId: storefront.userId,
+        followerUserId,
+      },
+    },
+    select: { followerUserId: true },
+  });
 
   await prisma.storefrontFollower.upsert({
     where: {
@@ -287,6 +303,14 @@ export async function followStorefront(
     create: { storefrontUserId: storefront.userId, followerUserId },
     update: {},
   });
+
+  if (!wasFollowing) {
+    await notifyNewStorefrontFollower({
+      storefrontUserId: storefront.userId,
+      followerName: follower?.name ?? "Someone",
+      handle: storefront.handle,
+    }).catch((e) => console.error("follower notification", e));
+  }
 
   const count = await prisma.storefrontFollower.count({
     where: { storefrontUserId: storefront.userId },

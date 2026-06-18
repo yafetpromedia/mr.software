@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { NotificationPushSync } from "@/components/notifications/notification-push-sync";
 import { isActiveAdmin } from "@/lib/auth/rbac";
 import { getSession } from "@/lib/auth/session";
 
@@ -21,6 +22,7 @@ export default async function AdminLayout({
 
   return (
     <AdminShell userName={session.name} userEmail={session.email}>
+      <NotificationPushSync />
       {children}
     </AdminShell>
   );

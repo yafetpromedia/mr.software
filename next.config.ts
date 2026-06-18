@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
     },
   },
   serverExternalPackages: ["bcrypt", "@aws-sdk/client-s3"],
+  transpilePackages: ["three", "three-globe"],
   async headers() {
     return [
       {
