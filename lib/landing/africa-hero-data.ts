@@ -1,9 +1,8 @@
 export const AFRICA_ORANGE = "#FF7A1A";
 
-export const ARC_ANIMATE_MS = 3200;
+export { ARC_ANIMATE_MS, ARC_GAP_MS, ARC_LAUNCH_STAGGER_MS, ARC_TRAIL_LENGTH, ARC_TRAVEL_MS } from "@/lib/landing/globe-arc-timing";
+
 export const ARC_ALTITUDE = 0.2;
-/** Visible length of each moving energy packet (0–1 along arc). */
-export const ARC_TRAIL_LENGTH = 0.26;
 
 export const HUB = {
   lat: 9.032,
@@ -73,6 +72,96 @@ export const DEPLOYMENT_ARCS: DeploymentArc[] = [
     product: "HealthLink",
     endLabel: "Germany",
     endFlag: "🇩🇪",
+  },
+  {
+    id: "campusone-us",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: 40.713,
+    endLng: -74.006,
+    product: "CampusOne",
+    endLabel: "USA",
+    endFlag: "🇺🇸",
+  },
+  {
+    id: "mrinvoice-ca",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: 43.653,
+    endLng: -79.383,
+    product: "Mr.Invoice",
+    endLabel: "Canada",
+    endFlag: "🇨🇦",
+  },
+  {
+    id: "educloud-br",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: -23.55,
+    endLng: -46.633,
+    product: "EduCloud",
+    endLabel: "Brazil",
+    endFlag: "🇧🇷",
+  },
+  {
+    id: "healthlink-ar",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: -34.603,
+    endLng: -58.382,
+    product: "HealthLink",
+    endLabel: "Argentina",
+    endFlag: "🇦🇷",
+  },
+  {
+    id: "campusone-mx",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: 19.432,
+    endLng: -99.133,
+    product: "CampusOne",
+    endLabel: "Mexico",
+    endFlag: "🇲🇽",
+  },
+  {
+    id: "mrinvoice-gb",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: 51.507,
+    endLng: -0.128,
+    product: "Mr.Invoice",
+    endLabel: "United Kingdom",
+    endFlag: "🇬🇧",
+  },
+  {
+    id: "educloud-jp",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: 35.676,
+    endLng: 139.65,
+    product: "EduCloud",
+    endLabel: "Japan",
+    endFlag: "🇯🇵",
+  },
+  {
+    id: "healthlink-au",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: -33.868,
+    endLng: 151.209,
+    product: "HealthLink",
+    endLabel: "Australia",
+    endFlag: "🇦🇺",
+  },
+  {
+    id: "campusone-in",
+    startLat: HUB.lat,
+    startLng: HUB.lng,
+    endLat: 19.076,
+    endLng: 72.877,
+    product: "CampusOne",
+    endLabel: "India",
+    endFlag: "🇮🇳",
   },
 ];
 

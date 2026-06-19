@@ -9,9 +9,9 @@ import {
   HUB,
   type DeploymentArc,
   ARC_ALTITUDE,
-  ARC_ANIMATE_MS,
   ARC_TRAIL_LENGTH,
 } from "@/lib/landing/africa-hero-data";
+import { arcHeadProgress } from "@/lib/landing/globe-arc-timing";
 import { arcTangent, hubSurfacePoint, interpolateArc, sampleArc } from "@/lib/landing/globe-math";
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -98,12 +98,14 @@ function EthiopiaHubSpark({
 
 function EnergyTrail({
   arc,
-  phaseMs,
+  arcIndex,
+  arcCount,
   reduceMotion,
   isLight,
 }: {
   arc: DeploymentArc;
-  phaseMs: number;
+  arcIndex: number;
+  arcCount: number;
   reduceMotion: boolean;
   isLight: boolean;
 }) {
@@ -115,11 +117,17 @@ function EnergyTrail({
   const coreCurve = useRef(new THREE.CatmullRomCurve3([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]));
 
   useFrame(({ clock }) => {
-    const cycle =
-      ((clock.elapsedTime * 1000 + phaseMs) % ARC_ANIMATE_MS) / ARC_ANIMATE_MS;
-    const headT = reduceMotion ? 0.72 : Math.min(0.998, cycle);
-    const tailT = Math.max(0, headT - ARC_TRAIL_LENGTH);
+    const headT = arcHeadProgress(clock.elapsedTime, arcIndex, arcCount, reduceMotion);
+    const visible = headT !== null;
 
+    if (glowRef.current) glowRef.current.visible = visible;
+    if (coreRef.current) coreRef.current.visible = visible;
+    if (headGlowRef.current) headGlowRef.current.visible = visible;
+    if (arrowRef.current) arrowRef.current.visible = visible;
+
+    if (!visible || headT === null) return;
+
+    const tailT = Math.max(0, headT - ARC_TRAIL_LENGTH);
     if (headT - tailT < 0.008) return;
 
     const points = sampleArc(
@@ -212,11 +220,13 @@ function EnergyTrail({
 
 function ArcDestinationLabel({
   arc,
-  phaseMs,
+  arcIndex,
+  arcCount,
   reduceMotion,
 }: {
   arc: DeploymentArc;
-  phaseMs: number;
+  arcIndex: number;
+  arcCount: number;
   reduceMotion: boolean;
 }) {
   const labelRef = useRef<HTMLDivElement>(null);
@@ -227,10 +237,8 @@ function ArcDestinationLabel({
 
   useFrame(({ clock }) => {
     if (!labelRef.current) return;
-    const cycle =
-      ((clock.elapsedTime * 1000 + phaseMs) % ARC_ANIMATE_MS) / ARC_ANIMATE_MS;
-    const headT = reduceMotion ? 0.72 : cycle;
-    const alpha = headT > 0.72 ? Math.min(1, (headT - 0.72) / 0.2) : 0;
+    const headT = arcHeadProgress(clock.elapsedTime, arcIndex, arcCount, reduceMotion);
+    const alpha = headT !== null && headT > 0.68 ? Math.min(1, (headT - 0.68) / 0.22) : 0;
     labelRef.current.style.opacity = String(alpha);
   });
 
@@ -257,6 +265,8 @@ type Props = {
 export function GlobeArcFlow({ show, reduceMotion, isLight = false }: Props) {
   if (!show) return null;
 
+  const arcCount = DEPLOYMENT_ARCS.length;
+
   return (
     <group>
       <EthiopiaHubSpark reduceMotion={reduceMotion} isLight={isLight} />
@@ -264,7 +274,8 @@ export function GlobeArcFlow({ show, reduceMotion, isLight = false }: Props) {
         <EnergyTrail
           key={`trail-${arc.id}`}
           arc={arc}
-          phaseMs={i * (ARC_ANIMATE_MS / 3)}
+          arcIndex={i}
+          arcCount={arcCount}
           reduceMotion={reduceMotion}
           isLight={isLight}
         />
@@ -273,7 +284,8 @@ export function GlobeArcFlow({ show, reduceMotion, isLight = false }: Props) {
         <ArcDestinationLabel
           key={`dest-${arc.id}`}
           arc={arc}
-          phaseMs={i * (ARC_ANIMATE_MS / 3)}
+          arcIndex={i}
+          arcCount={arcCount}
           reduceMotion={reduceMotion}
         />
       ))}
