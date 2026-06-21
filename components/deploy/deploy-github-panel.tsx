@@ -55,7 +55,17 @@ function WorkflowSteps() {
   );
 }
 
-export function DeployGithubPanel({ freeBlocked }: { freeBlocked: boolean }) {
+export function DeployGithubPanel({
+  freeBlocked,
+  connectNextUrl = "/api/github/connect?next=%2Fdeploy%3Fsource%3Dgithub",
+  onDeploySuccess,
+  redirectOnSuccess = true,
+}: {
+  freeBlocked: boolean;
+  connectNextUrl?: string;
+  onDeploySuccess?: (deployment: { id: string }) => void;
+  redirectOnSuccess?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -64,6 +74,11 @@ export function DeployGithubPanel({ freeBlocked }: { freeBlocked: boolean }) {
   const [loadingRepos, setLoadingRepos] = useState(false);
   const [deployingId, setDeployingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deploySuccess, setDeploySuccess] = useState<{
+    id: string;
+    url: string | null;
+    name: string;
+  } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const loadStatus = useCallback(async () => {
@@ -163,9 +178,17 @@ export function DeployGithubPanel({ freeBlocked }: { freeBlocked: boolean }) {
         return;
       }
       const id = data.deployment?.id as string | undefined;
+      const url = (data.deployment?.url as string | undefined) ?? null;
+      const name = (data.deployment?.name as string | undefined) ?? repo.name;
       if (id) {
-        router.push(`/projects/${id}`);
-        router.refresh();
+        setDeploySuccess({ id, url, name });
+        onDeploySuccess?.({ id });
+        if (redirectOnSuccess) {
+          window.setTimeout(() => {
+            router.push(`/projects/${id}`);
+            router.refresh();
+          }, 4000);
+        }
       }
     } catch {
       setError("Network error during deploy.");
@@ -221,6 +244,38 @@ export function DeployGithubPanel({ freeBlocked }: { freeBlocked: boolean }) {
         </div>
       </div>
 
+      {deploySuccess ? (
+        <div className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 p-4">
+          <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+            {deploySuccess.name} is live
+          </p>
+          {deploySuccess.url ? (
+            <p className="mt-2 break-all font-mono text-xs text-[var(--foreground)]">
+              {deploySuccess.url}
+            </p>
+          ) : null}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {deploySuccess.url ? (
+              <a
+                href={deploySuccess.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-brand inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-xs font-semibold"
+              >
+                Open live URL
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </a>
+            ) : null}
+            <Link
+              href={`/projects/${deploySuccess.id}`}
+              className="inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-4 text-xs font-medium hover:bg-[var(--surface)]"
+            >
+              Project details
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       {notice ? (
         <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
           {notice}
@@ -241,7 +296,7 @@ export function DeployGithubPanel({ freeBlocked }: { freeBlocked: boolean }) {
             Authorize Mr.Software to list repositories and deploy static sites.
           </p>
           <a
-            href="/api/github/connect?next=%2Fdeploy%3Fsource%3Dgithub"
+            href={connectNextUrl}
             className="btn-brand mt-4 inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold"
           >
             <GithubIcon className="h-4 w-4" />

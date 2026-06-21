@@ -14,14 +14,14 @@ export function DeveloperAccessNotice() {
           </p>
           <p className="mt-1.5 text-sm leading-relaxed text-[var(--muted)]">
             Member accounts can browse the marketplace and use this library.{" "}
-            <span className="font-medium text-[var(--foreground)]">Developers</span> and admins can
-            upload and host builds — contact an admin to be promoted.
+            <span className="font-medium text-[var(--foreground)]">Developers</span> can upload, deploy,
+            and sell — submit a request in Settings and an admin will review it.
           </p>
           <Link
-            href="/deploy"
+            href="/app/settings#developer"
             className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] hover:underline"
           >
-            Learn about deploy access
+            Request developer access
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>

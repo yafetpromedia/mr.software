@@ -5,6 +5,7 @@ import { LandingSectionPlaceholder } from "@/components/landing/landing-section-
 import { FeaturedStorefrontsRow } from "@/components/storefront/featured-storefronts-row";
 import { getPublicSiteSettings } from "@/lib/site-settings";
 import { getApprovedTestimonials } from "@/lib/testimonials";
+import { getPublicTeamSection } from "@/lib/team";
 
 const LandingMetricsStrip = dynamic(
   () =>
@@ -71,9 +72,10 @@ const LandingCtaBand = dynamic(
 );
 
 export async function LandingBelowFold() {
-  const [{ partners }, testimonials] = await Promise.all([
+  const [{ partners }, testimonials, team] = await Promise.all([
     getPublicSiteSettings(),
     getApprovedTestimonials(),
+    getPublicTeamSection(),
   ]);
 
   return (
@@ -92,7 +94,7 @@ export async function LandingBelowFold() {
       <PartnersSection partners={partners} />
       <TestimonialsSection testimonials={testimonials} />
       <GlobalVision />
-      <LandingTeam />
+      <LandingTeam settings={team.settings} members={team.members} />
       <LandingCtaBand />
     </>
   );

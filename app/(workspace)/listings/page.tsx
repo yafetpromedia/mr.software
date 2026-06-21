@@ -168,7 +168,7 @@ export default async function ListingsPage() {
                     Live on marketplace
                   </span>
                   <Link
-                    href={`/software/${s.id}`}
+                    href={`/app/software/${s.id}`}
                     className="inline-flex h-8 items-center rounded-full border border-[var(--border)] px-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]/40"
                   >
                     View listing

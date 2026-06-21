@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { LessonContent } from "@/components/academy/lesson-content";
+import type { PublicAcademyLesson } from "@/lib/academy/types";
 import type { AcademyCourseLevel } from "@prisma/client";
 
 const LEVEL_LABEL: Record<AcademyCourseLevel, string> = {
@@ -15,8 +17,6 @@ const LEVEL_STYLE: Record<AcademyCourseLevel, string> = {
   INTERMEDIATE: "bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300",
   ADVANCED: "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300",
 };
-
-type Lesson = { id: string; title: string; content: string; sortOrder: number };
 
 export function AcademyCourseClient({
   slug,
@@ -33,7 +33,7 @@ export function AcademyCourseClient({
   description: string;
   level: AcademyCourseLevel;
   durationMinutes: number;
-  lessons: Lesson[];
+  lessons: PublicAcademyLesson[];
   completed: boolean;
   hasSession: boolean;
 }) {
@@ -42,6 +42,7 @@ export function AcademyCourseClient({
   const [busy, setBusy] = useState(false);
   const active = lessons[activeIndex];
   const progressPct = lessons.length > 0 ? ((activeIndex + 1) / lessons.length) * 100 : 0;
+  const lessonMinutes = lessons.reduce((n, l) => n + l.durationMinutes, 0);
 
   async function markComplete() {
     if (!hasSession) {
@@ -61,24 +62,29 @@ export function AcademyCourseClient({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-8 xl:grid-cols-[18rem_minmax(0,1fr)]">
+    <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-8 xl:grid-cols-[20rem_minmax(0,1fr)]">
       <aside className="lg:sticky lg:top-24 lg:self-start">
-        <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)] sm:p-5">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-[var(--muted)]">
-              Lessons
+        <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
+          <div className="bg-gradient-to-br from-orange-500/15 via-amber-400/5 to-transparent p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-[var(--muted)]">
+                Course outline
+              </p>
+              <span className="text-xs font-semibold tabular-nums text-stone-500 dark:text-[var(--muted)]">
+                {activeIndex + 1}/{lessons.length}
+              </span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/60 dark:bg-[var(--surface-elevated)]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-orange-600 to-amber-400 transition-all duration-500 ease-out"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <p className="mt-2 text-[0.65rem] font-medium text-stone-500 dark:text-[var(--muted)]">
+              {Math.round(progressPct)}% complete
             </p>
-            <span className="text-xs font-semibold tabular-nums text-stone-500 dark:text-[var(--muted)]">
-              {activeIndex + 1}/{lessons.length}
-            </span>
           </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-stone-100 dark:bg-[var(--surface-elevated)]">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-orange-600 to-amber-400 transition-all duration-300"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-          <ol className="mt-4 space-y-1">
+          <ol className="max-h-[min(28rem,60vh)] space-y-0.5 overflow-y-auto p-2 sm:p-3">
             {lessons.map((lesson, i) => (
               <li key={lesson.id}>
                 <button
@@ -86,12 +92,12 @@ export function AcademyCourseClient({
                   onClick={() => setActiveIndex(i)}
                   className={
                     i === activeIndex
-                      ? "flex w-full items-start gap-2 rounded-xl bg-orange-50 px-3 py-2.5 text-left text-sm font-semibold text-orange-800 dark:bg-[var(--accent-muted)] dark:text-[var(--accent)]"
-                      : "flex w-full items-start gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-stone-600 transition hover:bg-stone-50 dark:text-[var(--muted)] dark:hover:bg-[var(--background)]"
+                      ? "flex w-full items-start gap-2.5 rounded-xl bg-orange-50 px-3 py-3 text-left dark:bg-[var(--accent-muted)]"
+                      : "flex w-full items-start gap-2.5 rounded-xl px-3 py-3 text-left transition hover:bg-stone-50 dark:hover:bg-[var(--background)]"
                   }
                 >
                   <span
-                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[0.65rem] font-bold ${
+                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[0.65rem] font-bold ${
                       i === activeIndex
                         ? "bg-orange-600 text-white dark:bg-[var(--accent)]"
                         : completed || i < activeIndex
@@ -101,7 +107,25 @@ export function AcademyCourseClient({
                   >
                     {completed || i < activeIndex ? "✓" : i + 1}
                   </span>
-                  <span className="min-w-0 leading-snug">{lesson.title}</span>
+                  <span className="min-w-0">
+                    <span
+                      className={`block text-sm font-semibold leading-snug ${
+                        i === activeIndex
+                          ? "text-orange-800 dark:text-[var(--accent)]"
+                          : "text-stone-800 dark:text-[var(--foreground)]"
+                      }`}
+                    >
+                      {lesson.title}
+                    </span>
+                    {lesson.summary ? (
+                      <span className="mt-0.5 block line-clamp-2 text-xs leading-relaxed text-stone-500 dark:text-[var(--muted)]">
+                        {lesson.summary}
+                      </span>
+                    ) : null}
+                    <span className="mt-1 block text-[0.65rem] font-medium text-stone-400 dark:text-[var(--muted)]">
+                      ~{lesson.durationMinutes} min
+                    </span>
+                  </span>
                 </button>
               </li>
             ))}
@@ -115,7 +139,7 @@ export function AcademyCourseClient({
             {LEVEL_LABEL[level]}
           </span>
           <span className="rounded-full border border-stone-200 bg-white px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--muted)]">
-            ~{durationMinutes} min
+            {lessons.length} lessons · ~{lessonMinutes || durationMinutes} min
           </span>
           {completed ? (
             <span className="rounded-full border border-emerald-500/30 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400">
@@ -133,18 +157,27 @@ export function AcademyCourseClient({
 
         {active ? (
           <div className="mt-8 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
-            <div className="border-b border-stone-100 bg-stone-50 px-5 py-4 dark:border-[var(--border)] dark:bg-[var(--surface-elevated)]/50 sm:px-6">
-              <p className="text-[0.65rem] font-bold uppercase tracking-wider text-stone-500 dark:text-[var(--muted)]">
-                Lesson {activeIndex + 1}
-              </p>
-              <h2 className="mt-1 text-lg font-bold text-stone-900 dark:text-[var(--foreground)]">
+            <div className="border-b border-stone-100 bg-gradient-to-r from-stone-50 to-orange-50/30 px-5 py-5 dark:border-[var(--border)] dark:from-[var(--surface-elevated)]/50 dark:to-[var(--accent-muted)]/20 sm:px-7">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-[0.65rem] font-bold uppercase tracking-wider text-stone-500 dark:text-[var(--muted)]">
+                  Lesson {activeIndex + 1} of {lessons.length}
+                </p>
+                <span className="text-stone-300 dark:text-[var(--border)]">·</span>
+                <p className="text-[0.65rem] font-semibold text-stone-500 dark:text-[var(--muted)]">
+                  ~{active.durationMinutes} min read
+                </p>
+              </div>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-stone-900 dark:text-[var(--foreground)] sm:text-2xl">
                 {active.title}
               </h2>
+              {active.summary ? (
+                <p className="mt-2 text-sm leading-relaxed text-stone-600 dark:text-[var(--muted)]">
+                  {active.summary}
+                </p>
+              ) : null}
             </div>
-            <div className="px-5 py-6 sm:px-6 sm:py-8">
-              <div className="whitespace-pre-wrap text-base leading-[1.75] text-stone-800 dark:text-[var(--foreground)]">
-                {active.content}
-              </div>
+            <div className="px-5 py-6 sm:px-7 sm:py-8">
+              <LessonContent content={active.content} />
             </div>
           </div>
         ) : null}
@@ -169,7 +202,7 @@ export function AcademyCourseClient({
           ) : null}
         </div>
 
-        <div className="mt-8 rounded-2xl border border-stone-200 bg-stone-50 p-5 dark:border-[var(--border)] dark:bg-[var(--surface-elevated)]/40 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-6">
+        <div className="mt-8 rounded-2xl border border-stone-200 bg-gradient-to-br from-stone-50 to-orange-50/40 p-5 dark:border-[var(--border)] dark:from-[var(--surface-elevated)]/40 dark:to-[var(--accent-muted)]/20 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-6">
           <div>
             <p className="text-sm font-bold text-stone-900 dark:text-[var(--foreground)]">
               {completed ? "Course complete — ship your product" : "Finish this track"}

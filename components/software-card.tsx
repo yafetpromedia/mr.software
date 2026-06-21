@@ -10,11 +10,21 @@ type Props = {
   featured?: boolean;
   /** Hide developer handle (e.g. on their storefront page) */
   hideDeveloper?: boolean;
+  /** Link product detail inside the signed-in portal */
+  linkVariant?: "catalog" | "portal";
 };
 
-export function SoftwareCard({ item, featured, hideDeveloper }: Props) {
+export function SoftwareCard({ item, featured, hideDeveloper, linkVariant = "catalog" }: Props) {
   const isFree = item.priceType === "free";
   const aspect = featured ? "aspect-[16/10] sm:aspect-[16/9]" : "aspect-[16/10]";
+  const detailHref =
+    linkVariant === "portal" ? `/app/software/${item.id}` : `/software/${item.id}`;
+  const storefrontHref =
+    linkVariant === "portal" && item.developerHandle
+      ? `/app/store/${item.developerHandle}`
+      : item.developerHandle
+        ? `/@${item.developerHandle}`
+        : null;
 
   return (
     <article
@@ -77,9 +87,9 @@ export function SoftwareCard({ item, featured, hideDeveloper }: Props) {
 
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-[var(--border)] pt-4">
           <span className="flex min-w-0 flex-col gap-1.5 text-xs text-[var(--muted)]">
-            {!hideDeveloper && item.developerHandle ? (
+            {!hideDeveloper && storefrontHref ? (
               <Link
-                href={`/@${item.developerHandle}`}
+                href={storefrontHref}
                 className="truncate font-medium text-[var(--foreground)]/80 transition hover:text-[var(--accent)]"
               >
                 @{item.developerHandle}
@@ -97,7 +107,7 @@ export function SoftwareCard({ item, featured, hideDeveloper }: Props) {
             ) : null}
           </span>
           <Link
-            href={`/software/${item.id}`}
+            href={detailHref}
             className="inline-flex items-center gap-1 rounded-xl bg-[var(--foreground)] px-4 py-2 text-sm font-semibold text-[var(--background)] transition group-hover:bg-[var(--accent)] group-hover:text-white dark:group-hover:text-white"
           >
             View

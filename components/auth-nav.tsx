@@ -1,38 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-
-type Me = {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  status?: string;
-};
+import { useAuthMe } from "@/components/auth/use-auth-me";
 
 export function AuthNav() {
-  const [me, setMe] = useState<Me | null | undefined>(undefined);
-
-  useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { user?: Me } | null) => setMe(data?.user ?? null))
-      .catch(() => setMe(null));
-  }, []);
+  const me = useAuthMe();
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    setMe(null);
     window.location.href = "/";
   }
-
-  const workspaceHref =
-    me?.role === "ADMIN" && me?.status === "ACTIVE"
-      ? "/admin"
-      : me?.role === "USER"
-        ? "/app/home"
-        : "/app";
 
   if (me === undefined) {
     return (
@@ -64,21 +41,6 @@ export function AuthNav() {
 
   return (
     <>
-      {me.role === "ADMIN" && me.status === "ACTIVE" ? (
-        <Link
-          href="/admin"
-          className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--accent-muted)] hover:text-[var(--foreground)]"
-        >
-          Admin portal
-        </Link>
-      ) : (
-        <Link
-          href={workspaceHref}
-          className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--muted)] transition hover:bg-[var(--accent-muted)] hover:text-[var(--foreground)]"
-        >
-          Workspace
-        </Link>
-      )}
       <span className="hidden max-w-[10rem] truncate text-xs text-[var(--muted)] sm:inline md:max-w-[14rem]">
         {me.name}
         {me.status && me.status !== "ACTIVE" ? (

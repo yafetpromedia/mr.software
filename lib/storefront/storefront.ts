@@ -1,18 +1,25 @@
-import type { DeveloperStorefront, Software, StorefrontTheme, User } from "@prisma/client";
+import type { DeveloperStorefront, Software, StorefrontTheme, User, DeploymentStatus } from "@prisma/client";
 import { notifyNewStorefrontFollower } from "@/lib/notifications/events";
 import { prisma } from "@/lib/prisma";
 import { mapSoftwareToItem } from "@/lib/data/software";
 import type { SoftwareItem } from "@/lib/software-item";
 import { normalizeHandle, validateHandle } from "@/lib/storefront/handles";
+import {
+  parseStorefrontSocialLinks,
+  serializeStorefrontSocialLinks,
+  type StorefrontSocialLinks,
+} from "@/lib/storefront/social-links";
 import { getDeveloperRevenueSummary } from "@/lib/storefront/revenue";
 import { sumProductViewsForDeveloper, sumProductViewsByDeveloper } from "@/lib/software/product-views";
 
 export type PublicStorefront = {
   handle: string;
+  ownerUserId: string;
   name: string;
   tagline?: string;
   bio?: string;
   website?: string;
+  socialLinks: StorefrontSocialLinks;
   theme: StorefrontTheme;
   verified: boolean;
   featured: boolean;
@@ -22,6 +29,13 @@ export type PublicStorefront = {
   publicRevenueCents?: number;
   revenueCurrency?: string;
   products: SoftwareItem[];
+  deployments: Array<{
+    id: string;
+    name: string;
+    url: string | null;
+    status: import("@prisma/client").DeploymentStatus;
+    createdAt: string;
+  }>;
 };
 
 export type OwnStorefront = {
@@ -29,6 +43,7 @@ export type OwnStorefront = {
   tagline: string;
   bio: string;
   website: string;
+  socialLinks: StorefrontSocialLinks;
   theme: StorefrontTheme;
   verified: boolean;
   showRevenuePublic: boolean;
@@ -60,6 +75,13 @@ async function toPublicStorefront(
     _count?: { followers: number };
   },
   products: Array<Software & { developer: User & { storefront?: DeveloperStorefront | null } }>,
+  deployments: Array<{
+    id: string;
+    name: string;
+    url: string | null;
+    status: DeploymentStatus;
+    createdAt: Date;
+  }>,
   options?: { isFollowing?: boolean },
 ): Promise<PublicStorefront> {
   let publicRevenueCents: number | undefined;
@@ -72,10 +94,12 @@ async function toPublicStorefront(
 
   return {
     handle: storefront.handle,
+    ownerUserId: storefront.userId,
     name: storefront.user.name,
     tagline: storefront.tagline ?? undefined,
     bio: storefront.bio ?? undefined,
     website: normalizeWebsite(storefront.website),
+    socialLinks: parseStorefrontSocialLinks(storefront.socialLinksJson),
     theme: storefront.theme,
     verified: storefront.verified,
     featured: storefront.featured,
@@ -85,6 +109,13 @@ async function toPublicStorefront(
     publicRevenueCents,
     revenueCurrency,
     products: products.map((row) => mapSoftwareToItem(row)),
+    deployments: deployments.map((d) => ({
+      id: d.id,
+      name: d.name,
+      url: d.url,
+      status: d.status,
+      createdAt: d.createdAt.toISOString(),
+    })),
   };
 }
 
@@ -102,11 +133,19 @@ export async function getStorefrontByHandle(
   });
   if (!storefront) return null;
 
-  const products = await prisma.software.findMany({
-    where: { developerId: storefront.userId },
-    orderBy: { createdAt: "desc" },
-    include: { developer: { include: { storefront: true } } },
-  });
+  const [products, deployments] = await Promise.all([
+    prisma.software.findMany({
+      where: { developerId: storefront.userId },
+      orderBy: { createdAt: "desc" },
+      include: { developer: { include: { storefront: true } } },
+    }),
+    prisma.deployment.findMany({
+      where: { userId: storefront.userId },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: { id: true, name: true, url: true, status: true, createdAt: true },
+    }),
+  ]);
 
   let isFollowing = false;
   if (viewerUserId) {
@@ -121,7 +160,7 @@ export async function getStorefrontByHandle(
     isFollowing = Boolean(follow);
   }
 
-  return await toPublicStorefront(storefront, products, { isFollowing });
+  return await toPublicStorefront(storefront, products, deployments, { isFollowing });
 }
 
 export async function getOwnStorefront(userId: string): Promise<OwnStorefront | null> {
@@ -134,6 +173,7 @@ export async function getOwnStorefront(userId: string): Promise<OwnStorefront | 
     tagline: storefront.tagline ?? "",
     bio: storefront.bio ?? "",
     website: storefront.website ?? "",
+    socialLinks: parseStorefrontSocialLinks(storefront.socialLinksJson),
     theme: storefront.theme,
     verified: storefront.verified,
     showRevenuePublic: storefront.showRevenuePublic,
@@ -164,6 +204,7 @@ export async function upsertStorefront(
     tagline?: string;
     bio?: string;
     website?: string;
+    socialLinks?: StorefrontSocialLinks;
     theme?: StorefrontTheme;
     showRevenuePublic?: boolean;
   },
@@ -178,6 +219,7 @@ export async function upsertStorefront(
   const tagline = input.tagline?.trim() || null;
   const bio = input.bio?.trim() || null;
   const website = input.website?.trim() || null;
+  const socialLinksJson = serializeStorefrontSocialLinks(input.socialLinks ?? {});
 
   const theme = input.theme ?? "CLASSIC";
   const showRevenuePublic = input.showRevenuePublic ?? false;
@@ -190,6 +232,7 @@ export async function upsertStorefront(
       tagline,
       bio,
       website,
+      socialLinksJson,
       theme,
       showRevenuePublic,
     },
@@ -198,6 +241,7 @@ export async function upsertStorefront(
       tagline,
       bio,
       website,
+      socialLinksJson,
       theme,
       showRevenuePublic,
     },
@@ -208,6 +252,7 @@ export async function upsertStorefront(
     tagline: storefront.tagline ?? "",
     bio: storefront.bio ?? "",
     website: storefront.website ?? "",
+    socialLinks: parseStorefrontSocialLinks(storefront.socialLinksJson),
     theme: storefront.theme,
     verified: storefront.verified,
     showRevenuePublic: storefront.showRevenuePublic,

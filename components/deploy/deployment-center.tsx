@@ -38,10 +38,11 @@ const METHODS = [
   {
     id: "github" as const,
     title: "Deploy from GitHub",
-    description: "Connect a repo — auto-build on every push to main.",
+    description: "Connect a repo — pick a branch — get a live URL in minutes.",
     icon: GithubIcon,
     status: "live" as const,
     audience: "Developers",
+    recommended: true,
   },
   {
     id: "zip" as const,
@@ -50,6 +51,7 @@ const METHODS = [
     icon: CloudUpload,
     status: "live" as const,
     audience: "Everyone",
+    recommended: false,
   },
   {
     id: "import" as const,
@@ -58,14 +60,16 @@ const METHODS = [
     icon: Package,
     status: "live" as const,
     audience: "Sellers",
+    recommended: false,
   },
   {
     id: "ai" as const,
     title: "AI generated app",
-    description: "Describe your product → Mr.Software AI drafts it → deploy in one flow.",
+    description: "Startup Factory → generate → deploy in one flow.",
     icon: Sparkles,
     status: "live" as const,
     audience: "Founders",
+    recommended: false,
   },
 ] as const;
 
@@ -116,7 +120,7 @@ export function DeploymentCenter({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [source, setSource] = useState<DeploySource>("zip");
+  const [source, setSource] = useState<DeploySource>("github");
   const [importSoftwareId, setImportSoftwareId] = useState<string>("");
 
   const syncSource = useCallback(() => {
@@ -129,7 +133,9 @@ export function DeploymentCenter({
     }
     if (param === "github" || param === "zip" || param === "import" || param === "ai") {
       setSource(param);
+      return;
     }
+    setSource("github");
   }, [searchParams]);
 
   useEffect(() => {
@@ -161,9 +167,12 @@ export function DeploymentCenter({
             Build, deploy, host, sell — from one dashboard
           </h1>
           <p className="max-w-2xl text-sm leading-relaxed text-[var(--muted)]">
-            Professional developers connect GitHub for CI/CD. Schools, NGOs, and freelancers upload a
-            ZIP and go live. Founders start with Mr.Software AI and deploy in one click.
+            Connect GitHub, select a repository, and get a live URL — the fastest path for
+            developers. ZIP upload and Startup Factory are also available.
           </p>
+          <div className="mt-3">
+            <WorkflowSteps steps={["Connect GitHub", "Select repo", "Deploy", "Live URL"]} />
+          </div>
 
           <div className="flex flex-wrap items-center gap-3 pt-1">
             {PIPELINE.map((step, i) => (
@@ -245,7 +254,14 @@ export function DeploymentCenter({
                     >
                       <Icon className="h-5 w-5" aria-hidden />
                     </span>
-                    <StatusBadge status={method.status} />
+                    <div className="flex flex-col items-end gap-1">
+                      {"recommended" in method && method.recommended ? (
+                        <span className="rounded-full border border-[var(--accent)]/40 bg-[var(--accent-muted)] px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-[var(--accent)]">
+                          Recommended
+                        </span>
+                      ) : null}
+                      <StatusBadge status={method.status} />
+                    </div>
                   </div>
                   <h2 className="mt-3 text-sm font-semibold text-[var(--foreground)]">{method.title}</h2>
                   <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">{method.description}</p>
@@ -263,7 +279,17 @@ export function DeploymentCenter({
             freeBlocked ? "pointer-events-none opacity-50" : ""
           }`}
         >
-          {source === "github" ? <DeployGithubPanel freeBlocked={freeBlocked} /> : null}
+          {source === "github" ? (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="text-lg font-semibold text-[var(--foreground)]">Deploy from GitHub</h2>
+                  <p className="mt-1 text-sm text-[var(--muted)]">
+                    Connect once, pick a repository, and Mr.Software hosts your static site with a live URL.
+                  </p>
+                </div>
+                <DeployGithubPanel freeBlocked={freeBlocked} />
+              </div>
+          ) : null}
 
           {source === "zip" ? (
             <div className="space-y-5">
@@ -375,11 +401,11 @@ export function DeploymentCenter({
 
               <div className="flex flex-wrap gap-3">
                 <Link
-                  href="/app/ai/blueprint"
+                  href="/app/factory"
                   className="btn-brand inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold"
                 >
                   <Sparkles className="h-4 w-4" aria-hidden />
-                  Open SaaS Blueprint
+                  Open Startup Factory
                 </Link>
                 <Link
                   href="/app/ai/deployment"

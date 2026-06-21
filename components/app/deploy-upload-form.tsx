@@ -7,9 +7,16 @@ import { FileArchive, Upload } from "lucide-react";
 type Props = {
   defaultName?: string;
   softwareId?: string;
+  onSuccess?: (deployment: { id: string }) => void;
+  redirectOnSuccess?: boolean;
 };
 
-export function DeployUploadForm({ defaultName = "", softwareId }: Props) {
+export function DeployUploadForm({
+  defaultName = "",
+  softwareId,
+  onSuccess,
+  redirectOnSuccess = true,
+}: Props) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(defaultName);
@@ -74,9 +81,12 @@ export function DeployUploadForm({ defaultName = "", softwareId }: Props) {
 
       setProgress("Deployed successfully.");
       if (data.deployment?.id) {
-        router.push(`/projects/${data.deployment.id}`);
-        router.refresh();
-      } else {
+        onSuccess?.({ id: data.deployment.id });
+        if (redirectOnSuccess) {
+          router.push(`/projects/${data.deployment.id}`);
+          router.refresh();
+        }
+      } else if (redirectOnSuccess) {
         router.push("/projects");
       }
     } catch {

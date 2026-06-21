@@ -88,6 +88,14 @@ export async function fulfillCheckoutSessionCompleted(
       stripeSubscriptionId: stripeSubscriptionId ?? undefined,
     },
   });
+
+  const purchase = await prisma.purchase.findUniqueOrThrow({
+    where: { userId_softwareId: { userId, softwareId } },
+    select: { id: true },
+  });
+
+  const { ensureLicenseKeyForPurchase } = await import("@/lib/trust/license-key");
+  await ensureLicenseKeyForPurchase(purchase.id);
 }
 
 export async function syncSubscriptionFromStripe(

@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       : null;
 
-  await prisma.purchase.upsert({
+  const purchase = await prisma.purchase.upsert({
     where: {
       userId_softwareId: { userId: session.id, softwareId: software.id },
     },
@@ -82,6 +82,9 @@ export async function POST(request: Request) {
       validUntil,
     },
   });
+
+  const { ensureLicenseKeyForPurchase } = await import("@/lib/trust/license-key");
+  await ensureLicenseKeyForPurchase(purchase.id);
 
   return NextResponse.json({ ok: true });
 }

@@ -71,6 +71,29 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const softwareId = pathname.match(/^\/software\/([^/]+)\/?$/)?.[1];
+  const catalogPortalPath =
+    pathname === "/marketplace" || pathname === "/marketplace/"
+      ? "/app/marketplace"
+      : softwareId
+        ? `/app/software/${softwareId}`
+        : null;
+
+  if (catalogPortalPath && token && secret) {
+    try {
+      const key = new TextEncoder().encode(secret);
+      const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
+      const role = payload.role;
+      if (role === "USER" || role === "DEVELOPER") {
+        const dest = new URL(catalogPortalPath, request.url);
+        dest.search = request.nextUrl.search;
+        return NextResponse.redirect(dest);
+      }
+    } catch {
+      // Invalid token — show public catalog
+    }
+  }
+
   const isAdminPath = pathname.startsWith("/api/admin");
   const isAdminUi = pathname.startsWith("/admin");
   const isSoftwareApi = pathname.startsWith("/api/software");
@@ -166,6 +189,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/marketplace",
+    "/software/:path*",
     "/store/:path*",
     "/app",
     "/app/:path*",

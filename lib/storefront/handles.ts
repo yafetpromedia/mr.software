@@ -30,6 +30,7 @@ const RESERVED_HANDLES = new Set([
   "payouts",
   "listings",
   "academy",
+  "report",
   "cloud",
   "studio",
   "mrsoftware",

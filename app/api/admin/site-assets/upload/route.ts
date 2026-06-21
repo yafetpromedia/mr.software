@@ -60,9 +60,9 @@ export async function POST(request: Request) {
 
   const scopeRaw = form.get("scope");
   const scope = typeof scopeRaw === "string" ? scopeRaw : "";
-  if (scope !== "logo" && scope !== "partner") {
+  if (scope !== "logo" && scope !== "partner" && scope !== "team") {
     return NextResponse.json(
-      { error: "scope must be logo or partner" },
+      { error: "scope must be logo, partner, or team" },
       { status: 400 },
     );
   }
@@ -91,7 +91,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unsupported image type" }, { status: 400 });
   }
 
-  const folder = scope === "logo" ? "public/brand/uploads/logo" : "public/brand/uploads/partners";
+  const folder =
+    scope === "logo"
+      ? "public/brand/uploads/logo"
+      : scope === "partner"
+        ? "public/brand/uploads/partners"
+        : "public/brand/uploads/team";
   const absoluteFolder = path.join(process.cwd(), folder);
   await mkdir(absoluteFolder, { recursive: true });
 
@@ -103,7 +108,9 @@ export async function POST(request: Request) {
   const publicUrl =
     scope === "logo"
       ? `/brand/uploads/logo/${fileName}`
-      : `/brand/uploads/partners/${fileName}`;
+      : scope === "partner"
+        ? `/brand/uploads/partners/${fileName}`
+        : `/brand/uploads/team/${fileName}`;
 
   return NextResponse.json({ url: publicUrl });
 }

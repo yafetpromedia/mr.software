@@ -3,6 +3,7 @@ import { oauthPublicOrigin } from "@/lib/auth/oauth-public-origin";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { DOWNLOAD_TOKEN_TTL_SEC } from "@/lib/monetization/constants";
+import { allowsFileDownload } from "@/lib/monetization/distribution-access";
 import { signDownloadToken } from "@/lib/monetization/download-token";
 import { userHasDownloadEntitlement } from "@/lib/monetization/entitlement";
 
@@ -22,6 +23,13 @@ export async function POST(request: Request, context: RouteContext) {
 
   if (!software) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (!allowsFileDownload(software.distributionType)) {
+    return NextResponse.json(
+      { error: "This product is cloud-hosted only. Open your instance from My software." },
+      { status: 403 },
+    );
   }
 
   const entitled = await userHasDownloadEntitlement({

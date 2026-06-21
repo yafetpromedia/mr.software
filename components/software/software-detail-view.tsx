@@ -1,7 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ReportTrigger } from "@/components/reports/report-trigger";
 import { SoftwarePurchaseActions } from "@/components/software-purchase-actions";
 import { ProductPlatformLinks } from "@/components/software/product-platform-links";
+import { SoftwareTrustPanel } from "@/components/software/software-trust-panel";
+import { StorefrontSocialLinks } from "@/components/storefront/storefront-social-links";
 import { VerifiedBadge } from "@/components/storefront/verified-badge";
 import { hasMobileStores, platformSummary } from "@/lib/software-platforms";
 import type { SoftwareItem } from "@/lib/software-item";
@@ -16,6 +19,8 @@ type Props = {
   chapaConfigured: boolean;
   telebirrEnabled: boolean;
   devCheckoutEnabled: boolean;
+  hostedAppUrl?: string | null;
+  variant?: "catalog" | "portal";
 };
 
 function pricingLabel(item: SoftwareItem) {
@@ -34,20 +39,41 @@ export function SoftwareDetailView({
   chapaConfigured,
   telebirrEnabled,
   devCheckoutEnabled,
+  hostedAppUrl,
+  variant = "catalog",
 }: Props) {
   const isFree = item.priceType === "free";
   const isSubscription = item.pricingModel === "SUBSCRIPTION";
+  const portal = variant === "portal";
+  const marketplaceHref = portal ? "/app/marketplace" : "/marketplace";
+  const storefrontHref = (handle: string) =>
+    portal ? `/app/store/${handle}` : `/@${handle}`;
+  const loginNext = portal ? `/app/software/${item.id}` : `/software/${item.id}`;
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] w-full overflow-x-hidden border-t border-stone-200 bg-[var(--background)] dark:border-[var(--border)]">
-      <div
-        className="bg-grid-pattern pointer-events-none fixed inset-0 -z-10 opacity-20 [mask-image:radial-gradient(ellipse_100%_80%_at_50%_-10%,black_20%,transparent_70%)]"
-        aria-hidden
-      />
+    <div
+      className={
+        portal
+          ? "relative w-full overflow-x-hidden"
+          : "min-h-[calc(100vh-3.5rem)] w-full overflow-x-hidden border-t border-stone-200 bg-[var(--background)] dark:border-[var(--border)]"
+      }
+    >
+      {!portal ? (
+        <div
+          className="bg-grid-pattern pointer-events-none fixed inset-0 -z-10 opacity-20 [mask-image:radial-gradient(ellipse_100%_80%_at_50%_-10%,black_20%,transparent_70%)]"
+          aria-hidden
+        />
+      ) : null}
 
-      <div className="relative mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+      <div
+        className={
+          portal
+            ? "relative mx-auto w-full max-w-6xl"
+            : "relative mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12"
+        }
+      >
         <Link
-          href="/marketplace"
+          href={marketplaceHref}
           className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-sm font-medium text-stone-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
@@ -99,9 +125,20 @@ export function SoftwareDetailView({
             </div>
 
             <div className="rounded-2xl border border-stone-200 bg-white p-6 dark:border-[var(--border)] dark:bg-[var(--surface)] sm:p-8">
-              <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500 dark:text-[var(--muted)]">
-                About
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500 dark:text-[var(--muted)]">
+                  About
+                </h2>
+                <ReportTrigger
+                  targetType="SOFTWARE"
+                  targetId={item.id}
+                  targetLabel={item.name}
+                  hasSession={hasSession}
+                  loginNext={loginNext}
+                  disabled={isOwner}
+                  disabledReason="You cannot report your own listing"
+                />
+              </div>
               <p className="mt-4 whitespace-pre-line text-base leading-[1.75] text-stone-800 dark:text-[var(--foreground)]">
                 {item.description}
               </p>
@@ -110,7 +147,10 @@ export function SoftwareDetailView({
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 { label: "Views", value: (item.viewCount ?? 0).toLocaleString() },
-                { label: "License", value: isFree ? "Free to use" : isSubscription ? "Monthly" : "One-time" },
+                {
+                  label: "Delivery",
+                  value: item.distributionTypeLabel ?? (isFree ? "Free to use" : isSubscription ? "Monthly" : "One-time"),
+                },
                 { label: "Platforms", value: platformSummary(item) },
               ].map((chip) => (
                 <div
@@ -126,6 +166,8 @@ export function SoftwareDetailView({
                 </div>
               ))}
             </div>
+
+            <SoftwareTrustPanel item={item} />
           </div>
 
           <aside className="space-y-4 lg:sticky lg:top-24">
@@ -145,6 +187,8 @@ export function SoftwareDetailView({
                 <SoftwarePurchaseActions
                   softwareId={item.id}
                   pricingModel={item.pricingModel}
+                  distributionType={item.distributionType}
+                  hostedAppUrl={hostedAppUrl}
                   entitled={entitled}
                   hasSession={hasSession}
                   isOwner={isOwner}
@@ -167,28 +211,53 @@ export function SoftwareDetailView({
             ) : null}
 
             {item.developerHandle ? (
-              <Link
-                href={`/@${item.developerHandle}`}
-                className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-white p-4 transition hover:border-orange-300 hover:shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)] dark:hover:border-[var(--accent)]/35"
-              >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-lg font-bold text-orange-600 dark:bg-[var(--accent-muted)] dark:text-[var(--accent)]">
-                  {item.developerName.charAt(0)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="truncate text-sm font-bold text-stone-900 dark:text-[var(--foreground)]">
-                      {item.developerName}
-                    </p>
-                    {developerVerified ? <VerifiedBadge size="sm" /> : null}
-                  </div>
-                  <p className="font-mono text-xs text-stone-500 dark:text-[var(--muted)]">
-                    @{item.developerHandle}
+              <div className="rounded-2xl border border-stone-200 bg-white p-4 dark:border-[var(--border)] dark:bg-[var(--surface)]">
+                {isOwner ? (
+                  <p className="mb-3 text-[0.65rem] font-bold uppercase tracking-wider text-orange-600 dark:text-[var(--accent)]">
+                    Your listing
                   </p>
-                </div>
-                <svg className="h-4 w-4 shrink-0 text-stone-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                </svg>
-              </Link>
+                ) : (
+                  <p className="mb-3 text-[0.65rem] font-bold uppercase tracking-wider text-stone-500 dark:text-[var(--muted)]">
+                    Published by
+                  </p>
+                )}
+                <Link
+                  href={storefrontHref(item.developerHandle)}
+                  className="flex items-center gap-3 transition hover:opacity-90"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-lg font-bold text-orange-600 dark:bg-[var(--accent-muted)] dark:text-[var(--accent)]">
+                    {item.developerName.charAt(0)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="truncate text-sm font-bold text-stone-900 dark:text-[var(--foreground)]">
+                        {item.developerName}
+                      </p>
+                      {developerVerified ? <VerifiedBadge size="sm" /> : null}
+                    </div>
+                    <p className="font-mono text-xs text-stone-500 dark:text-[var(--muted)]">
+                      @{item.developerHandle}
+                    </p>
+                  </div>
+                  <svg className="h-4 w-4 shrink-0 text-stone-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                  </svg>
+                </Link>
+                {item.developerSocialLinks ? (
+                  <StorefrontSocialLinks
+                    links={item.developerSocialLinks}
+                    className="mt-4 border-t border-stone-100 pt-4 dark:border-[var(--border)]"
+                  />
+                ) : null}
+                {isOwner ? (
+                  <Link
+                    href="/listings"
+                    className="mt-4 inline-flex text-xs font-semibold text-orange-600 hover:underline dark:text-[var(--accent)]"
+                  >
+                    Manage in workspace →
+                  </Link>
+                ) : null}
+              </div>
             ) : null}
           </aside>
         </div>

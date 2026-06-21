@@ -2,11 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { PricingModel, SoftwareCategory } from "@prisma/client";
+import type { PricingModel, SoftwareCategory, ProductLicenseTier, OpenSourceLicense, DistributionType } from "@prisma/client";
 import { SOFTWARE_CATEGORIES, SOFTWARE_CATEGORY_LABELS } from "@/lib/marketplace/categories";
+import { LicenseTierFields } from "@/components/trust/license-tier-fields";
+import { DistributionTypeFields } from "@/components/trust/distribution-type-fields";
+
+type InitialValues = {
+  name?: string;
+  description?: string;
+  category?: SoftwareCategory;
+  pricingModel?: PricingModel;
+  amount?: string;
+};
 
 type Props = {
   defaultCurrency?: string;
+  initial?: InitialValues;
+  onSuccess?: (software: { id: string; name: string }) => void;
+  submitLabel?: string;
 };
 
 function formatPriceLabel(
@@ -41,18 +54,26 @@ function formatPriceLabel(
   return { price: label, priceCents };
 }
 
-export function ListingCreateForm({ defaultCurrency = "etb" }: Props) {
+export function ListingCreateForm({
+  defaultCurrency = "etb",
+  initial,
+  onSuccess,
+  submitLabel = "Publish to marketplace",
+}: Props) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<SoftwareCategory>("DEVELOPER_TOOLS");
-  const [pricingModel, setPricingModel] = useState<PricingModel>("ONE_TIME");
-  const [amount, setAmount] = useState("");
+  const [name, setName] = useState(initial?.name ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [category, setCategory] = useState<SoftwareCategory>(initial?.category ?? "DEVELOPER_TOOLS");
+  const [pricingModel, setPricingModel] = useState<PricingModel>(initial?.pricingModel ?? "ONE_TIME");
+  const [amount, setAmount] = useState(initial?.amount ?? "");
   const [currency, setCurrency] = useState(defaultCurrency);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [assetUrl, setAssetUrl] = useState("");
   const [playStoreUrl, setPlayStoreUrl] = useState("");
   const [appStoreUrl, setAppStoreUrl] = useState("");
+  const [licenseTier, setLicenseTier] = useState<ProductLicenseTier>("PERSONAL");
+  const [openSourceLicense, setOpenSourceLicense] = useState<OpenSourceLicense>("MIT");
+  const [distributionType, setDistributionType] = useState<DistributionType>("COMPILED");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
@@ -89,6 +110,9 @@ export function ListingCreateForm({ defaultCurrency = "etb" }: Props) {
           assetUrl: assetUrl.trim() || undefined,
           playStoreUrl: playStoreUrl.trim() || undefined,
           appStoreUrl: appStoreUrl.trim() || undefined,
+          licenseTier,
+          openSourceLicense: licenseTier === "OPEN_SOURCE" ? openSourceLicense : undefined,
+          distributionType,
         }),
       });
 
@@ -98,13 +122,19 @@ export function ListingCreateForm({ defaultCurrency = "etb" }: Props) {
       }
 
       setStatus(`“${data.name ?? trimmedName}” is live on the marketplace.`);
-      setName("");
-      setDescription("");
-      setAmount("");
-      setThumbnailUrl("");
-      setAssetUrl("");
-      setPlayStoreUrl("");
-      setAppStoreUrl("");
+      onSuccess?.({ id: data.id ?? "", name: data.name ?? trimmedName });
+      if (!onSuccess) {
+        setName("");
+        setDescription("");
+        setAmount("");
+        setThumbnailUrl("");
+        setAssetUrl("");
+        setPlayStoreUrl("");
+        setAppStoreUrl("");
+        setLicenseTier("PERSONAL");
+        setOpenSourceLicense("MIT");
+        setDistributionType("COMPILED");
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Publish failed");
@@ -215,6 +245,18 @@ export function ListingCreateForm({ defaultCurrency = "etb" }: Props) {
           </>
         ) : null}
 
+        <LicenseTierFields
+          licenseTier={licenseTier}
+          openSourceLicense={openSourceLicense}
+          onLicenseTierChange={setLicenseTier}
+          onOpenSourceLicenseChange={setOpenSourceLicense}
+        />
+
+        <DistributionTypeFields
+          distributionType={distributionType}
+          onChange={setDistributionType}
+        />
+
         <div className="sm:col-span-2">
           <label htmlFor="listing-thumb" className="text-xs font-medium text-[var(--muted)]">
             Cover image URL
@@ -239,11 +281,14 @@ export function ListingCreateForm({ defaultCurrency = "etb" }: Props) {
             value={assetUrl}
             onChange={(e) => setAssetUrl(e.target.value)}
             className="mt-1 h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none ring-[var(--accent)]/30 focus:ring-2"
-            placeholder="Optional — or deploy a build from Deploy"
+            placeholder={distributionType === "HOSTED" ? "Optional — deploy from Deploy after listing" : "Optional — or deploy a build from Deploy"}
           />
           <p className="mt-1 text-xs text-[var(--muted)]">
-            Buyers get this link after purchase. You can also host a static build via{" "}
-            <span className="font-medium text-[var(--foreground)]">Deploy</span> after listing.
+            {distributionType === "HOSTED"
+              ? "Hosted products run on Mr.Software Cloud. Buyers receive a URL — not source code or downloads."
+              : distributionType === "COMPILED"
+                ? "Buyers download a package and enter their license key at startup. Verify via POST /api/licenses/verify."
+                : "Buyers get this link after purchase. You can also host a static build via Deploy after listing."}
           </p>
         </div>
 
@@ -292,7 +337,7 @@ export function ListingCreateForm({ defaultCurrency = "etb" }: Props) {
         disabled={saving}
         className="btn-brand btn-brand-shine inline-flex h-10 items-center rounded-xl px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {saving ? "Publishing…" : "Publish to marketplace"}
+        {saving ? "Publishing…" : submitLabel}
       </button>
     </form>
   );

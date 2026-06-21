@@ -35,8 +35,32 @@ export function AuthSplitLayout({
   footerHref = "/marketplace",
   footerLabel = "Browse catalog",
 }: Props) {
+  const footerLinks = (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--muted)] transition hover:text-[var(--foreground)]"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+        Back to website
+      </Link>
+      <Link
+        href={footerHref}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] transition hover:gap-2"
+      >
+        {footerLabel}
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+        </svg>
+      </Link>
+    </div>
+  );
+
   return (
-    <div className="relative mx-auto grid min-h-[calc(100vh-3.5rem)] max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:py-14">
+    <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-14">
+      <div className="relative grid min-h-[calc(100vh-3.5rem)] gap-8 lg:grid-cols-12 lg:gap-14">
       <div
         className="bg-grid-pattern pointer-events-none absolute inset-0 opacity-[0.12] [mask-image:radial-gradient(ellipse_80%_70%_at_20%_40%,black_20%,transparent_75%)]"
         aria-hidden
@@ -73,15 +97,7 @@ export function AuthSplitLayout({
             ))}
           </ul>
 
-          <Link
-            href={footerHref}
-            className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] transition hover:gap-2"
-          >
-            {footerLabel}
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-            </svg>
-          </Link>
+          <div className="mt-6">{footerLinks}</div>
         </div>
       </div>
 
@@ -97,18 +113,14 @@ export function AuthSplitLayout({
                   <LogoMark size="md" rounded="xl" />
                   Mr.Software
                 </Link>
-                <Link
-                  href="/marketplace"
-                  className="text-xs font-medium text-[var(--muted)] transition hover:text-[var(--accent)]"
-                >
-                  Catalog
-                </Link>
               </div>
               {children}
             </div>
           </div>
+          <div className="mt-5 lg:hidden">{footerLinks}</div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

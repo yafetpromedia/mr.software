@@ -137,6 +137,9 @@ export async function fulfillChapaPurchase(txRef: string): Promise<boolean> {
     where: { id: purchase.id },
     data: { status: PurchaseStatus.ACTIVE },
   });
+
+  const { ensureLicenseKeyForPurchase } = await import("@/lib/trust/license-key");
+  await ensureLicenseKeyForPurchase(purchase.id);
   return true;
 }
 

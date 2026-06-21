@@ -1,4 +1,5 @@
 import { AdminSiteSettingsForm } from "@/components/admin/admin-site-settings-form";
+import { getLaunchMapMode } from "@/lib/launch-map/launch-map";
 import { getPublicSiteSettings } from "@/lib/site-settings";
 
 export const metadata = {
@@ -6,7 +7,10 @@ export const metadata = {
 };
 
 export default async function AdminSiteSettingsPage() {
-  const settings = await getPublicSiteSettings();
+  const [settings, launchMapMode] = await Promise.all([
+    getPublicSiteSettings(),
+    getLaunchMapMode(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -15,10 +19,10 @@ export default async function AdminSiteSettingsPage() {
           Site settings
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-[var(--muted)] sm:text-base">
-          Manage brand logo and partnerships shown on the landing page.
+          Manage brand logo, global launch map, and partnerships on the landing page.
         </p>
       </div>
-      <AdminSiteSettingsForm initialSettings={settings} />
+      <AdminSiteSettingsForm initialSettings={{ ...settings, launchMapMode }} />
     </div>
   );
 }

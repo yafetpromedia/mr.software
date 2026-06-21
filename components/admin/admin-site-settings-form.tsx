@@ -2,12 +2,32 @@
 
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
+import type { LaunchMapMode } from "@prisma/client";
 import type { Partner } from "@/lib/landing/partners";
 
 type SiteSettings = {
   logoUrl: string;
   partners: Partner[];
+  launchMapMode: LaunchMapMode;
 };
+
+const LAUNCH_MAP_MODES: { value: LaunchMapMode; label: string; hint: string }[] = [
+  {
+    value: "HYBRID",
+    label: "Hybrid (recommended)",
+    hint: "Show real launches when available; fill with demo arcs if the platform is still growing.",
+  },
+  {
+    value: "LIVE",
+    label: "Live only",
+    hint: "Only real deployments, listings, and sales. Falls back to demo if empty.",
+  },
+  {
+    value: "DEMO",
+    label: "Demo / cinematic",
+    hint: "Always use the curated CampusOne story arcs for marketing demos.",
+  },
+];
 
 function emptyPartner(): Partner {
   return { name: "", logo: "", href: "", label: "" };
@@ -19,6 +39,9 @@ export function AdminSiteSettingsForm({
   initialSettings: SiteSettings;
 }) {
   const [logoUrl, setLogoUrl] = useState(initialSettings.logoUrl);
+  const [launchMapMode, setLaunchMapMode] = useState<LaunchMapMode>(
+    initialSettings.launchMapMode ?? "HYBRID",
+  );
   const [partners, setPartners] = useState<Partner[]>(
     initialSettings.partners.length > 0 ? initialSettings.partners : [emptyPartner()],
   );
@@ -34,6 +57,7 @@ export function AdminSiteSettingsForm({
     const sourcePartners = nextPartners ?? partners;
     return {
       logoUrl: (nextLogoUrl ?? logoUrl).trim(),
+      launchMapMode,
       partners: sourcePartners
         .map((p) => ({
           name: p.name?.trim() ?? "",
@@ -213,6 +237,39 @@ export function AdminSiteSettingsForm({
           ) : (
             <p className="text-xs text-[var(--muted)]">No logo selected yet.</p>
           )}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <h2 className="text-sm font-semibold text-[var(--foreground)]">Global launch map</h2>
+        <p className="mt-1 text-xs text-[var(--muted)]">
+          Controls homepage globe arcs and the live activity feed at{" "}
+          <code className="text-[var(--foreground)]">/explore/map</code>.
+        </p>
+        <div className="mt-4 grid gap-2">
+          {LAUNCH_MAP_MODES.map((mode) => (
+            <label
+              key={mode.value}
+              className={`flex cursor-pointer gap-3 rounded-xl border p-3 transition ${
+                launchMapMode === mode.value
+                  ? "border-[var(--accent)] bg-[var(--accent-muted)]/40"
+                  : "border-[var(--border)] hover:border-[var(--accent)]/25"
+              }`}
+            >
+              <input
+                type="radio"
+                name="launchMapMode"
+                value={mode.value}
+                checked={launchMapMode === mode.value}
+                onChange={() => setLaunchMapMode(mode.value)}
+                className="mt-1"
+              />
+              <span>
+                <span className="block text-sm font-medium text-[var(--foreground)]">{mode.label}</span>
+                <span className="mt-0.5 block text-xs text-[var(--muted)]">{mode.hint}</span>
+              </span>
+            </label>
+          ))}
         </div>
       </section>
 

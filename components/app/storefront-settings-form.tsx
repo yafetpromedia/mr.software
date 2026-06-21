@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { StorefrontTheme } from "@prisma/client";
 import { normalizeHandle } from "@/lib/storefront/handles";
+import {
+  SOCIAL_PLATFORM_IDS,
+  SOCIAL_PLATFORM_META,
+  type SocialPlatformId,
+  type StorefrontSocialLinks,
+} from "@/lib/storefront/social-links";
 import { STOREFRONT_THEMES } from "@/lib/storefront/themes";
 import type { OwnStorefront } from "@/lib/storefront/storefront";
 
@@ -12,12 +18,19 @@ type Props = {
   initial: OwnStorefront | null;
 };
 
+function emptySocialFormState(links?: StorefrontSocialLinks): Record<SocialPlatformId, string> {
+  return Object.fromEntries(
+    SOCIAL_PLATFORM_IDS.map((id) => [id, links?.[id] ?? ""]),
+  ) as Record<SocialPlatformId, string>;
+}
+
 export function StorefrontSettingsForm({ initial }: Props) {
   const router = useRouter();
   const [handle, setHandle] = useState(initial?.handle ?? "");
   const [tagline, setTagline] = useState(initial?.tagline ?? "");
   const [bio, setBio] = useState(initial?.bio ?? "");
   const [website, setWebsite] = useState(initial?.website ?? "");
+  const [socialLinks, setSocialLinks] = useState(() => emptySocialFormState(initial?.socialLinks));
   const [theme, setTheme] = useState<StorefrontTheme>(initial?.theme ?? "CLASSIC");
   const [showRevenuePublic, setShowRevenuePublic] = useState(initial?.showRevenuePublic ?? false);
   const [saved, setSaved] = useState<OwnStorefront | null>(initial);
@@ -63,7 +76,15 @@ export function StorefrontSettingsForm({ initial }: Props) {
         method: "PUT",
         headers: { "content-type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ handle, tagline, bio, website, theme, showRevenuePublic }),
+        body: JSON.stringify({
+          handle,
+          tagline,
+          bio,
+          website,
+          socialLinks,
+          theme,
+          showRevenuePublic,
+        }),
       });
       const data = (await res.json()) as { error?: string; storefront?: OwnStorefront };
       if (!res.ok || !data.storefront) {
@@ -71,6 +92,7 @@ export function StorefrontSettingsForm({ initial }: Props) {
       }
       setSaved(data.storefront);
       setHandle(data.storefront.handle);
+      setSocialLinks(emptySocialFormState(data.storefront.socialLinks));
       setTheme(data.storefront.theme);
       setShowRevenuePublic(data.storefront.showRevenuePublic);
       setStatus("Storefront saved. Your public page is live.");
@@ -212,6 +234,35 @@ export function StorefrontSettingsForm({ initial }: Props) {
           className="mt-1 h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none ring-[var(--accent)]/30 focus:ring-2"
           placeholder="yafetpromedia.com"
         />
+      </div>
+
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--background)]/50 p-4">
+        <p className="text-sm font-semibold text-[var(--foreground)]">Social profiles</p>
+        <p className="mt-1 text-xs text-[var(--muted)]">
+          Add links so visitors can follow you on other platforms. Icons appear on your public store.
+        </p>
+        <div className="mt-4 space-y-3">
+          {SOCIAL_PLATFORM_IDS.map((id) => {
+            const meta = SOCIAL_PLATFORM_META[id];
+            return (
+              <div key={id}>
+                <label htmlFor={`sf-social-${id}`} className="text-xs font-medium text-[var(--muted)]">
+                  {meta.label}
+                </label>
+                <input
+                  id={`sf-social-${id}`}
+                  value={socialLinks[id]}
+                  onChange={(e) =>
+                    setSocialLinks((prev) => ({ ...prev, [id]: e.target.value }))
+                  }
+                  className="mt-1 h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none ring-[var(--accent)]/30 focus:ring-2"
+                  placeholder={meta.placeholder}
+                />
+                <p className="mt-0.5 text-[0.65rem] text-[var(--muted)]">{meta.hint}</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {error ? (

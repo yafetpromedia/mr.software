@@ -6,6 +6,7 @@ import { OrbitControls, Stars } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import { AFRICA_VIEW, GLOBE_RADIUS, latLngToVector3 } from "@/lib/landing/globe-math";
+import type { DeploymentArc } from "@/lib/landing/africa-hero-data";
 import { AfricaGlobeSpin } from "@/components/landing/africa-launch/africa-locked-spin";
 import { RealEarthGlobe } from "@/components/landing/africa-launch/real-earth-globe";
 import { GlobeArcFlow } from "@/components/landing/africa-launch/globe-arc-flow";
@@ -60,6 +61,7 @@ export type AfricaGlobeSceneProps = {
   introComplete?: boolean;
   onReady?: () => void;
   className?: string;
+  deploymentArcs?: DeploymentArc[];
 };
 
 export function AfricaGlobeScene({
@@ -69,6 +71,7 @@ export function AfricaGlobeScene({
   introComplete = true,
   onReady,
   className,
+  deploymentArcs,
 }: AfricaGlobeSceneProps) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const globeGroupRef = useRef<Group | null>(null);
@@ -131,6 +134,7 @@ export function AfricaGlobeScene({
             show={loaded && introComplete}
             reduceMotion={!!reduceMotion}
             isLight={isLight}
+            arcs={deploymentArcs}
           />
         </group>
         {!isLight ? (

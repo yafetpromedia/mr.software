@@ -1,26 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { AuthNav } from "@/components/auth-nav";
+import { useAuthMe, workspaceHrefFor } from "@/components/auth/use-auth-me";
+import { PUBLIC_SITE_NAV, signedInSiteNav } from "@/components/site-nav-links";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
-const NAV = [
-  { href: "/#features", label: "Features" },
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/academy", label: "Academy" },
-  { href: "/#partners", label: "Partners" },
-  { href: "/#testimonials", label: "Stories" },
-  { href: "/#team", label: "Team" },
-  { href: "/app/ai", label: "Mr.Software AI" },
-] as const;
-
 export function SiteHeader() {
+  const me = useAuthMe();
   const [elevated, setElevated] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const reduce = useReducedMotion();
+
+  const nav = useMemo(() => {
+    if (me === undefined) return PUBLIC_SITE_NAV;
+    if (!me) return PUBLIC_SITE_NAV;
+    return signedInSiteNav(me);
+  }, [me]);
+
+  const homeHref = me ? workspaceHrefFor(me) : "/";
+  const mobileCta = me
+    ? { href: workspaceHrefFor(me), label: "Open workspace" }
+    : { href: "/marketplace", label: "Explore marketplace" };
 
   useEffect(() => {
     const onScroll = () => setElevated(window.scrollY > 8);
@@ -49,7 +53,7 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
         <Link
-          href="/"
+          href={homeHref}
           className="flex min-w-0 shrink items-center gap-2 font-display text-sm font-semibold tracking-tight text-[var(--foreground)]"
           onClick={() => setMenuOpen(false)}
         >
@@ -61,7 +65,7 @@ export function SiteHeader() {
           className="hidden items-center gap-0.5 lg:flex"
           aria-label="Main navigation"
         >
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <HeaderLink key={item.href} href={item.href}>
               {item.label}
             </HeaderLink>
@@ -114,7 +118,7 @@ export function SiteHeader() {
             className="overflow-hidden border-t border-[var(--border)] bg-[var(--surface)] lg:hidden"
           >
             <nav className="flex flex-col gap-1 px-4 py-4 sm:px-6" aria-label="Mobile navigation">
-              {NAV.map((item) => (
+              {nav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -125,11 +129,11 @@ export function SiteHeader() {
                 </Link>
               ))}
               <Link
-                href="/marketplace"
+                href={mobileCta.href}
                 className="btn-brand mt-2 flex h-11 items-center justify-center rounded-lg text-sm font-semibold"
                 onClick={() => setMenuOpen(false)}
               >
-                Explore marketplace
+                {mobileCta.label}
               </Link>
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
                 <AuthNav />

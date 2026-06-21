@@ -1,8 +1,12 @@
 import { LandingHero } from "@/components/landing/landing-hero";
 import { listFeaturedStorefronts } from "@/lib/storefront/storefront";
+import { getLaunchMapPayload } from "@/lib/launch-map/launch-map";
 
 export async function LandingHeroSection() {
-  const stores = await listFeaturedStorefronts(1);
+  const [stores, initialLaunchMap] = await Promise.all([
+    listFeaturedStorefronts(1),
+    getLaunchMapPayload(),
+  ]);
   const featured = stores[0] ?? {
     handle: "devstudio",
     name: "Dev Studio",
@@ -15,6 +19,7 @@ export async function LandingHeroSection() {
 
   return (
     <LandingHero
+      initialLaunchMap={initialLaunchMap}
       featuredStore={{
         handle: featured.handle,
         name: featured.name,

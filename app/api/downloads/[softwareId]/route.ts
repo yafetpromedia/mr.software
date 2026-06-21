@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { assertFetchableAssetUrl } from "@/lib/monetization/asset-fetch";
+import { allowsFileDownload } from "@/lib/monetization/distribution-access";
 import { userHasDownloadEntitlement } from "@/lib/monetization/entitlement";
 import { verifyDownloadToken } from "@/lib/monetization/download-token";
 import { getClientIp } from "@/lib/security/client-ip";
@@ -48,6 +49,13 @@ export async function GET(request: Request, context: RouteContext) {
 
   if (!software) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (!allowsFileDownload(software.distributionType)) {
+    return NextResponse.json(
+      { error: "This product is not available as a file download" },
+      { status: 403 },
+    );
   }
 
   const user = await prisma.user.findUnique({

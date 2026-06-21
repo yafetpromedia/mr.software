@@ -3,20 +3,23 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { LIVE_EVENTS } from "@/lib/landing/africa-hero-data";
+import { useLaunchMapOptional } from "@/components/launch-map/launch-map-provider";
 
 export function LiveEventsFeed() {
   const reduce = useReducedMotion();
+  const launchMap = useLaunchMapOptional();
+  const events = launchMap?.data.events ?? LIVE_EVENTS;
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     if (reduce) return;
     const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % LIVE_EVENTS.length);
+      setIndex((i) => (i + 1) % events.length);
     }, 3000);
     return () => window.clearInterval(id);
-  }, [reduce]);
+  }, [reduce, events.length]);
 
-  const event = LIVE_EVENTS[index]!;
+  const event = events[index % events.length]!;
 
   return (
     <div className="w-full max-w-sm">

@@ -6,6 +6,7 @@ import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
 import { prisma } from "@/lib/prisma";
 import { countQuotaDeployments, getUserPlan } from "@/lib/subscription/limits";
 import { getStorefrontAnalytics } from "@/lib/storefront/storefront";
+import { getFactoryProgress } from "@/lib/factory/progress";
 
 export const metadata = {
   title: "Command center",
@@ -53,6 +54,7 @@ export default async function DeveloperOverviewPage() {
     storefront,
     storefrontRecord,
     sub,
+    factoryProgress,
   ] = await Promise.all([
     prisma.deployment.findMany({
       where: { userId: session.id },
@@ -87,6 +89,7 @@ export default async function DeveloperOverviewPage() {
       where: { userId: session.id },
       select: { plan: true, status: true },
     }),
+    getFactoryProgress(session.id),
   ]);
 
   const countByStatus = (status: DeploymentStatus) =>
@@ -132,6 +135,7 @@ export default async function DeveloperOverviewPage() {
         maxFree,
         atLimit,
       }}
+      factoryProgress={factoryProgress}
     />
   );
 }

@@ -23,6 +23,7 @@ const developers = [
 ] as const;
 
 const company = [
+  { href: "/report", label: "Report a problem" },
   { href: "/auth/login", label: "Log in" },
   { href: "/auth/register", label: "Register" },
 ] as const;

@@ -33,5 +33,5 @@ export default async function WorkspaceStorefrontPage({ params }: Props) {
   const myHandle = await getDeveloperHandle(session.id);
   const isStoreOwner = myHandle === store.handle;
 
-  return <StorefrontView store={store} isStoreOwner={isStoreOwner} />;
+  return <StorefrontView store={store} isStoreOwner={isStoreOwner} hasSession={Boolean(session)} />;
 }

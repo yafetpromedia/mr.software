@@ -1,8 +1,13 @@
-import { PricingModel, type DeveloperStorefront, type Software, type SoftwareCategory, type User } from "@prisma/client";
+import { PricingModel, type DeveloperStorefront, type Software, type SoftwareCategory, type User, type ProductLicenseTier, type OpenSourceLicense, type DistributionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { categoryLabel } from "@/lib/marketplace/categories";
+import { parseStorefrontSocialLinks, type StorefrontSocialLinks } from "@/lib/storefront/social-links";
 import type { SoftwareItem } from "@/lib/software-item";
 import { resolveThumbnailUrl } from "@/lib/software-thumbnails";
+import { applyTrustOnSoftwarePublish } from "@/lib/trust/publish-trust";
+import { formatFingerprintShort } from "@/lib/trust/fingerprint";
+import { licenseTierLabel, OPEN_SOURCE_LABELS } from "@/lib/trust/license-types";
+import { distributionTypeLabel } from "@/lib/trust/distribution-types";
 
 function firstLine(text: string, maxLen: number): string {
   const line = text.split(/\r?\n/).find((l) => l.trim().length > 0) ?? text;
@@ -12,7 +17,10 @@ function firstLine(text: string, maxLen: number): string {
 }
 
 export function mapSoftwareToItem(
-  row: Software & { developer: User & { storefront?: DeveloperStorefront | null } },
+  row: Software & {
+    developer: User & { storefront?: DeveloperStorefront | null };
+    ownershipRecord?: { recordNumber: string } | null;
+  },
   options?: { includeStripe?: boolean },
 ): SoftwareItem {
   const priceType = row.pricingModel === PricingModel.FREE ? "free" : "paid";
@@ -28,12 +36,24 @@ export function mapSoftwareToItem(
     currency: row.currency,
     developerName: row.developer.name,
     developerHandle: row.developer.storefront?.handle,
+    developerSocialLinks: parseStorefrontSocialLinks(row.developer.storefront?.socialLinksJson),
     category: categoryLabel(row.category),
     categoryKey: row.category,
     thumbnailUrl: resolveThumbnailUrl(row.thumbnailUrl, row.id),
     playStoreUrl: row.playStoreUrl,
     appStoreUrl: row.appStoreUrl,
     viewCount: row.viewCount,
+    licenseTier: row.licenseTier,
+    licenseTierLabel: licenseTierLabel(row.licenseTier),
+    openSourceLicense: row.openSourceLicense
+      ? OPEN_SOURCE_LABELS[row.openSourceLicense]
+      : undefined,
+    ownershipRecordNumber: row.ownershipRecord?.recordNumber,
+    contentFingerprint: row.contentFingerprint
+      ? formatFingerprintShort(row.contentFingerprint)
+      : undefined,
+    distributionType: row.distributionType,
+    distributionTypeLabel: distributionTypeLabel(row.distributionType),
   };
   if (options?.includeStripe) {
     return { ...base, stripePriceId: row.stripePriceId };
@@ -44,7 +64,7 @@ export function mapSoftwareToItem(
 export async function listSoftware(): Promise<SoftwareItem[]> {
   const rows = await prisma.software.findMany({
     orderBy: { createdAt: "desc" },
-    include: { developer: { include: { storefront: true } } },
+    include: { developer: { include: { storefront: true } }, ownershipRecord: true },
   });
   return rows.map((r) => mapSoftwareToItem(r));
 }
@@ -52,7 +72,7 @@ export async function listSoftware(): Promise<SoftwareItem[]> {
 export async function getSoftwareById(id: string): Promise<SoftwareItem | null> {
   const row = await prisma.software.findUnique({
     where: { id },
-    include: { developer: { include: { storefront: true } } },
+    include: { developer: { include: { storefront: true } }, ownershipRecord: true },
   });
   return row ? mapSoftwareToItem(row, { includeStripe: true }) : null;
 }
@@ -80,7 +100,7 @@ export async function getSoftwareDetailBundle(id: string): Promise<{
 } | null> {
   const row = await prisma.software.findUnique({
     where: { id },
-    include: { developer: { include: { storefront: true } } },
+    include: { developer: { include: { storefront: true } }, ownershipRecord: true },
   });
   if (!row) return null;
   return {
@@ -103,7 +123,16 @@ export async function createSoftwareRecord(input: {
   category?: SoftwareCategory;
   playStoreUrl?: string | null;
   appStoreUrl?: string | null;
-}): Promise<SoftwareItem> {
+  licenseTier?: ProductLicenseTier;
+  openSourceLicense?: OpenSourceLicense | null;
+  distributionType?: DistributionType;
+}): Promise<SoftwareItem & { ownershipRecordNumber: string; contentFingerprint: string }> {
+  const developer = await prisma.user.findUnique({
+    where: { id: input.developerId },
+    select: { name: true },
+  });
+  if (!developer) throw new Error("Developer not found");
+
   const row = await prisma.software.create({
     data: {
       name: input.name,
@@ -115,6 +144,9 @@ export async function createSoftwareRecord(input: {
       assetUrl: input.assetUrl,
       developerId: input.developerId,
       category: input.category ?? "DEVELOPER_TOOLS",
+      licenseTier: input.licenseTier ?? "PERSONAL",
+      openSourceLicense: input.openSourceLicense ?? null,
+      distributionType: input.distributionType ?? "COMPILED",
       thumbnailUrl:
         typeof input.thumbnailUrl === "string" && input.thumbnailUrl.trim()
           ? input.thumbnailUrl.trim()
@@ -132,7 +164,28 @@ export async function createSoftwareRecord(input: {
           ? input.appStoreUrl.trim()
           : null,
     },
-    include: { developer: { include: { storefront: true } } },
+    include: { developer: { include: { storefront: true } }, ownershipRecord: true },
   });
-  return mapSoftwareToItem(row);
+
+  const trust = await applyTrustOnSoftwarePublish({
+    softwareId: row.id,
+    developerId: input.developerId,
+    developerName: developer.name,
+    name: input.name,
+    description: input.description,
+    assetUrl: input.assetUrl,
+    licenseTier: input.licenseTier ?? "PERSONAL",
+    openSourceLicense: input.openSourceLicense,
+  });
+
+  const refreshed = await prisma.software.findUniqueOrThrow({
+    where: { id: row.id },
+    include: { developer: { include: { storefront: true } }, ownershipRecord: true },
+  });
+
+  return {
+    ...mapSoftwareToItem(refreshed),
+    ownershipRecordNumber: trust.ownershipRecordNumber,
+    contentFingerprint: trust.contentFingerprint,
+  };
 }

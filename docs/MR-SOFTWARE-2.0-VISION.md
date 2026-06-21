@@ -3,31 +3,46 @@
 **Status:** Strategic north star · **Owner:** YafetPromedia  
 **Last updated:** June 2026
 
+**Related:** [Strategic review](./STRATEGIC-REVIEW.md) · [Engineering roadmap](./ROADMAP-2.0.md) · [Technical spec](./PROJECT.md)
+
 ---
 
 ## Overview
 
 Mr.Software is no longer just a software marketplace or deployment platform.
 
-It becomes a **Software Business Operating System** built for developers, startups, creators, and businesses.
+It becomes a **Software Business Operating System** — the infrastructure layer where African developers **build, launch, deploy, monetize, and scale** software businesses.
+
+### Positioning
+
+> **AI helps you build. You own the system.**
+
+Differentiation: unlike closed AI builders, developers keep their code, deploy path, storefront identity (`/@handle`), and revenue data on Mr.Software.
 
 ### Mission
 
 **Build → Deploy → Sell → Manage → Scale** from one platform.
 
+### North star (one line)
+
+> *The platform where African developers turn software into businesses.*
+
 Mr.Software is a product ecosystem owned by **YafetPromedia**. Products such as CampusOne, future SaaS applications, templates, APIs, and digital solutions can all be published and monetized through Mr.Software.
 
 ### Strategic shift
 
-| Mr.Software 1.x (today) | Mr.Software 2.0 (target) |
-|---------------------------|---------------------------|
-| Marketplace + deploy + auth | Full software business OS |
-| Product-centric URLs | **Developer storefronts** at `/@handle` |
+| Mr.Software 1.x | Mr.Software 2.0 (target) |
+|-------------------|---------------------------|
+| Marketplace + deploy + auth | **Continent-wide startup creation ecosystem** |
+| Upload → sell | **Startup Factory:** idea → validation → build → deploy → launch → revenue |
+| Product-centric URLs | **Developer storefronts** at `/@handle` (identity layer) |
 | Stripe-only payments | African + global payment rails |
-| Rule-based AI builder | AI co-pilot across product lifecycle |
-| Placeholder Academy | Learn → build → publish loop |
+| Isolated AI tools | **AI startup team** + co-pilot across lifecycle |
+| Academy placeholder | Learn → build → publish loop (**shipped**) |
 
 The goal is **not** to beat GitHub, Vercel, or Stripe individually. The goal is to **unify everything software entrepreneurs need** into one platform built for Africa and the world.
+
+**Strongest asset:** every developer gets a storefront, AI tools, deployment infrastructure, and monetization in **one ecosystem** — not four separate products.
 
 ---
 
@@ -88,8 +103,8 @@ Upload Project → Build → Deploy → Generate URL → Publish to Marketplace
 
 No external hosting required.
 
-**Today:** ZIP deploy, slugged URLs, local/S3 storage, preview API, deployment status lifecycle.  
-**Next:** Custom domains, SSL, build pipelines, deploy-from-marketplace publish.
+**Today:** ZIP deploy, **GitHub OAuth deploy** (`/deploy?source=github`), slugged URLs, local/S3 storage, preview API, deployment status lifecycle.  
+**Next:** GitHub-first factory onboarding, custom domains, SSL, deploy → marketplace publish in one flow.
 
 ---
 
@@ -156,8 +171,8 @@ AI assists — **does not replace** developers.
 
 AI is a **co-pilot**, not an automatic startup generator.
 
-**Today:** Rule-based startup generator, builder UI, copilot panel shell.  
-**Next:** LLM-backed co-pilot wired to product/listing/deploy flows.
+**Today:** Startup advisor (LLM when configured), rule-based + saved builder, copilot panel shell.  
+**Next:** **Startup Factory** wizard chaining advisor → builder → deploy → listing; **AI startup team** personas (`lib/ai/startup-team.ts`).
 
 ---
 
@@ -175,8 +190,55 @@ Learning ecosystem.
 
 Students learn and immediately publish products on Mr.Software.
 
-**Today:** Placeholder links only.  
-**Next:** Course CMS, progress tracking, publish-from-lesson workflow.
+**Today:** Admin CMS (`/admin/academy`), public catalog, course pages, progress tracking.  
+**Next:** Publish-from-lesson workflow tied to Startup Factory.
+
+---
+
+## Four north star systems (2.0)
+
+These systems turn Mr.Software from “marketplace + hosting” into a **startup creation ecosystem**. Full phased plan: [`ROADMAP-2.0.md`](./ROADMAP-2.0.md).
+
+### 1. Startup Factory
+
+**Target flow:**
+
+```text
+Idea → AI Validation → AI Builder → Deploy → Launch → Marketplace → Revenue
+```
+
+Users should **create startups inside Mr.Software**, not only upload ZIPs. Individual steps exist today; Phase A wires them into one guided factory.
+
+### 2. Global infrastructure map
+
+**Story:** Projects emerge from Africa and connect globally.
+
+```text
+Addis Ababa  → CampusOne
+Nairobi      → Fintech App
+Lagos        → Ecommerce Platform
+Cairo        → Healthcare SaaS
+```
+
+**Today:** Full-viewport Africa → World globe on logged-out homepage (`components/landing/africa-launch/`), demo arcs and CampusOne narrative in `lib/landing/africa-hero-data.ts`.  
+**Next:** Live feed from real deployments and listings on the map.
+
+### 3. One-click GitHub deployment
+
+```text
+Connect GitHub → Select repository → Deploy → mr.software/…
+```
+
+**Today:** OAuth, repo picker, and deploy API shipped; Deployment Center UI at `/deploy`.  
+**Next:** Default path in Startup Factory; post-deploy listing draft.
+
+### 4. AI startup team
+
+```text
+Human Founder + Mr Strategist + Mr Designer + Mr Developer + Mr Marketer
+```
+
+Every startup gets a **named AI team** — unique vs a single generic chatbot. Role definitions: `lib/ai/startup-team.ts`. Strategist-like output exists via startup advisor; designer/marketer outputs are Phase D.
 
 ---
 
@@ -280,16 +342,19 @@ Mr.Software becomes **Africa's largest software ecosystem** where developers can
 
 | Vision pillar | Primary routes / modules today |
 |---------------|-------------------------------|
-| Marketplace | `/marketplace`, `/software/[id]`, `/api/software`, Stripe |
-| Cloud | `/deploy`, `/projects`, `/api/deploy` |
-| Creator dashboard | `/app`, `/listings`, `/earnings`, `/payouts` |
-| Payments | Stripe webhooks, `/api/checkout` |
-| AI | `/app/builder`, `/api/generate-startup` |
-| Academy | Not built |
-| Storefronts | `/@handle`, `/settings` storefront form, `lib/storefront/` |
-| Trust (landing) | Partners CMS, testimonials review |
+| Marketplace | `/marketplace`, `/app/marketplace`, `/software/[id]`, Stripe, entitlements |
+| Cloud | `/deploy`, GitHub OAuth (`/api/github/*`), `/projects`, `/api/deploy` |
+| Creator dashboard | `/app`, `/listings`, `/earnings`, `/payouts`, `/app/storefront` |
+| Payments | Stripe webhooks, `/api/checkout`, Chapa hooks (where configured) |
+| AI / Factory | `/app/ai`, `/app/builder`, `/api/ai/startup-advisor`, `/api/generate-startup` |
+| AI team (spec) | `lib/ai/startup-team.ts` |
+| Academy | `/academy`, `/admin/academy`, course progress |
+| Storefronts | `/@handle`, social links, themes, verified badge, `lib/storefront/` |
+| Developer access | `/app/settings#developer`, `/admin/developer-requests` |
+| Trust & map | Africa globe hero, partners CMS, testimonials, team CMS |
+| Reports | `/api/reports`, `/admin/reports` |
 
-See also: [`docs/PROJECT.md`](./PROJECT.md) for implementation inventory and API reference.
+See also: [`PROJECT.md`](./PROJECT.md) · [`USER-ADMIN-GUIDE.md`](./USER-ADMIN-GUIDE.md) · [`STRATEGIC-REVIEW.md`](./STRATEGIC-REVIEW.md).
 
 ---
 

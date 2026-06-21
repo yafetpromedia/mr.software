@@ -5,6 +5,9 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getAppOpenUrlForSoftware } from "@/lib/portal/resolve-app-open-url";
 import { formatMoneyAmount } from "@/lib/portal/format-amount";
+import { CopyLicenseKey } from "@/components/trust/copy-license-key";
+import { allowsFileDownload, isHostedOnly, requiresLicenseKeyAtRuntime } from "@/lib/monetization/distribution-access";
+import { distributionTypeLabel } from "@/lib/trust/distribution-types";
 
 type Props = { params: Promise<{ softwareId: string }> };
 
@@ -13,11 +16,14 @@ export default async function OwnedSoftwareDetailPage({ params }: Props) {
   const session = await getSession();
   if (!session) notFound();
 
-  const [purchase, software] = await Promise.all([
+  const [purchase, software, licenseKey] = await Promise.all([
     prisma.purchase.findFirst({
       where: { userId: session.id, softwareId },
     }),
     prisma.software.findUnique({ where: { id: softwareId } }),
+    prisma.softwareLicenseKey.findFirst({
+      where: { userId: session.id, softwareId },
+    }),
   ]);
   if (!software) notFound();
   if (!purchase) {
@@ -25,7 +31,7 @@ export default async function OwnedSoftwareDetailPage({ params }: Props) {
       <div className="space-y-4">
         <p className="text-sm text-[var(--muted)]">You do not have this product in your library.</p>
         <Link
-          href={`/software/${softwareId}`}
+          href={`/app/software/${softwareId}`}
           className="text-sm font-medium text-[var(--accent)] underline-offset-4 hover:underline"
         >
           View in marketplace
@@ -37,6 +43,9 @@ export default async function OwnedSoftwareDetailPage({ params }: Props) {
   const openUrl = await getAppOpenUrlForSoftware(softwareId);
   const isActive = purchase.status === PurchaseStatus.ACTIVE;
   const isExpired = purchase.status === PurchaseStatus.EXPIRED;
+  const hosted = isHostedOnly(software.distributionType);
+  const canDownload = allowsFileDownload(software.distributionType);
+  const needsRuntimeKey = requiresLicenseKeyAtRuntime(software.distributionType);
 
   return (
     <div className="space-y-6">
@@ -67,6 +76,12 @@ export default async function OwnedSoftwareDetailPage({ params }: Props) {
             <dt className="text-xs uppercase tracking-wider text-[var(--muted)]">Status</dt>
             <dd className="mt-0.5 font-medium text-[var(--foreground)]">{purchase.status}</dd>
           </div>
+          <div>
+            <dt className="text-xs uppercase tracking-wider text-[var(--muted)]">Distribution</dt>
+            <dd className="mt-0.5 font-medium text-[var(--foreground)]">
+              {distributionTypeLabel(software.distributionType)}
+            </dd>
+          </div>
           {purchase.validUntil ? (
             <div>
               <dt className="text-xs uppercase tracking-wider text-[var(--muted)]">Valid until</dt>
@@ -88,6 +103,50 @@ export default async function OwnedSoftwareDetailPage({ params }: Props) {
         </dl>
       </div>
 
+      {licenseKey && isActive && needsRuntimeKey ? (
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">License key</p>
+          <CopyLicenseKey licenseKey={licenseKey.licenseKey} />
+          <p className="mt-2 text-xs text-[var(--muted)]">
+            Enter this key when the compiled app starts. Verify via{" "}
+            <code className="rounded bg-[var(--background)] px-1 py-0.5 font-mono text-[0.65rem]">
+              POST /api/licenses/verify
+            </code>
+            {licenseKey.licensedDomain ? (
+              <span className="block mt-1">
+                Licensed domain: <strong>{licenseKey.licensedDomain}</strong>
+              </span>
+            ) : null}
+          </p>
+          <Link
+            href={`/trust/certificate/${encodeURIComponent(licenseKey.licenseKey)}`}
+            className="mt-3 inline-flex text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline"
+          >
+            Download certificate →
+          </Link>
+        </div>
+      ) : null}
+
+      {hosted && isActive ? (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-900 dark:text-emerald-200">
+          {openUrl ? (
+            <>
+              <p className="font-semibold">Your cloud instance is ready</p>
+              <p className="mt-1 text-xs opacity-90">
+                No source code or database is included — access your hosted app only.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold">Cloud instance pending</p>
+              <p className="mt-1 text-xs opacity-90">
+                The developer will provision your URL (e.g. school1.mr.software) after purchase.
+              </p>
+            </>
+          )}
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-3">
         {isActive && openUrl ? (
           <a
@@ -96,14 +155,22 @@ export default async function OwnedSoftwareDetailPage({ params }: Props) {
             rel="noopener noreferrer"
             className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--foreground)] px-5 text-sm font-semibold text-[var(--background)] transition hover:bg-[var(--accent)]"
           >
-            Open app
+            {hosted ? "Open cloud app" : "Open app"}
           </a>
         ) : null}
+        {isActive && canDownload && !hosted ? (
+          <Link
+            href={`/app/software/${softwareId}`}
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--foreground)] px-5 text-sm font-semibold text-[var(--background)] transition hover:bg-[var(--accent)]"
+          >
+            Download from listing
+          </Link>
+        ) : null}
         <Link
-          href={`/software/${softwareId}`}
+          href={`/app/software/${softwareId}`}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]/40"
         >
-          Public product page
+          Marketplace listing
         </Link>
         {isExpired ? (
           <span className="inline-flex h-10 items-center rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 text-sm font-medium text-amber-900 dark:text-amber-200">

@@ -6,12 +6,20 @@ import { ArrowRight } from "lucide-react";
 import { AfricaGlobeCanvas } from "@/components/landing/africa-launch/africa-globe-canvas";
 import { useHeroIntro } from "@/components/landing/africa-launch/use-hero-intro";
 import { EthiopiaFlagIcon } from "@/components/icons/ethiopia-flag-icon";
+import { LaunchMapLiveDock } from "@/components/launch-map/launch-map-live-dock";
+import { LaunchMapProvider, useLaunchMap } from "@/components/launch-map/launch-map-provider";
+import type { LaunchMapPayload } from "@/lib/launch-map/types";
 
 const REVEAL_EASE = [0.16, 1, 0.3, 1] as const;
 
-export function AfricaLaunchHero() {
+type Props = {
+  initialLaunchMap: LaunchMapPayload;
+};
+
+function AfricaLaunchHeroInner() {
   const reduce = useReducedMotion();
   const intro = useHeroIntro(!!reduce);
+  const { data } = useLaunchMap();
 
   return (
     <section className="africa-launch-hero relative isolate flex h-[calc(100dvh-3.5rem)] w-full flex-col overflow-hidden sm:h-[calc(100dvh-4rem)]">
@@ -38,6 +46,7 @@ export function AfricaLaunchHero() {
           isLight={false}
           energyPulse={intro.energyPulse}
           introComplete={intro.globeRevealed}
+          deploymentArcs={data.arcs}
           onReady={() => intro.setGlobeReady(true)}
         />
 
@@ -84,17 +93,19 @@ export function AfricaLaunchHero() {
             Software from Africa to the world — on Mr.Software.
           </p>
           <div className="pointer-events-auto mt-6 flex flex-col items-center justify-center gap-3 sm:mt-7 sm:flex-row">
-            <Link href="/app/ai" className="africa-hero-cta-primary group">
-              Join Platform
+            <Link href="/app/factory" className="africa-hero-cta-primary group">
+              Start Startup Factory
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
             </Link>
-            <Link href="/marketplace" className="africa-hero-cta-secondary">
-              Explore Marketplace
+            <Link href="/explore/map" className="africa-hero-cta-secondary">
+              Live global map
             </Link>
           </div>
         </motion.div>
 
         <div className="min-h-0 flex-1 pointer-events-none" aria-hidden />
+
+        {intro.copyVisible ? <LaunchMapLiveDock /> : null}
 
         <motion.p
           className="africa-launch-hero-hint pointer-events-none mt-auto pb-4 text-xs sm:pb-5"
@@ -106,5 +117,13 @@ export function AfricaLaunchHero() {
         </motion.p>
       </div>
     </section>
+  );
+}
+
+export function AfricaLaunchHero({ initialLaunchMap }: Props) {
+  return (
+    <LaunchMapProvider initial={initialLaunchMap}>
+      <AfricaLaunchHeroInner />
+    </LaunchMapProvider>
   );
 }

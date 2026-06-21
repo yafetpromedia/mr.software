@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { validateHandle } from "@/lib/storefront/handles";
+import { storefrontSocialLinksSchema } from "@/lib/storefront/social-links";
 import { parseStorefrontTheme } from "@/lib/storefront/themes";
 
 export const storefrontUpsertBodySchema = z.object({
@@ -16,6 +17,7 @@ export const storefrontUpsertBodySchema = z.object({
   tagline: z.string().trim().max(120).optional().or(z.literal("")),
   bio: z.string().trim().max(800).optional().or(z.literal("")),
   website: z.string().trim().max(200).optional().or(z.literal("")),
+  socialLinks: storefrontSocialLinksSchema,
   theme: z
     .string()
     .optional()

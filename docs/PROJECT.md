@@ -2,6 +2,8 @@
 
 This document describes **what Mr.Software is**, **what the codebase implements today**, and **how to run and extend it**. Use it as the single source of truth for routes, auth, data, UI surfaces, APIs, branding, and local development.
 
+**Also read:** [`MVP-LAUNCH-PLAN.md`](./MVP-LAUNCH-PLAN.md) for launch priorities (ship MVP before new features). [`USER-ADMIN-GUIDE.md`](./USER-ADMIN-GUIDE.md) for step-by-step flows.
+
 **Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, Prisma 7 + PostgreSQL, JWT sessions (`jose`), bcrypt, Stripe, Framer Motion, optional S3 for deploy storage.
 
 ---
@@ -12,23 +14,24 @@ This document describes **what Mr.Software is**, **what the codebase implements 
 2. [What is built (feature inventory)](#2-what-is-built-feature-inventory)
 3. [Design system & branding](#3-design-system--branding)
 4. [Route map](#4-route-map)
-5. [Landing page (`/`)](#5-landing-page-)
-6. [Workspace (`/app`, `/deploy`, …)](#6-workspace-app-deploy-)
-7. [Startup builder & AI generation](#7-startup-builder--ai-generation)
-8. [Authentication & sessions](#8-authentication--sessions)
-9. [Middleware](#9-middleware)
-10. [Database (Prisma)](#10-database-prisma)
-11. [HTTP API reference](#11-http-api-reference)
-12. [Admin console & site CMS](#12-admin-console--site-cms)
-13. [Monetization (Stripe, licenses, downloads)](#13-monetization-stripe-licenses-downloads)
-14. [Deployments & hosting](#14-deployments--hosting)
-15. [Environment variables](#15-environment-variables)
-16. [Local development](#16-local-development)
-17. [Managing logo & partners](#17-managing-logo--partners)
-18. [UI component inventory](#18-ui-component-inventory)
-19. [Security notes](#19-security-notes)
-20. [Known gaps & intentional limits](#20-known-gaps--intentional-limits)
-21. [File index (quick reference)](#21-file-index-quick-reference)
+5. [Roles & developer access](#5-roles--developer-access)
+6. [Landing page (`/`)](#6-landing-page-)
+7. [Workspace (`/app`, `/deploy`, …)](#7-workspace-app-deploy-)
+8. [Startup builder & AI generation](#8-startup-builder--ai-generation)
+9. [Authentication & sessions](#9-authentication--sessions)
+10. [Middleware](#10-middleware)
+11. [Database (Prisma)](#11-database-prisma)
+12. [HTTP API reference](#12-http-api-reference)
+13. [Admin console & site CMS](#13-admin-console--site-cms)
+14. [Monetization (Stripe, licenses, downloads)](#14-monetization-stripe-licenses-downloads)
+15. [Deployments & hosting](#15-deployments--hosting)
+16. [Environment variables](#16-environment-variables)
+17. [Local development](#17-local-development)
+18. [Managing logo & partners](#18-managing-logo--partners)
+19. [UI component inventory](#19-ui-component-inventory)
+20. [Security notes](#20-security-notes)
+21. [Known gaps & intentional limits](#21-known-gaps--intentional-limits)
+22. [File index (quick reference)](#22-file-index-quick-reference)
 
 ---
 
@@ -36,7 +39,7 @@ This document describes **what Mr.Software is**, **what the codebase implements 
 
 **Mr.Software** is a **Software Business Operating System**: build, deploy, sell, manage, and scale from one platform — with developer storefronts at `/@handle` as the ecosystem identity layer.
 
-> **Strategic north star:** see [`docs/MR-SOFTWARE-2.0-VISION.md`](./MR-SOFTWARE-2.0-VISION.md) for the full 2.0 architecture (Marketplace, Cloud, Creator Dashboard, Payments, AI, Academy, Storefronts).
+> **Strategic north star:** see [`MR-SOFTWARE-2.0-VISION.md`](./MR-SOFTWARE-2.0-VISION.md) (five modules + four 2.0 systems), [`STRATEGIC-REVIEW.md`](./STRATEGIC-REVIEW.md), and [`ROADMAP-2.0.md`](./ROADMAP-2.0.md).
 
 Core promise on the marketing site:
 
@@ -52,7 +55,7 @@ Five ecosystem modules (marketing narrative; maps to real routes):
 | **Mr.Software Cloud** | ZIP deploy, project URLs, preview API | `/deploy`, `/projects`, `/api/deploy` |
 | **Mr.Software Marketplace** | Catalog, detail, checkout, entitlements | `/marketplace`, `/software/[id]`, `/app/marketplace` |
 | **Mr.Software Studio** | Signed-in workspace — library, billing, settings | `/app`, `/app/home`, `/app/my-software` |
-| **Mr.Software Academy** | Future learning layer | Placeholder links only |
+| **Mr.Software Academy** | Course catalog + lessons + admin CMS | `/academy`, `/admin/academy` |
 
 Existing backend systems (auth, RBAC, Stripe, deployments, entitlements, admin audit) are **preserved**; the UI presents them as product-grade surfaces.
 
@@ -66,7 +69,8 @@ Existing backend systems (auth, RBAC, Stripe, deployments, entitlements, admin a
 - [x] **Inter** (body) + **Space Grotesk** (display headings) via `next/font/google`
 - [x] **Warm orange** brand system (`--accent`, gradients, glow) — not a generic blue SaaS palette
 - [x] **Light / dark theme** toggle (`data-theme`, `ThemeProvider`, persisted in `localStorage`)
-- [x] Responsive site header with mobile menu, anchor links (`#features`, `#partners`, `#testimonials`, `#team`)
+- [x] Responsive site header; **signed-in users** see portal nav (Workspace, Marketplace, …) not marketing anchors
+- [x] Logged-in **USER/DEVELOPER** redirect: `/marketplace` → `/app/marketplace`, `/software/[id]` → `/app/software/[id]`, `/@handle` → `/app/store/[handle]`
 - [x] Partners / “Trusted by” section (`PartnersSection`, `id="partners"`)
 - [x] Logo mark with **transparent** wrapper (no forced black tile); runtime URL from DB + `BrandSettingsProvider`
 - [x] Dynamic favicon / apple icon from site settings
@@ -77,20 +81,24 @@ Existing backend systems (auth, RBAC, Stripe, deployments, entitlements, admin a
 - [x] Google OAuth (optional env)
 - [x] JWT cookie session with DB-backed `sessionVersion` invalidation
 - [x] Roles: `USER`, `DEVELOPER`, `ADMIN`; statuses: `ACTIVE`, `RESTRICTED`, `SUSPENDED`, `BANNED`
+- [x] **Developer access requests** — members submit pitch; admins approve at `/admin/developer-requests` (promotes to DEVELOPER)
 - [x] Capability flags: `canUpload`, `canPublish`, `canWithdraw`
 
 ### Workspace
 
 - [x] Login-gated `(workspace)` layout with dual shells (consumer vs developer)
-- [x] Consumer: library, marketplace in app, my software, billing, settings
-- [x] Developer: command center, deploy, projects, earnings, listings, payouts, builder
+- [x] Consumer: library, marketplace in app, my software, billing, **tabbed settings** (incl. developer access for USER)
+- [x] Developer: command center, deploy, projects, earnings, listings, payouts, **storefront + social links**, builder
+- [x] Portal product pages: `/app/software/[id]`, `/app/store/[handle]` inside workspace shell
 - [x] AI copilot panel UI on developer shell (preview / not wired to external LLM by default)
 - [x] Admin users visiting `/app` redirect to `/admin`
 
 ### Marketplace & money
 
-- [x] Public catalog + software detail pages
+- [x] Public catalog + software detail pages (public + portal variants)
+- [x] **User reports** — public submit, admin queue at `/admin/reports`
 - [x] Stripe Checkout sessions, webhooks, purchase entitlements
+- [x] Chapa / Telebirr hooks (when env configured)
 - [x] Signed download tokens + proxy stream (no public `assetUrl`)
 - [x] Dev-only checkout grant when `ENABLE_DEV_CHECKOUT=true`
 
@@ -100,12 +108,21 @@ Existing backend systems (auth, RBAC, Stripe, deployments, entitlements, admin a
 - [x] Local filesystem or S3-backed storage
 - [x] Deploy preview route for hosted static sites
 
+### Academy
+
+- [x] Public catalog `/academy`, course `/academy/[slug]`, lesson markdown renderer, progress API
+- [x] Admin CMS `/admin/academy` — section settings, courses, lessons
+
 ### Admin
 
 - [x] Operator console: users, software, deployments, payments, audit, system
+- [x] **Developer access requests** (`/admin/developer-requests`)
+- [x] **Reports queue** (`/admin/reports`)
+- [x] **Academy CMS** (`/admin/academy`)
+- [x] **Team CMS** (`/admin/team`)
 - [x] **Site CMS** (`/admin/site`): logo URL, partner list, file uploads
-- [x] **Testimonials review** (`/admin/testimonials`): approve/reject landing quotes
-- [x] **Developer storefronts** (`/@handle`): public creator stores + settings UI
+- [x] **Testimonials review** (`/admin/testimonials`)
+- [x] **Developer storefronts** (`/admin/storefronts`): verify / feature; public `/@handle` + settings UI with **social links**
 - [x] Admin audit log for privileged mutations
 
 ### AI startup builder (MVP)
@@ -177,15 +194,19 @@ Site layout (`app/(site)/layout.tsx`) applies `font-display` + `tracking-tight` 
 | URL / prefix | Layout | Auth | Purpose |
 |--------------|--------|------|---------|
 | `/` | `(site)` | Public | Landing page |
-| `/marketplace` | `(site)` | Public | Software catalog |
-| `/software/[id]` | `(site)` | Public | Listing detail + purchase actions |
-| `/@handle` | `(site)` | Public | **Developer storefront** (rewrites to `/store/[handle]`) |
-| `/store/[handle]` | `(site)` | Public | Storefront page implementation |
+| `/marketplace` | `(site)` | Public (guests); **USER/DEVELOPER redirect** → `/app/marketplace` |
+| `/software/[id]` | `(site)` | Public detail; **USER/DEVELOPER redirect** → `/app/software/[id]` |
+| `/academy`, `/academy/[slug]` | `(site)` | Academy catalog & courses |
+| `/report` | `(site)` | Report submission (login required to POST) |
+| `/@handle` | `(site)` | Developer storefront; **signed-in redirect** → `/app/store/[handle]` |
+| `/store/[handle]` | `(site)` | Storefront implementation |
 | `/auth/login`, `/auth/register` | `auth/` | Public | Sign in / sign up |
 | `/dashboard` | redirect | — | → `/app` |
-| `/app`, `/app/*` | `(workspace)` | **Required** | Consumer workspace |
-| `/deploy`, `/projects`, `/earnings`, `/listings`, `/payouts`, `/settings` | `(workspace)` | **Required** | Developer / ops surfaces |
-| `/startup/[id]`, `/startup/[id]/dashboard-preview` | `startup/` | Mixed | Generated startup previews |
+| `/app`, `/app/*` | `(workspace)` | **Required** | Consumer + developer workspace |
+| `/app/software/[id]` | `(workspace)` | **Required** | Product detail in portal shell |
+| `/app/store/[handle]` | `(workspace)` | **Required** | Storefront in portal shell |
+| `/deploy`, `/projects`, `/earnings`, `/listings`, `/payouts`, `/settings` | `(workspace)` | **Required** | Developer surfaces |
+| `/startup/[id]`, … | `startup/` | Mixed | Generated startup previews |
 | `/admin`, `/admin/*` | `admin/` | **ADMIN + ACTIVE** | Operator console |
 
 **Root layout** (`app/layout.tsx`): fonts, global CSS, `ThemeScript`, `ThemeProvider`, `BrandSettingsProvider`, dynamic metadata/icons — **no** global marketing header (that lives under `(site)`).
@@ -195,15 +216,19 @@ Site layout (`app/(site)/layout.tsx`) applies `font-display` + `tracking-tight` 
 | Path | Purpose |
 |------|---------|
 | `/admin` | Operations overview |
-| `/admin/users` | Role, status, permissions (`?q=` search) |
+| `/admin/users` | Role, status, permissions (`?q=` search); manual DEVELOPER promotion |
+| `/admin/developer-requests` | **Member → developer request queue** (approve / reject) |
 | `/admin/software` | Catalog overview |
 | `/admin/deployments` | Deployment status / failures |
 | `/admin/payments` | Purchases |
-| `/admin/reports` | Report queue placeholder |
+| `/admin/reports` | **User report triage queue** |
+| `/admin/academy` | **Courses, lessons, section settings** |
+| `/admin/team` | **Landing team section** |
 | `/admin/moderation` | Shortcuts into governance views |
 | `/admin/system` | Deploy limits, operator notes |
 | `/admin/site` | **Landing CMS** — logo, uploads, partnerships |
 | `/admin/testimonials` | Review visitor-submitted landing testimonials |
+| `/admin/storefronts` | Verify / feature developer storefronts |
 | `/admin/audit` | Last 100 `AdminAuditLog` rows |
 
 ### Workspace routes (representative)
@@ -212,9 +237,12 @@ Site layout (`app/(site)/layout.tsx`) applies `font-display` + `tracking-tight` 
 |------|-------|---------|
 | `/app` | Developer (dev/admin) or redirect | Overview; **USER** → `/app/home` (middleware) |
 | `/app/home` | Consumer | Library home |
-| `/app/marketplace` | Consumer | In-app marketplace |
+| `/app/marketplace` | Consumer / dev | In-app marketplace (portal layout) |
+| `/app/software/[id]` | Consumer / dev | Product detail in portal |
+| `/app/store/[handle]` | Consumer / dev | Storefront in portal |
 | `/app/my-software`, `/app/my-software/[id]` | Consumer | Owned / entitled software |
-| `/app/billing`, `/app/settings` | Consumer | Account |
+| `/app/billing`, `/app/settings` | Consumer | Account; settings incl. `#developer` for USER |
+| `/app/storefront` | Developer | Storefront editor (handle, theme, social links) |
 | `/app/builder` | Developer | AI startup builder |
 | `/deploy` | Developer | ZIP deploy upload |
 | `/projects`, `/projects/[id]` | Developer | Hosted projects |
@@ -225,7 +253,34 @@ Shell selection: `lib/auth/workspace-surface.ts` → `WorkspaceShell` → consum
 
 ---
 
-## 5. Landing page (`/`)
+## 5. Roles & developer access
+
+### Role matrix
+
+| Role | Workspace entry | Deploy / listings | Admin |
+|------|-----------------|-------------------|-------|
+| `USER` | `/app/home` | No | No |
+| `DEVELOPER` | `/app` | Yes (if ACTIVE + flags) | No |
+| `ADMIN` | `/admin` | Yes | Yes |
+
+### Member → developer promotion
+
+Two paths:
+
+1. **Request queue (recommended)** — member submits at `/app/settings#developer`; admin approves at `/admin/developer-requests`. Approve sets `User.role = DEVELOPER` and increments `sessionVersion`.
+2. **Manual** — admin sets role dropdown on `/admin/users`.
+
+**Model:** `DeveloperAccessRequest` — `PENDING` | `APPROVED` | `REJECTED`, fields `pitch`, `website`, `adminNote`, `reviewedById`.
+
+**Lib:** `lib/developer-access/developer-access.ts`  
+**API:** `GET|POST /api/developer-access`, `GET /api/admin/developer-requests`, `PATCH /api/admin/developer-requests/[id]`  
+**UI:** `components/app/developer-access-request-form.tsx`, `components/admin/admin-developer-requests-panel.tsx`
+
+Full walkthrough: [`USER-ADMIN-GUIDE.md` §4](./USER-ADMIN-GUIDE.md#4-developer-access-requests).
+
+---
+
+## 6. Landing page (`/`)
 
 **File:** `app/(site)/page.tsx`
 
@@ -255,7 +310,7 @@ Still available to re-import for A/B or alternate home layouts:
 
 ---
 
-## 6. Workspace (`/app`, `/deploy`, …)
+## 7. Workspace (`/app`, `/deploy`, …)
 
 ### Shells
 
@@ -271,7 +326,7 @@ Still available to re-import for A/B or alternate home layouts:
 
 ---
 
-## 7. Startup builder & AI generation
+## 8. Startup builder & AI generation
 
 | Piece | Path |
 |-------|------|
@@ -286,7 +341,7 @@ Still available to re-import for A/B or alternate home layouts:
 
 ---
 
-## 8. Authentication & sessions
+## 9. Authentication & sessions
 
 ### Session model
 
@@ -311,26 +366,36 @@ Still available to re-import for A/B or alternate home layouts:
 
 ---
 
-## 9. Middleware
+## 10. Middleware
 
 **File:** `middleware.ts`
 
-Applies to `/api/software/*`, `/api/admin/*`, `/admin`, `/admin/*`.
+Matcher includes `/marketplace`, `/software/*`, `/store/*`, `/app/*`, `/admin/*`, deploy paths, and software/admin APIs.
 
-- Strips spoofed `x-mr-software-*` headers; may set internal user/role headers after JWT verify.
+- Strips spoofed `x-mr-software-*` headers; sets `x-mr-pathname` for layouts.
+- **Catalog portal redirects** (JWT valid, role `USER` or `DEVELOPER`):
+  - `/marketplace` → `/app/marketplace`
+  - `/software/[id]` → `/app/software/[id]`
+- **Storefront portal redirects** (JWT valid):
+  - `/@handle` / `/store/[handle]` → `/app/store/[handle]` (ADMIN stays on public URL)
 - Admin API + UI: **ADMIN + ACTIVE** required.
 - Software **`POST`**: upload rules by role, status, `canUpload`.
 - **`USER`** at `/app` → redirect `/app/home`.
+- Active **ADMIN** on developer workspace paths → redirect `/admin`.
 
 ---
 
-## 10. Database (Prisma)
+## 11. Database (Prisma)
 
 **Schema:** `prisma/schema.prisma`
 
 | Model | Role |
 |-------|------|
 | **User** | Accounts, OAuth, Stripe customer id, roles, flags, `sessionVersion` |
+| **DeveloperAccessRequest** | Member → developer promotion queue |
+| **UserReport** | Abuse / listing reports (admin triage) |
+| **AcademySectionSettings**, **AcademyCourse**, **AcademyLesson**, **AcademyProgress** | Academy CMS + learner progress |
+| **DeveloperStorefront** | `/@handle` identity; includes `socialLinksJson` |
 | **GeneratedStartup** | AI builder output JSON per user |
 | **AdminAuditLog** | Privileged admin actions |
 | **SiteSettings** | Singleton `id = 1`: `logoUrl`, `partnersJson` |
@@ -338,6 +403,7 @@ Applies to `/api/software/*`, `/api/admin/*`, `/admin`, `/admin/*`.
 | **Purchase** | Entitlement / Stripe checkout state |
 | **Subscription** | Workspace deploy quota (`FREE` / `PRO`) — not marketplace purchase |
 | **Deployment** | User-hosted static sites |
+| **TeamMember**, **Testimonial** | Landing page CMS (via admin team / testimonials) |
 
 **Site settings I/O:** `lib/site-settings.ts` uses raw SQL upsert/read for reliability (`getPublicSiteSettings`, `upsertSiteSettings`).
 
@@ -345,7 +411,7 @@ Applies to `/api/software/*`, `/api/admin/*`, `/admin`, `/admin/*`.
 
 ---
 
-## 11. HTTP API reference
+## 12. HTTP API reference
 
 ### Auth
 
@@ -381,7 +447,38 @@ Applies to `/api/software/*`, `/api/admin/*`, `/admin`, `/admin/*`.
 | `POST /api/generate-startup` | Generate (and optionally save) startup package |
 | `GET/POST /api/startups`, `GET /api/startups/[id]` | Saved startups API |
 
-### Admin
+### Developer access & reports
+
+| Method / path | Notes |
+|---------------|--------|
+| `GET /api/developer-access` | Member — request status |
+| `POST /api/developer-access` | Member — submit pitch |
+| `GET /api/admin/developer-requests` | Admin — queue + stats |
+| `PATCH /api/admin/developer-requests/[id]` | Admin — approve / reject |
+| `POST /api/reports` | Authenticated — submit report |
+| `GET /api/admin/reports` | Admin — list reports |
+| `PATCH /api/admin/reports/[id]` | Admin — triage |
+
+### Storefront
+
+| Method / path | Notes |
+|---------------|--------|
+| `GET /api/storefront` | Own storefront |
+| `PUT /api/storefront` | Upsert handle, theme, bio, **socialLinks** |
+| `GET /api/storefront/check` | Handle availability |
+| `GET /api/storefront/[handle]` | Public store JSON |
+| `POST /api/storefront/[handle]/follow` | Follow creator |
+
+### Academy
+
+| Method / path | Notes |
+|---------------|--------|
+| `GET /api/admin/academy` | Admin bundle |
+| `PATCH /api/admin/academy/settings` | Section copy |
+| CRUD under `/api/admin/academy/courses`, `.../lessons` | Course CMS |
+| `POST /api/academy/[slug]/complete` | Mark lesson complete |
+
+### Admin (users, site, team)
 
 | Method / path | Notes |
 |---------------|--------|
@@ -392,10 +489,13 @@ Applies to `/api/software/*`, `/api/admin/*`, `/admin`, `/admin/*`.
 | `PATCH /api/admin/users/[id]/permissions` | **audited** |
 | `PATCH /api/admin/users/[id]/status` | **audited** |
 | `PATCH /api/admin/users/[id]/role` | **audited**; blocks demoting sole active admin |
+| `/api/admin/team/*` | Team landing CMS |
+| `/api/admin/testimonials/*` | Testimonial review |
+| `/api/admin/storefronts/*` | Verify / feature storefronts |
 
 ---
 
-## 12. Admin console & site CMS
+## 13. Admin console & site CMS
 
 - Layout: `app/admin/layout.tsx`, shell `components/admin/admin-shell.tsx`.
 - **Site settings UI:** `components/admin/admin-site-settings-form.tsx` on **`/admin/site`**.
@@ -427,7 +527,7 @@ export default async function Home() {
 
 ---
 
-## 13. Monetization (Stripe, licenses, downloads)
+## 14. Monetization (Stripe, licenses, downloads)
 
 - Checkout from `Software.pricingModel` + optional `stripePriceId`.
 - Webhooks update `Purchase` / subscription period.
@@ -439,7 +539,7 @@ Pricing models: `FREE`, `ONE_TIME`, `SUBSCRIPTION`.
 
 ---
 
-## 14. Deployments & hosting
+## 15. Deployments & hosting
 
 | Concern | Location |
 |---------|----------|
@@ -453,7 +553,7 @@ Env: `DEPLOY_STORAGE`, `S3_*`, `LOCAL_DEPLOY_ROOT`, `DEPLOYMENT_PUBLIC_HOST`, `N
 
 ---
 
-## 15. Environment variables
+## 16. Environment variables
 
 ### Required
 
@@ -500,7 +600,7 @@ ENABLE_DEV_CHECKOUT=true
 
 ---
 
-## 16. Local development
+## 17. Local development
 
 ### Database
 
@@ -543,7 +643,7 @@ Default DB URL matches `docker-compose.yml` (see comment in file).
 
 ---
 
-## 17. Managing logo & partners
+## 18. Managing logo & partners
 
 ### Logo (recommended paths)
 
@@ -573,7 +673,7 @@ Empty array → section hidden.
 
 ---
 
-## 18. UI component inventory
+## 19. UI component inventory
 
 ### Marketing
 
@@ -604,7 +704,7 @@ Empty array → section hidden.
 
 ---
 
-## 19. Security notes
+## 20. Security notes
 
 | Area | Implementation |
 |------|----------------|
@@ -621,17 +721,17 @@ Empty array → section hidden.
 
 ---
 
-## 20. Known gaps & intentional limits
+## 21. Known gaps & intentional limits
 
 - **Partners on `/`:** DB partners from admin may not appear until `page.tsx` passes `getPublicSiteSettings().partners` (defaults used today).
-- **AI copilot / builder:** UI previews; no bundled paid LLM API key.
+- **AI copilot / builder:** UI previews; no bundled paid LLM API key unless configured.
 - **Production runbook:** HTTPS, secret rotation, backup strategy — out of scope here.
-- **Academy module:** marketing placeholder only.
-- **Legacy landing sections:** built and styled but not mounted on current home.
+- **Email on developer approval:** In-app status only; no automatic email unless `RESEND_API_KEY` digest paths used elsewhere.
+- **Legacy landing sections:** built and styled but not all mounted on current home.
 
 ---
 
-## 21. File index (quick reference)
+## 22. File index (quick reference)
 
 | Area | Paths |
 |------|--------|
@@ -645,10 +745,14 @@ Empty array → section hidden.
 | Prisma | `prisma/schema.prisma`, `prisma/seed.ts`, `prisma.config.ts` |
 | Monetization | `lib/monetization/*`, `app/api/checkout/*`, `app/api/webhooks/stripe/` |
 | Deploy | `lib/deploy/*`, `app/api/deploy/` |
-| Validation | `lib/validation/site-settings.ts`, `lib/validation/admin-users.ts`, `lib/validation/auth.ts` |
-| Security | `lib/security/*`, `middleware.ts` |
-| Docs | `docs/PROJECT.md` (this file), `public/brand/README.md` |
+| Developer access | `lib/developer-access/*`, `app/api/developer-access/`, `app/admin/developer-requests/` |
+| Reports | `lib/reports.ts`, `app/api/reports/`, `components/reports/*` |
+| Academy | `lib/academy/*`, `components/academy/*`, `app/(site)/academy/` |
+| Storefront social | `lib/storefront/social-links.ts`, `components/storefront/storefront-social-links.tsx` |
+| Site nav (signed-in) | `components/site-nav-links.ts`, `components/auth/use-auth-me.ts` |
+| Validation | `lib/validation/site-settings.ts`, `lib/validation/admin-users.ts`, `lib/validation/developer-access.ts`, `lib/validation/reports.ts`, `lib/validation/academy.ts` |
+| Docs | `docs/README.md`, `docs/USER-ADMIN-GUIDE.md`, `docs/PROJECT.md`, `docs/MR-SOFTWARE-2.0-VISION.md`, `docs/STRATEGIC-REVIEW.md`, `docs/ROADMAP-2.0.md`, `public/brand/README.md` |
 
 ---
 
-*Last updated: reflects the open-builder landing, orange brand system, Inter + Space Grotesk typography, theme toggle, workspace dual shells, admin site CMS, and tablet/slate platform-preview component (legacy on home). Verify against code after major refactors.*
+*Last updated: June 2026 — developer access requests, portal routing, academy CMS, reports queue, storefront social links, tabbed settings, signed-in site nav. See [`USER-ADMIN-GUIDE.md`](./USER-ADMIN-GUIDE.md) for operational flows.*

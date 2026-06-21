@@ -1,7 +1,11 @@
 import "dotenv/config";
 import bcrypt from "bcrypt";
-import { AcademyCourseLevel, Plan, PricingModel, Role, SoftwareCategory, SubscriptionStatus } from "@prisma/client";
+import { AcademyCourseLevel, Plan, PricingModel, Role, SoftwareCategory, SubscriptionStatus, type DistributionType } from "@prisma/client";
 import { prisma } from "../lib/prisma";
+import { seedDefaultTeamContent } from "../lib/team";
+import { ensureAcademyDefaults } from "../lib/academy/academy";
+import { seedSampleReports } from "../lib/reports";
+import { applyTrustOnSoftwarePublish } from "../lib/trust/publish-trust";
 
 const DEMO_PASSWORD = "password123";
 
@@ -14,6 +18,7 @@ type CatalogRow = {
   assetUrl: string;
   thumbnailUrl: string;
   category: SoftwareCategory;
+  distributionType?: DistributionType;
   playStoreUrl?: string;
   appStoreUrl?: string;
 };
@@ -42,6 +47,7 @@ const catalog: CatalogRow[] = [
     thumbnailUrl:
       "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=1200&h=675&fit=crop&q=80&auto=format",
     category: SoftwareCategory.TEMPLATES,
+    distributionType: "SOURCE_CODE",
   },
   {
     name: "Code Metrics",
@@ -54,6 +60,7 @@ const catalog: CatalogRow[] = [
     thumbnailUrl:
       "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&h=675&fit=crop&q=80&auto=format",
     category: SoftwareCategory.DEVELOPER_TOOLS,
+    distributionType: "COMPILED",
   },
   {
     name: "SecureVault",
@@ -78,6 +85,7 @@ const catalog: CatalogRow[] = [
     thumbnailUrl:
       "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&h=675&fit=crop&q=80&auto=format",
     category: SoftwareCategory.BUSINESS,
+    distributionType: "HOSTED",
   },
   {
     name: "ClipForge",
@@ -92,6 +100,7 @@ const catalog: CatalogRow[] = [
     category: SoftwareCategory.DEVELOPER_TOOLS,
     playStoreUrl: "https://play.google.com/store/apps/details?id=com.example.clipforge",
     appStoreUrl: "https://apps.apple.com/app/clipforge/id0000000000",
+    distributionType: "COMPILED",
   },
 ];
 
@@ -120,7 +129,7 @@ async function main() {
     update: { password: passwordHash },
   });
 
-  await prisma.user.upsert({
+  const admin = await prisma.user.upsert({
     where: { email: "admin@mrsoftware.local" },
     create: {
       name: "Platform Admin",
@@ -145,6 +154,7 @@ async function main() {
         thumbnailUrl: c.thumbnailUrl,
         developerId: developer.id,
         category: c.category,
+        distributionType: c.distributionType ?? "COMPILED",
         playStoreUrl: c.playStoreUrl ?? null,
         appStoreUrl: c.appStoreUrl ?? null,
       })),
@@ -161,6 +171,7 @@ async function main() {
         assetUrl: c.assetUrl,
         price: c.price,
         category: c.category,
+        distributionType: c.distributionType ?? "COMPILED",
         playStoreUrl: c.playStoreUrl ?? null,
         appStoreUrl: c.appStoreUrl ?? null,
       },
@@ -206,73 +217,395 @@ async function main() {
       slug: "publish-your-first-product",
       title: "Publish your first product",
       description:
-        "List software on the Mr.Software marketplace, set pricing, and open your developer storefront.",
+        "A complete beginner track: set up your developer profile, create a storefront, list software on the marketplace, and configure pricing that converts.",
       level: AcademyCourseLevel.BEGINNER,
-      durationMinutes: 45,
+      durationMinutes: 90,
       sortOrder: 1,
       lessons: [
         {
-          title: "Marketplace basics",
-          content:
-            "Mr.Software is a software business OS. Your product gets a catalog page, secure downloads, and optional Stripe or Chapa checkout.\n\nStart from Developer Settings → create your storefront at /@yourname.",
+          title: "What is the Mr.Software marketplace?",
+          summary: "Understand the platform loop: learn, build, list, and sell.",
+          durationMinutes: 12,
           sortOrder: 1,
+          content: `## The learn → build → publish loop
+
+Mr.Software is a **software business OS** for developers and founders. You can ship products, host demos, accept payments, and grow an audience — all from one account.
+
+> Your goal in this course: go from zero to a live marketplace listing with a branded storefront.
+
+## What you get when you publish
+
+- A **catalog page** with title, description, screenshots, and pricing
+- **Secure downloads** — buyers never see raw asset URLs
+- Optional **Stripe** or **Chapa** checkout for global and local payments
+- A **storefront** at \`/@yourname\` to showcase your work
+
+## Before you start
+
+1. Create a developer account (or upgrade from a user account)
+2. Verify your email
+3. Open **Developer Settings** from the app menu
+
+---
+
+Next we'll walk through creating your storefront and first listing step by step.`,
         },
         {
-          title: "List and price",
-          content:
-            "Upload via the developer portal or API. Choose a category (Education, AI Tools, Templates, etc.) and set one-time or subscription pricing.",
+          title: "Create your developer storefront",
+          summary: "Claim your handle and customize your public profile page.",
+          durationMinutes: 15,
           sortOrder: 2,
+          content: `## Your storefront is your home base
+
+Every developer gets a public page at \`/@handle\`. This is where followers discover your products, bio, and links.
+
+## Step-by-step
+
+1. Go to **Settings → Developer**
+2. Choose a unique **handle** (lowercase, no spaces)
+3. Add a short **bio** and optional avatar
+4. Save — your page is live immediately
+
+## Best practices
+
+- Use a handle that matches your brand or GitHub username
+- Write a bio that states **who you help** and **what you ship**
+- Link to your best product first
+
+\`\`\`
+Example bio:
+"I build AI tools and templates for African founders.
+Ship faster with my starter kits."
+\`\`\`
+
+> Tip: Share your storefront link on X, LinkedIn, and in your product README.`,
+        },
+        {
+          title: "List your first software product",
+          summary: "Upload assets, pick a category, and write a listing that sells.",
+          durationMinutes: 20,
+          sortOrder: 3,
+          content: `## Creating a marketplace listing
+
+From the developer portal, open **Software → New listing**.
+
+### Required fields
+
+- **Name** — clear, searchable (e.g. "SaaS Landing Page Kit")
+- **Description** — explain the outcome, not just features
+- **Category** — Education, AI Tools, Templates, DevOps, etc.
+- **Asset** — ZIP or package buyers will download
+
+### Writing a strong description
+
+Structure your copy in three parts:
+
+1. **Problem** — what pain does this solve?
+2. **Solution** — what does the buyer get?
+3. **Proof** — screenshots, version, changelog
+
+## Categories that perform well
+
+- Starter templates and boilerplates
+- AI workflow packs
+- Niche tools for local markets (payments, languages, compliance)
+
+---
+
+After saving as **draft**, preview the listing. Publish when you're ready for it to appear on /marketplace.`,
+        },
+        {
+          title: "Pricing models that work",
+          summary: "One-time vs subscription, free tiers, and regional pricing tips.",
+          durationMinutes: 18,
+          sortOrder: 4,
+          content: `## Choose the right pricing model
+
+Mr.Software supports **one-time** and **subscription** pricing.
+
+| Model | Best for |
+| --- | --- |
+| One-time | Templates, ebooks, single tools |
+| Subscription | SaaS, updates, support included |
+
+## Setting your price
+
+- Start with a **launch price** lower than your target — you can raise later
+- For ETB markets, round to familiar price points (499, 999, 1999 ETB)
+- Offer a **free product** first to collect emails and testimonials
+
+## Stripe vs Chapa
+
+- **Stripe** — cards, global buyers, USD/EUR
+- **Chapa** — ETB, mobile money (Telebirr), local cards
+
+> You can enable both. Checkout picks the right flow based on configuration.
+
+## Checklist before launch
+
+- [ ] Price set and tested in sandbox
+- [ ] Screenshot and cover image uploaded
+- [ ] License terms clear in description
+- [ ] Support contact in bio or listing`,
+        },
+        {
+          title: "Launch checklist & next steps",
+          summary: "Ship with confidence — verify checkout, analytics, and promotion.",
+          durationMinutes: 15,
+          sortOrder: 5,
+          content: `## Pre-launch verification
+
+Run through this list before sharing your link publicly:
+
+1. **Purchase test** — buy your own product with a test card or sandbox Chapa
+2. **Download test** — confirm the entitlement and download token flow
+3. **Storefront** — confirm the product appears on \`/@handle\`
+4. **Mobile** — check listing on a phone
+
+## Promote your launch
+
+- Post on your storefront-linked social accounts
+- Ask 3 peers for **testimonials** (they can submit from the landing page)
+- Cross-link from your GitHub repo README
+
+## What to learn next
+
+- **Deploy & monetize** — host a live demo on Mr.Software Cloud
+- **African payments** — deep dive on Chapa and Telebirr
+
+---
+
+**Congratulations** — you're ready to publish. Mark this course complete and open the builder when you want to ship something new.`,
         },
       ],
     },
     {
       slug: "deploy-and-monetize",
       title: "Deploy & monetize",
-      description: "Ship a static build to Mr.Software Cloud and link it to your marketplace listing.",
+      description:
+        "Ship static sites and demos to Mr.Software Cloud, tie deployments to marketplace listings, and understand entitlements end-to-end.",
       level: AcademyCourseLevel.INTERMEDIATE,
-      durationMinutes: 60,
+      durationMinutes: 75,
       sortOrder: 2,
       lessons: [
         {
-          title: "Deploy flow",
-          content:
-            "ZIP upload → build → live URL. Deployments can be tied to a software row for demos and customer previews.",
+          title: "Deployment architecture",
+          summary: "How ZIP uploads become live URLs on the platform.",
+          durationMinutes: 15,
           sortOrder: 1,
+          content: `## From ZIP to live URL
+
+Mr.Software Cloud turns a static build into a hosted demo:
+
+\`\`\`
+Your build.zip → upload → build pipeline → https://your-app.mrsoftware.cloud
+\`\`\`
+
+## When to deploy
+
+- **Product demos** linked from marketplace listings
+- **Client previews** before handoff
+- **Documentation sites** for your templates
+
+## Limits & expectations
+
+- Static sites and SPA builds work best
+- Server-side backends need separate hosting
+- Each deployment gets a unique URL you can rotate
+
+> Deployments can be linked to a **software row** so buyers preview before purchase.`,
         },
         {
-          title: "Entitlements",
-          content:
-            "Purchases create license rows per user. Downloads use short-lived tokens — assets are never public URLs.",
+          title: "Upload and configure a deployment",
+          summary: "Step-by-step deploy flow from the developer dashboard.",
+          durationMinutes: 20,
           sortOrder: 2,
+          content: `## Deploy step-by-step
+
+1. Build your project locally (\`npm run build\`)
+2. ZIP the output folder (e.g. \`dist/\` or \`out/\`)
+3. Open **Deployments → New**
+4. Upload ZIP, name the deployment, optionally link to software
+5. Wait for build — status moves from **pending** to **live**
+
+## Linking to a listing
+
+When linked, your marketplace page shows a **Live demo** button. This increases conversion for visual products.
+
+## Troubleshooting
+
+- **Build failed** — check index.html exists at ZIP root or correct subfolder
+- **Blank page** — SPA may need base path config
+- **Slow first load** — large assets; optimize images before zipping`,
+        },
+        {
+          title: "Entitlements & license flow",
+          summary: "How purchases become download rights for your customers.",
+          durationMinutes: 18,
+          sortOrder: 3,
+          content: `## Purchase → license → download
+
+When a customer pays:
+
+1. Payment provider confirms via webhook
+2. A **license row** is created for that user + product
+3. Download uses a **short-lived token** — never a public S3 URL
+
+## Why this matters
+
+- Prevents link sharing and piracy
+- Lets you revoke access if needed
+- Works the same for Stripe and Chapa
+
+## Developer responsibilities
+
+- Keep asset URLs private in your env config
+- Version your ZIPs — bump version in listing when you ship updates
+- Subscribers may expect automatic access to new versions`,
+        },
+        {
+          title: "Monetization playbook",
+          summary: "Bundle demos, listings, and email capture for maximum revenue.",
+          durationMinutes: 22,
+          sortOrder: 4,
+          content: `## The demo + download combo
+
+Best-performing listings use:
+
+- **Live demo** on Cloud (try before buy)
+- **Clear pricing** above the fold
+- **Testimonials** on your storefront
+
+## Funnel ideas
+
+1. Free template → paid pro version
+2. Demo site → one-time unlock for source code
+3. Subscription → monthly new templates
+
+## Metrics to watch
+
+- Demo → purchase conversion
+- Refund / support requests
+- Traffic sources (storefront vs marketplace search)
+
+---
+
+Ship your next deployment, link it to a listing, and track what converts.`,
         },
       ],
     },
     {
       slug: "african-payments",
       title: "African payments (Chapa & Telebirr)",
-      description: "Accept ETB and mobile money alongside Stripe for one-time product sales.",
+      description:
+        "Accept ETB, mobile money, and local cards alongside Stripe — configuration, checkout flow, webhooks, and buyer experience.",
       level: AcademyCourseLevel.BEGINNER,
-      durationMinutes: 30,
+      durationMinutes: 55,
       sortOrder: 3,
       lessons: [
         {
-          title: "Configure Chapa",
-          content:
-            "Set CHAPA_SECRET_KEY in your environment. Checkout initializes a Chapa session; webhooks verify and activate licenses.",
+          title: "Why local payments matter",
+          summary: "Reach Ethiopian and African buyers who don't use international cards.",
+          durationMinutes: 10,
           sortOrder: 1,
+          content: `## The gap Stripe doesn't fill
+
+Many of your customers use **Telebirr**, **CBE Birr**, or local debit — not Visa/Mastercard.
+
+Mr.Software integrates **Chapa** so you can accept:
+
+- ETB settlements
+- Mobile money (including Telebirr via Chapa)
+- Local bank cards
+
+> Enabling local payments often **doubles conversion** for ETB-priced products.`,
         },
         {
-          title: "Telebirr via Chapa",
-          content:
-            "Telebirr is offered through Chapa checkout when ENABLE_TELEBIRR is not false. Customers pick mobile money on the Chapa hosted page.",
+          title: "Configure Chapa",
+          summary: "Environment keys, webhook URL, and sandbox testing.",
+          durationMinutes: 18,
           sortOrder: 2,
+          content: `## Setup checklist
+
+1. Create a [Chapa](https://chapa.co) merchant account
+2. Copy **CHAPA_SECRET_KEY** into your environment
+3. Set webhook URL to your app's \`/api/webhooks/chapa\` endpoint
+4. Enable Chapa in admin/system payment settings
+
+## Sandbox vs production
+
+- Use test keys while developing
+- Run a real small-amount purchase before launch
+- Confirm webhook fires and license activates
+
+\`\`\`
+# .env example
+CHAPA_SECRET_KEY=CHASECK_TEST-...
+\`\`\`
+
+## Common errors
+
+- **Invalid key** — test vs live mismatch
+- **Webhook 401** — verify signature secret
+- **Amount mismatch** — ETB must be integer birr`,
+        },
+        {
+          title: "Telebirr via Chapa checkout",
+          summary: "How buyers pay with mobile money on the hosted checkout page.",
+          durationMinutes: 12,
+          sortOrder: 3,
+          content: `## Telebirr flow
+
+Telebirr is offered **through Chapa's hosted checkout** — you don't integrate Telebirr separately.
+
+1. Buyer clicks **Buy** on your listing
+2. Redirected to Chapa checkout
+3. Selects **Telebirr** or mobile money option
+4. Completes payment on phone
+5. Webhook confirms → license granted
+
+## Configuration
+
+- \`ENABLE_TELEBIRR\` defaults to true — set false only to hide the option
+- Price must be in **ETB** for local methods
+
+> Show ETB pricing clearly on your listing so buyers know what they'll pay.`,
+        },
+        {
+          title: "Stripe + Chapa together",
+          summary: "Offer global and local checkout without confusing buyers.",
+          durationMinutes: 15,
+          sortOrder: 4,
+          content: `## Dual payment strategy
+
+| Buyer | Typical method |
+| --- | --- |
+| International | Stripe (USD card) |
+| Ethiopia | Chapa (ETB, Telebirr) |
+
+## Pricing display tips
+
+- Show **both currencies** if you support both, e.g. "$19 / 1,099 ETB"
+- Or create separate listings per region if pricing differs
+
+## Reconciliation
+
+- Stripe dashboard for USD/EUR
+- Chapa dashboard for ETB settlements
+- Mr.Software admin **Payments** tab for unified order view
+
+---
+
+You're ready to accept African payments. Test both flows and publish your listing.`,
         },
       ],
     },
   ] as const;
 
+  await ensureAcademyDefaults();
+
   for (const course of academyCourses) {
-    await prisma.academyCourse.upsert({
+    const row = await prisma.academyCourse.upsert({
       where: { slug: course.slug },
       create: {
         slug: course.slug,
@@ -281,10 +614,13 @@ async function main() {
         level: course.level,
         durationMinutes: course.durationMinutes,
         sortOrder: course.sortOrder,
+        published: true,
         lessons: {
           create: course.lessons.map((l) => ({
             title: l.title,
+            summary: l.summary,
             content: l.content,
+            durationMinutes: l.durationMinutes,
             sortOrder: l.sortOrder,
           })),
         },
@@ -295,7 +631,56 @@ async function main() {
         level: course.level,
         durationMinutes: course.durationMinutes,
         sortOrder: course.sortOrder,
+        published: true,
       },
+    });
+
+    for (const lesson of course.lessons) {
+      const existing = await prisma.academyLesson.findFirst({
+        where: { courseId: row.id, sortOrder: lesson.sortOrder },
+      });
+      if (existing) {
+        await prisma.academyLesson.update({
+          where: { id: existing.id },
+          data: {
+            title: lesson.title,
+            summary: lesson.summary,
+            content: lesson.content,
+            durationMinutes: lesson.durationMinutes,
+          },
+        });
+      } else {
+        await prisma.academyLesson.create({
+          data: {
+            courseId: row.id,
+            title: lesson.title,
+            summary: lesson.summary,
+            content: lesson.content,
+            durationMinutes: lesson.durationMinutes,
+            sortOrder: lesson.sortOrder,
+          },
+        });
+      }
+    }
+  }
+
+  await seedDefaultTeamContent();
+  await seedSampleReports(admin.id);
+
+  const needsTrust = await prisma.software.findMany({
+    where: { ownershipRecord: null },
+    include: { developer: { select: { name: true } } },
+  });
+  for (const row of needsTrust) {
+    await applyTrustOnSoftwarePublish({
+      softwareId: row.id,
+      developerId: row.developerId,
+      developerName: row.developer.name,
+      name: row.name,
+      description: row.description,
+      assetUrl: row.assetUrl,
+      licenseTier: row.licenseTier,
+      openSourceLicense: row.openSourceLicense,
     });
   }
 }

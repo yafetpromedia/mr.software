@@ -3,12 +3,25 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 
 /** Bump when Prisma schema changes so dev HMR picks up a fresh client. */
-const PRISMA_CLIENT_GENERATION = "2026-06-18-notification-prefs";
+const PRISMA_CLIENT_GENERATION = "2026-06-21-distribution-type";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-  prismaGeneration?: string;
-};
+const REQUIRED_DELEGATES = [
+  "userReport",
+  "academySectionSettings",
+  "academyCourse",
+  "developerAccessRequest",
+  "factorySession",
+  "ownershipRecord",
+  "softwareLicenseKey",
+] as const;
+
+function clientHasRequiredModels(client: PrismaClient): boolean {
+  const record = client as unknown as Record<string, unknown>;
+  return REQUIRED_DELEGATES.every((key) => {
+    const delegate = record[key];
+    return typeof delegate === "object" && delegate !== null;
+  });
+}
 
 function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
@@ -20,14 +33,25 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+  prismaGeneration?: string;
+};
+
 function getPrismaClient(): PrismaClient {
   if (
     globalForPrisma.prisma &&
-    globalForPrisma.prismaGeneration === PRISMA_CLIENT_GENERATION
+    globalForPrisma.prismaGeneration === PRISMA_CLIENT_GENERATION &&
+    clientHasRequiredModels(globalForPrisma.prisma)
   ) {
     return globalForPrisma.prisma;
   }
   const client = createPrismaClient();
+  if (!clientHasRequiredModels(client)) {
+    console.warn(
+      "[prisma] Client is missing schema models. Run `npx prisma generate` and restart the dev server.",
+    );
+  }
   globalForPrisma.prisma = client;
   globalForPrisma.prismaGeneration = PRISMA_CLIENT_GENERATION;
   return client;

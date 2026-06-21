@@ -131,8 +131,8 @@ function EnergyTrail({
     if (headT - tailT < 0.008) return;
 
     const points = sampleArc(
-      HUB.lat,
-      HUB.lng,
+      arc.startLat,
+      arc.startLng,
       arc.endLat,
       arc.endLng,
       tailT,
@@ -155,7 +155,7 @@ function EnergyTrail({
 
     if (arrowRef.current) {
       const headPos = points[points.length - 1]!;
-      const tangent = arcTangent(HUB.lat, HUB.lng, arc.endLat, arc.endLng, headT, ARC_ALTITUDE);
+      const tangent = arcTangent(arc.startLat, arc.startLng, arc.endLat, arc.endLng, headT, ARC_ALTITUDE);
       arrowRef.current.position.copy(headPos);
       orientAlongTangent(arrowRef.current, tangent);
     }
@@ -231,7 +231,7 @@ function ArcDestinationLabel({
 }) {
   const labelRef = useRef<HTMLDivElement>(null);
   const pos = useMemo(
-    () => interpolateArc(HUB.lat, HUB.lng, arc.endLat, arc.endLng, 1, ARC_ALTITUDE),
+    () => interpolateArc(arc.startLat, arc.startLng, arc.endLat, arc.endLng, 1, ARC_ALTITUDE),
     [arc],
   );
 
@@ -260,17 +260,19 @@ type Props = {
   show: boolean;
   reduceMotion: boolean;
   isLight?: boolean;
+  arcs?: DeploymentArc[];
 };
 
-export function GlobeArcFlow({ show, reduceMotion, isLight = false }: Props) {
+export function GlobeArcFlow({ show, reduceMotion, isLight = false, arcs = DEPLOYMENT_ARCS }: Props) {
   if (!show) return null;
 
-  const arcCount = DEPLOYMENT_ARCS.length;
+  const arcCount = arcs.length;
+  if (arcCount === 0) return null;
 
   return (
     <group>
       <EthiopiaHubSpark reduceMotion={reduceMotion} isLight={isLight} />
-      {DEPLOYMENT_ARCS.map((arc, i) => (
+      {arcs.map((arc, i) => (
         <EnergyTrail
           key={`trail-${arc.id}`}
           arc={arc}
@@ -280,7 +282,7 @@ export function GlobeArcFlow({ show, reduceMotion, isLight = false }: Props) {
           isLight={isLight}
         />
       ))}
-      {DEPLOYMENT_ARCS.map((arc, i) => (
+      {arcs.map((arc, i) => (
         <ArcDestinationLabel
           key={`dest-${arc.id}`}
           arc={arc}

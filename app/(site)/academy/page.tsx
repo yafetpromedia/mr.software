@@ -1,5 +1,5 @@
 import { AcademyCatalog } from "@/components/academy/academy-catalog";
-import { listPublishedCourses } from "@/lib/academy/courses";
+import { getPublicAcademySection } from "@/lib/academy/courses";
 
 export const metadata = {
   title: "Academy",
@@ -7,6 +7,6 @@ export const metadata = {
 };
 
 export default async function AcademyPage() {
-  const courses = await listPublishedCourses();
-  return <AcademyCatalog courses={courses} />;
+  const { settings, courses } = await getPublicAcademySection();
+  return <AcademyCatalog settings={settings} courses={courses} />;
 }

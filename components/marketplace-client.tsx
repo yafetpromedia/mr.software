@@ -283,7 +283,7 @@ export function MarketplaceClient({ initialQuery, variant = "catalog" }: Marketp
               <ul className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
                 {items.slice(0, 3).map((item) => (
                   <li key={item.id} className="min-w-0">
-                    <SoftwareCard item={item} featured />
+                    <SoftwareCard item={item} featured linkVariant={portal ? "portal" : "catalog"} />
                   </li>
                 ))}
               </ul>
@@ -298,7 +298,7 @@ export function MarketplaceClient({ initialQuery, variant = "catalog" }: Marketp
               <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {mainList.map((item) => (
                   <li key={item.id} className="min-w-0">
-                    <SoftwareCard item={item} />
+                    <SoftwareCard item={item} linkVariant={portal ? "portal" : "catalog"} />
                   </li>
                 ))}
               </ul>

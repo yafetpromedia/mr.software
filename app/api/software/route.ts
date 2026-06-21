@@ -7,6 +7,11 @@ import {
 import { assertCanUploadSoftware } from "@/lib/auth/governance";
 import { getSession } from "@/lib/auth/session";
 import { parseSoftwareCategory } from "@/lib/marketplace/categories";
+import {
+  parseOpenSourceLicense,
+  parseProductLicenseTier,
+} from "@/lib/trust/license-types";
+import { parseDistributionType } from "@/lib/trust/distribution-types";
 
 function parsePricingModel(v: unknown): PricingModel | undefined {
   if (v === "FREE" || v === "ONE_TIME" || v === "SUBSCRIPTION") {
@@ -96,6 +101,10 @@ export async function POST(request: Request) {
       typeof b.appStoreUrl === "string" && b.appStoreUrl.trim()
         ? b.appStoreUrl.trim()
         : null;
+    const licenseTier = parseProductLicenseTier(b.licenseTier) ?? "PERSONAL";
+    const openSourceLicense =
+      licenseTier === "OPEN_SOURCE" ? parseOpenSourceLicense(b.openSourceLicense) ?? "MIT" : null;
+    const distributionType = parseDistributionType(b.distributionType) ?? "COMPILED";
 
     const item = await createSoftwareRecord({
       name,
@@ -111,6 +120,9 @@ export async function POST(request: Request) {
       category,
       playStoreUrl,
       appStoreUrl,
+      licenseTier,
+      openSourceLicense,
+      distributionType,
     });
 
     return NextResponse.json(item, { status: 201 });

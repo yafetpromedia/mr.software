@@ -31,6 +31,34 @@ enum LicenseKind {
   SUBSCRIPTION
 }
 
+/** How the product may be used (marketplace license tier). */
+enum ProductLicenseTier {
+  PERSONAL
+  COMMERCIAL
+  ENTERPRISE
+  OPEN_SOURCE
+}
+
+enum OpenSourceLicense {
+  MIT
+  APACHE_2
+  GPL
+  BSD
+}
+
+/** How buyers receive the product (developer choice at publish). */
+enum DistributionType {
+  SOURCE_CODE
+  COMPILED
+  HOSTED
+}
+
+enum SoftwareLicenseKeyStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
 enum PurchaseStatus {
   PENDING
   ACTIVE
@@ -125,6 +153,13 @@ model User {
   notifications       Notification[]
   notificationPreferences NotificationPreferences?
   pushSubscriptions   PushSubscription[]
+  reportsFiled        UserReport[] @relation("ReportsFiled")
+  reportsResolved     UserReport[] @relation("ReportsResolved")
+  developerAccessRequests DeveloperAccessRequest[]
+  developerAccessReviews  DeveloperAccessRequest[] @relation("DeveloperAccessReviewed")
+  factorySessions         FactorySession[]
+  ownershipRecords        OwnershipRecord[]
+  softwareLicenseKeys     SoftwareLicenseKey[]
 }
 
 /** Public developer identity at `/@handle` — core of the 2.0 ecosystem model. */
@@ -136,6 +171,8 @@ model DeveloperStorefront {
   tagline   String?
   bio       String?  @db.Text
   website   String?
+  /** JSON map of platform id → profile URL (twitter, github, linkedin, etc.) */
+  socialLinksJson String @default("{}") @db.Text
   theme     StorefrontTheme @default(CLASSIC)
   /** Platform-verified creator badge (admin-granted) */
   verified  Boolean         @default(false)
@@ -180,6 +217,36 @@ model GeneratedStartup {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+enum FactoryStep {
+  IDEA
+  VALIDATION
+  PACKAGE
+  DEPLOY
+  STOREFRONT
+  LISTING
+  COMPLETE
+}
+
+/** Guided startup creation flow — idea through marketplace listing. */
+model FactorySession {
+  id             String      @id @default(cuid())
+  userId         String
+  idea           String      @db.Text
+  currentStep    FactoryStep @default(IDEA)
+  analysisJson   Json?
+  conversationId String?
+  startupId      String?
+  deploymentId   String?
+  softwareId     String?
+  completedAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
 }
 
 /** GitHub OAuth link for deploy-from-repo (separate from Google login). */
@@ -332,14 +399,23 @@ model Software {
   /** Optional Apple App Store listing for mobile apps */
   appStoreUrl   String?
   category      SoftwareCategory @default(DEVELOPER_TOOLS)
+  licenseTier   ProductLicenseTier @default(PERSONAL)
+  openSourceLicense OpenSourceLicense?
+  /** How the product is delivered to buyers */
+  distributionType DistributionType @default(COMPILED)
+  /** SHA-256 fingerprint of published product metadata / asset reference */
+  contentFingerprint String?
+  contentSignedAt    DateTime?
   developerId   String
   developer     User     @relation("DeveloperSoftware", fields: [developerId], references: [id], onDelete: Cascade)
   /** Product detail page views */
   viewCount     Int      @default(0)
   createdAt     DateTime @default(now())
 
-  purchases Purchase[]
-  deployments Deployment[]
+  purchases       Purchase[]
+  deployments     Deployment[]
+  ownershipRecord OwnershipRecord?
+  licenseKeys     SoftwareLicenseKey[]
 }
 
 /**
@@ -366,10 +442,51 @@ model Purchase {
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   software Software @relation(fields: [softwareId], references: [id], onDelete: Cascade)
+  licenseKey SoftwareLicenseKey?
 
   @@unique([userId, softwareId])
   @@index([userId])
   @@index([softwareId])
+}
+
+/** Timestamped ownership record when a product is published (Level 1 trust). */
+model OwnershipRecord {
+  id            String   @id @default(cuid())
+  recordNumber  String   @unique
+  softwareId    String   @unique
+  developerId   String
+  developerName String
+  productName   String
+  publishedAt   DateTime @default(now())
+
+  software  Software @relation(fields: [softwareId], references: [id], onDelete: Cascade)
+  developer User     @relation(fields: [developerId], references: [id], onDelete: Cascade)
+
+  @@index([developerId])
+  @@index([publishedAt])
+}
+
+/** Per-purchase license key for verification API (Level 2 trust). */
+model SoftwareLicenseKey {
+  id          String                   @id @default(cuid())
+  softwareId  String
+  purchaseId  String                   @unique
+  userId      String
+  licenseKey  String                   @unique
+  /** Optional domain lock for web/self-hosted installs (e.g. school.edu.et) */
+  licensedDomain String?
+  status      SoftwareLicenseKeyStatus @default(ACTIVE)
+  expiresAt   DateTime?
+  issuedAt    DateTime                 @default(now())
+  revokedAt   DateTime?
+
+  software Software @relation(fields: [softwareId], references: [id], onDelete: Cascade)
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([softwareId])
+  @@index([userId])
+  @@index([licenseKey])
 }
 
 /**
@@ -433,10 +550,17 @@ model Deployment {
 }
 
 model SiteSettings {
-  id           Int      @id
-  logoUrl      String   @default("/brand/logo-mark.png")
-  partnersJson String   @default("[]") @db.Text
-  updatedAt    DateTime @updatedAt
+  id             Int            @id
+  logoUrl        String         @default("/brand/logo-mark.png")
+  partnersJson   String         @default("[]") @db.Text
+  launchMapMode  LaunchMapMode  @default(HYBRID)
+  updatedAt      DateTime       @updatedAt
+}
+
+enum LaunchMapMode {
+  DEMO
+  LIVE
+  HYBRID
 }
 
 enum TestimonialStatus {
@@ -466,6 +590,49 @@ model Testimonial {
   @@index([submittedAt])
 }
 
+enum TeamMemberKind {
+  HUMAN
+  AI_CAPABILITY
+  ECOSYSTEM
+}
+
+/** Landing page team section copy (singleton). */
+model TeamSectionSettings {
+  id        Int      @id
+  eyebrow   String   @default("Team")
+  title     String   @default("The Modern Startup Team")
+  tagline   String   @default("Built by a Human. Powered by AI.")
+  intro     String   @default("Building the future of software with human creativity and AI execution.") @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+/** Landing page team profiles — managed from admin. */
+model TeamMember {
+  id        String         @id @default(cuid())
+  kind      TeamMemberKind
+  name      String
+  role      String
+  bio       String         @db.Text
+  avatarUrl String?
+  monogram  String?
+  published Boolean        @default(true)
+  sortOrder Int            @default(0)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+/** Academy catalog page copy (singleton). */
+model AcademySectionSettings {
+  id        Int      @id
+  eyebrow   String   @default("Mr.Software Academy")
+  title     String   @default("Learn → build → publish")
+  tagline   String   @default("From idea to live product on the marketplace.")
+  intro     String   @default("Courses for developers and founders. Finish a track, then publish on the marketplace or open your storefront.") @db.Text
+  updatedAt DateTime @updatedAt
+}
+
 /** Mr.Software Academy — learn and publish on the platform. */
 model AcademyCourse {
   id              String             @id @default(cuid())
@@ -486,12 +653,15 @@ model AcademyCourse {
 }
 
 model AcademyLesson {
-  id        String   @id @default(cuid())
-  courseId  String
-  title     String
-  content   String   @db.Text
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  courseId        String
+  title           String
+  summary         String   @default("") @db.Text
+  content         String   @db.Text
+  durationMinutes Int      @default(10)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
 
   course AcademyCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
@@ -511,5 +681,76 @@ model AcademyProgress {
   course AcademyCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
+  @@index([userId])
+}
+
+enum UserReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+enum UserReportTargetType {
+  SOFTWARE
+  STOREFRONT
+  USER
+}
+
+enum UserReportReason {
+  SPAM
+  SCAM
+  COPYRIGHT
+  INAPPROPRIATE
+  MISLEADING
+  OTHER
+}
+
+/** User-submitted abuse / listing reports — triaged from admin. */
+model UserReport {
+  id           String               @id @default(cuid())
+  reporterId   String
+  targetType   UserReportTargetType
+  targetId     String
+  reason       UserReportReason
+  details      String?              @db.Text
+  status       UserReportStatus     @default(OPEN)
+  resolution   String?              @db.Text
+  resolvedAt   DateTime?
+  resolvedById String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  reporter   User  @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
+  resolvedBy User? @relation("ReportsResolved", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@index([reporterId])
+}
+
+enum DeveloperAccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/** Members request promotion to the Developer role — reviewed in admin. */
+model DeveloperAccessRequest {
+  id           String                       @id @default(cuid())
+  userId       String
+  pitch        String                       @db.Text
+  website      String?
+  status       DeveloperAccessRequestStatus @default(PENDING)
+  adminNote    String?                      @db.Text
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime                     @default(now())
+  updatedAt    DateTime                     @updatedAt
+
+  user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("DeveloperAccessReviewed", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
   @@index([userId])
 }

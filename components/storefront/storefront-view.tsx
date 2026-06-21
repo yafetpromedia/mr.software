@@ -1,7 +1,11 @@
+import { DeploymentStatus } from "@prisma/client";
 import { VerifiedAvatarMark, VerifiedBadge } from "@/components/storefront/verified-badge";
 import Link from "next/link";
+import { ReportTrigger } from "@/components/reports/report-trigger";
 import { SoftwareCard } from "@/components/software-card";
 import { StorefrontFollowButton } from "@/components/storefront/storefront-client";
+import { StorefrontSocialLinks } from "@/components/storefront/storefront-social-links";
+import { StorefrontDeploymentsSection } from "@/components/storefront/storefront-deployments-section";
 import { formatPublicRevenue } from "@/lib/storefront/format-public-revenue";
 import {
   getStorefrontTheme,
@@ -41,9 +45,11 @@ function Metric({
 export function StorefrontView({
   store,
   isStoreOwner,
+  hasSession = false,
 }: {
   store: PublicStorefront;
   isStoreOwner: boolean;
+  hasSession?: boolean;
 }) {
   const theme = getStorefrontTheme(store.theme);
   const isMidnight = store.theme === "MIDNIGHT";
@@ -61,6 +67,10 @@ export function StorefrontView({
       value: store.followerCount.toLocaleString(),
     },
     { label: store.productCount === 1 ? "Product" : "Products", value: store.productCount },
+    {
+      label: store.deployments.filter((d) => d.status === DeploymentStatus.ACTIVE).length === 1 ? "Deploy" : "Deploys",
+      value: store.deployments.filter((d) => d.status === DeploymentStatus.ACTIVE).length,
+    },
     ...(revenueLabel ? [{ label: "Earned", value: revenueLabel }] : []),
   ];
 
@@ -151,7 +161,7 @@ export function StorefrontView({
                 ) : null}
               </div>
               <div
-                className={`grid grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-6 lg:gap-8 ${
+                className={`grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-6 lg:gap-8 ${
                   isMinimal
                     ? "rounded-xl border border-stone-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/90 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none"
                     : ""
@@ -214,6 +224,21 @@ export function StorefrontView({
                     Website ↗
                   </a>
                 ) : null}
+                <StorefrontSocialLinks
+                  links={store.socialLinks}
+                  variant={isMidnight ? "midnight" : isMinimal ? "minimal" : "default"}
+                  className="md:text-right"
+                />
+                <ReportTrigger
+                  targetType="STOREFRONT"
+                  targetId={store.ownerUserId}
+                  targetLabel={`@${store.handle} · ${store.name}`}
+                  hasSession={hasSession}
+                  loginNext={`/@${store.handle}`}
+                  disabled={isStoreOwner}
+                  disabledReason="You cannot report your own storefront"
+                  className={isMidnight ? "text-zinc-400 hover:text-red-400" : ""}
+                />
               </div>
             </div>
 
@@ -283,6 +308,8 @@ export function StorefrontView({
             </div>
           )}
         </section>
+
+        <StorefrontDeploymentsSection deployments={store.deployments} isMidnight={isMidnight} />
       </div>
     </div>
   );

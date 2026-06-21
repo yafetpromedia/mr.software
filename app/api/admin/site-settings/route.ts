@@ -3,6 +3,7 @@ import { logAdminAction } from "@/lib/admin/audit";
 import { isActiveAdmin } from "@/lib/auth/rbac";
 import { getSession } from "@/lib/auth/session";
 import { getPublicSiteSettings, upsertSiteSettings } from "@/lib/site-settings";
+import { updateLaunchMapMode, getLaunchMapMode } from "@/lib/launch-map/launch-map";
 import { adminSiteSettingsBodySchema } from "@/lib/validation/site-settings";
 
 export async function GET() {
@@ -14,8 +15,11 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const settings = await getPublicSiteSettings();
-  return NextResponse.json({ settings });
+  const [settings, launchMapMode] = await Promise.all([
+    getPublicSiteSettings(),
+    getLaunchMapMode(),
+  ]);
+  return NextResponse.json({ settings: { ...settings, launchMapMode } });
 }
 
 export async function PATCH(request: Request) {
@@ -44,7 +48,15 @@ export async function PATCH(request: Request) {
 
   try {
     const before = await getPublicSiteSettings();
-    const settings = await upsertSiteSettings(parsed.data);
+    const beforeMode = await getLaunchMapMode();
+    const settings = await upsertSiteSettings({
+      logoUrl: parsed.data.logoUrl,
+      partners: parsed.data.partners,
+    });
+    const launchMapMode =
+      parsed.data.launchMapMode !== undefined
+        ? await updateLaunchMapMode(parsed.data.launchMapMode)
+        : beforeMode;
     await logAdminAction({
       adminId: session.id,
       action: "site.settings",
@@ -55,9 +67,11 @@ export async function PATCH(request: Request) {
         logoTo: settings.logoUrl,
         partnersCountFrom: before.partners.length,
         partnersCountTo: settings.partners.length,
+        launchMapModeFrom: beforeMode,
+        launchMapModeTo: launchMapMode,
       },
     });
-    return NextResponse.json({ settings });
+    return NextResponse.json({ settings: { ...settings, launchMapMode } });
   } catch (error) {
     console.error(error);
     const message =

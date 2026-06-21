@@ -7,6 +7,7 @@ import { InfrastructureCard } from "@/components/ui/infrastructure-card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { formatMoneyAmount } from "@/lib/portal/format-amount";
 import type { StorefrontAnalytics } from "@/lib/storefront/storefront";
+import type { FactoryProgress } from "@/lib/factory/types";
 import type { Deployment } from "@prisma/client";
 
 type TrendPoint = { date: string; value: number };
@@ -33,6 +34,7 @@ type Props = {
   deploymentTrend: TrendPoint[];
   statusBreakdown: StatusBreakdown;
   planInfo: PlanInfo;
+  factoryProgress: FactoryProgress;
 };
 
 const DEPLOY_COLORS = {
@@ -139,6 +141,7 @@ export function CommandCenter({
   deploymentTrend,
   statusBreakdown,
   planInfo,
+  factoryProgress,
 }: Props) {
   const firstName = userName.split(/\s+/)[0] ?? userName;
   const totalStatus =
@@ -201,10 +204,10 @@ export function CommandCenter({
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             <Link
-              href="/app/ai/blueprint"
+              href="/app/factory"
               className="btn-brand inline-flex h-10 items-center rounded-xl px-5 text-sm font-semibold shadow-sm"
             >
-              AI-assisted builder
+              Startup Factory
             </Link>
             <Link
               href="/deploy"
@@ -215,6 +218,59 @@ export function CommandCenter({
           </div>
         </div>
       </section>
+
+      {factoryProgress.percent < 100 ? (
+        <InfrastructureCard className="p-4 sm:p-5" hover={false}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-stone-900 dark:text-[var(--foreground)]">
+                Startup Factory progress
+              </h2>
+              <p className="mt-1 text-xs text-stone-500 dark:text-[var(--muted)]">
+                {factoryProgress.completedCount} of {factoryProgress.totalCount} steps complete
+              </p>
+            </div>
+            <Link
+              href="/app/factory"
+              className="text-xs font-medium text-[var(--accent)] hover:underline"
+            >
+              Open factory →
+            </Link>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--border-subtle)]">
+            <div
+              className="h-full rounded-full bg-[var(--accent)] transition-all"
+              style={{ width: `${factoryProgress.percent}%` }}
+            />
+          </div>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {factoryProgress.items.map((item) => (
+              <li key={item.step}>
+                <Link
+                  href={item.href}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition hover:border-[var(--accent)]/30 ${
+                    item.done
+                      ? "border-emerald-500/25 bg-emerald-500/5 text-emerald-800 dark:text-emerald-200"
+                      : "border-[var(--border)] text-stone-600 dark:text-[var(--muted)]"
+                  }`}
+                >
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold ${
+                      item.done
+                        ? "bg-emerald-500 text-white"
+                        : "border border-[var(--border)] bg-[var(--background)]"
+                    }`}
+                    aria-hidden
+                  >
+                    {item.done ? "✓" : "·"}
+                  </span>
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </InfrastructureCard>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
@@ -417,6 +473,16 @@ export function CommandCenter({
               Quick actions
             </h2>
             <div className="mt-3 grid gap-2">
+              <QuickAction
+                href="/app/factory"
+                title="Startup Factory"
+                description="Idea → validate → deploy → list"
+                icon={
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                  </svg>
+                }
+              />
               <QuickAction
                 href="/app/ai/blueprint"
                 title="AI-assisted builder"

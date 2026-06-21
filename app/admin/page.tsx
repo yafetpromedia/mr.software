@@ -8,6 +8,7 @@ import { AdminOverviewDashboard } from "@/components/admin/admin-overview-dashbo
 import { getPlatformAnalytics } from "@/lib/admin/platform-analytics";
 import { prisma } from "@/lib/prisma";
 import { countPendingTestimonials } from "@/lib/testimonials";
+import { countPendingDeveloperAccessRequests } from "@/lib/developer-access/developer-access";
 
 function usdCents(n: number) {
   return new Intl.NumberFormat("en-US", {
@@ -31,6 +32,7 @@ export default async function AdminOverviewPage() {
     nonActiveUserCount,
     pendingPurchaseCount,
     pendingTestimonials,
+    pendingDeveloperRequests,
     recentAudit,
     analytics,
   ] = await Promise.all([
@@ -52,6 +54,7 @@ export default async function AdminOverviewPage() {
     }),
     prisma.purchase.count({ where: { status: PurchaseStatus.PENDING } }),
     countPendingTestimonials(),
+    countPendingDeveloperAccessRequests(),
     prisma.adminAuditLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 6,
@@ -99,6 +102,13 @@ export default async function AdminOverviewPage() {
     alerts.push({
       text: `${pendingPurchaseCount} purchase(s) awaiting completion`,
       href: "/admin/payments",
+      kind: "warn",
+    });
+  }
+  if (pendingDeveloperRequests > 0) {
+    alerts.push({
+      text: `${pendingDeveloperRequests} developer access request(s) pending`,
+      href: "/admin/developer-requests",
       kind: "warn",
     });
   }

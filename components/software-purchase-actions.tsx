@@ -2,10 +2,19 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { SoftwareDistributionType } from "@/lib/software-item";
+import {
+  allowsFileDownload,
+  distributionAccessLabel,
+  isHostedOnly,
+  requiresLicenseKeyAtRuntime,
+} from "@/lib/monetization/distribution-access";
 
 type Props = {
   softwareId: string;
   pricingModel: "FREE" | "ONE_TIME" | "SUBSCRIPTION";
+  distributionType?: SoftwareDistributionType;
+  hostedAppUrl?: string | null;
   entitled: boolean;
   hasSession: boolean;
   isOwner: boolean;
@@ -23,6 +32,8 @@ type Props = {
 export function SoftwarePurchaseActions({
   softwareId,
   pricingModel,
+  distributionType = "COMPILED",
+  hostedAppUrl,
   entitled,
   hasSession,
   isOwner,
@@ -40,6 +51,9 @@ export function SoftwarePurchaseActions({
 
   const needsPurchase =
     pricingModel !== "FREE" && !entitled && !isOwner;
+  const canDownload = allowsFileDownload(distributionType);
+  const hosted = isHostedOnly(distributionType);
+  const accessHint = distributionAccessLabel(distributionType, entitled || isOwner);
   const canBuyStripe =
     needsPurchase &&
     stripeConfigured &&
@@ -160,7 +174,7 @@ export function SoftwarePurchaseActions({
             Sign in to download
           </p>
           <p className="mt-1.5 text-xs leading-relaxed text-stone-600 dark:text-[var(--muted)]">
-            Free and licensed downloads are issued to your account. Pay with Stripe or
+            Free and licensed access is issued to your account. Pay with Stripe or
             Chapa / Telebirr when configured.
           </p>
         </div>
@@ -182,17 +196,32 @@ export function SoftwarePurchaseActions({
         <div>
           <p className="text-sm font-semibold text-stone-900 dark:text-[var(--foreground)]">
             {entitled || isOwner
-              ? "Download"
+              ? hosted
+                ? "Cloud access"
+                : canDownload
+                  ? "Download"
+                  : "Access"
               : needsPurchase
                 ? "Purchase required"
-                : "Download"}
+                : hosted
+                  ? "Cloud access"
+                  : "Download"}
           </p>
           <p className="mt-1.5 text-xs leading-relaxed text-stone-600 dark:text-[var(--muted)]">
             {entitled || isOwner
-              ? "Opens a short-lived secure link; the asset is streamed from the server."
+              ? accessHint
               : needsPurchase
                 ? "Stripe (global) or Chapa / Telebirr (Ethiopia) when enabled."
                 : "Sign in required."}
+            {requiresLicenseKeyAtRuntime(distributionType) && (entitled || isOwner) ? (
+              <span className="block mt-1">
+                License key available in{" "}
+                <Link href="/app/my-software" className="font-semibold text-orange-600 underline-offset-2 hover:underline dark:text-[var(--accent)]">
+                  My software
+                </Link>
+                .
+              </span>
+            ) : null}
             {etbHint ? ` · ${etbHint}` : null}
           </p>
           {message ? (
@@ -261,7 +290,31 @@ export function SoftwarePurchaseActions({
             </button>
           ) : null}
 
-          {(entitled || isOwner) ? (
+          {(entitled || isOwner) && hosted && hostedAppUrl ? (
+            <a
+              href={hostedAppUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex h-11 items-center justify-center rounded-xl bg-orange-600 px-6 text-sm font-semibold text-white shadow-md shadow-orange-600/20 transition hover:bg-orange-500 dark:bg-[var(--accent)] dark:shadow-[var(--accent-glow)] dark:hover:bg-[var(--accent-hover)] ${
+                embedded ? "w-full" : "shrink-0"
+              }`}
+            >
+              Open cloud app
+            </a>
+          ) : null}
+
+          {(entitled || isOwner) && hosted && !hostedAppUrl ? (
+            <Link
+              href={`/app/my-software/${softwareId}`}
+              className={`inline-flex h-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 text-sm font-semibold text-[var(--foreground)] ${
+                embedded ? "w-full" : "shrink-0"
+              }`}
+            >
+              View in library
+            </Link>
+          ) : null}
+
+          {(entitled || isOwner) && canDownload ? (
             <button
               type="button"
               disabled={busy}
@@ -270,7 +323,7 @@ export function SoftwarePurchaseActions({
                 embedded ? "w-full" : "shrink-0"
               }`}
             >
-              {busy ? "…" : "Download"}
+              {busy ? "…" : distributionType === "SOURCE_CODE" ? "Download source" : "Download"}
             </button>
           ) : null}
         </div>
