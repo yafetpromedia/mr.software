@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { DeployUploadForm } from "@/components/app/deploy-upload-form";
 import { ListingCreateForm } from "@/components/app/listing-create-form";
+import { StartupOneClickDeploy } from "@/components/app/startup-one-click-deploy";
 import { DeployGithubPanel } from "@/components/deploy/deploy-github-panel";
 import { FactoryStepIndicator } from "@/components/factory/factory-step-indicator";
 import { GenerationLoading } from "@/components/startup/generation-loading";
@@ -516,7 +517,7 @@ export function StartupFactoryWizard({
             <div>
               <h2 className="text-lg font-semibold text-[var(--foreground)]">4. Deploy preview</h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
-                Recommended: connect GitHub. Or upload a ZIP build of your static site.
+                One-click deploy your AI landing, connect GitHub, or upload a ZIP build.
               </p>
             </div>
             <button
@@ -527,6 +528,15 @@ export function StartupFactoryWizard({
               Skip for now
             </button>
           </div>
+
+          {session?.startupId ? (
+            <StartupOneClickDeploy
+              startupId={session.startupId}
+              projectName={projectName}
+              disabled={freeBlocked}
+              onSuccess={(d) => void handleDeployRecorded(d.id)}
+            />
+          ) : null}
 
           <div className="flex gap-2">
             <button

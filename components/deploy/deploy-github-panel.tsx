@@ -80,6 +80,7 @@ export function DeployGithubPanel({
     name: string;
   } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [autoDeployOnPush, setAutoDeployOnPush] = useState(true);
 
   const loadStatus = useCallback(async () => {
     const res = await fetch("/api/github/status", { credentials: "include" });
@@ -170,6 +171,7 @@ export function DeployGithubPanel({
           repo: repoName,
           branch: repo.defaultBranch,
           name: repo.name,
+          autoDeploy: autoDeployOnPush,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -236,8 +238,8 @@ export function DeployGithubPanel({
       <div>
         <h2 className="text-lg font-semibold text-[var(--foreground)]">Deploy from GitHub</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Connect your account, pick a repository, and Mr.Software deploys the static build. Auto-deploy
-          on <code className="text-[var(--foreground)]">git push</code> ships next.
+          Connect your account, pick a repository, and Mr.Software builds and hosts your app. Enable
+          auto-deploy to redeploy on every <code className="text-[var(--foreground)]">git push</code>.
         </p>
         <div className="mt-3">
           <WorkflowSteps />
@@ -338,6 +340,22 @@ export function DeployGithubPanel({
             </div>
           </div>
 
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--background)]/60 px-4 py-3">
+            <input
+              type="checkbox"
+              checked={autoDeployOnPush}
+              onChange={(e) => setAutoDeployOnPush(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-[var(--border)] accent-[var(--accent)]"
+            />
+            <span className="text-sm text-[var(--foreground)]">
+              <span className="font-medium">Auto-deploy on git push</span>
+              <span className="mt-0.5 block text-xs text-[var(--muted)]">
+                Registers a GitHub webhook on the default branch — requires{" "}
+                <code className="text-[var(--foreground)]">GITHUB_WEBHOOK_SECRET</code> on the server.
+              </span>
+            </span>
+          </label>
+
           <ul className="space-y-2">
             {loadingRepos && repos.length === 0 ? (
               <li className="py-8 text-center text-sm text-[var(--muted)]">Loading repositories…</li>
@@ -403,8 +421,7 @@ export function DeployGithubPanel({
 
           <p className="text-xs text-[var(--muted)]">
             Mr.Software auto-detects Next.js, Vite, PHP, Python, and static sites — runs{" "}
-            <code className="text-[var(--foreground)]">npm run build</code> when needed. Push-to-deploy
-            webhooks are coming next.{" "}
+            <code className="text-[var(--foreground)]">npm run build</code> when needed.{" "}
             <Link href="/deploy?source=zip" className="font-medium text-[var(--accent)] hover:underline">
               Upload ZIP
             </Link>{" "}

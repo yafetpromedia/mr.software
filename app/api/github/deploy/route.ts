@@ -9,6 +9,11 @@ import { slugifyProjectName } from "@/lib/deploy/slug";
 import { downloadGithubRepoArchive } from "@/lib/github/api";
 import { getGithubAccessToken } from "@/lib/github/connection";
 import { isGithubConfigured } from "@/lib/github/config";
+import {
+  createGithubRepoWebhook,
+  getGithubWebhookSecret,
+  githubWebhookCallbackUrl,
+} from "@/lib/github/webhooks";
 import { prisma } from "@/lib/prisma";
 import { assertCanCreateDeployment } from "@/lib/subscription/limits";
 import { checkRateLimit } from "@/lib/security/rate-limit";
@@ -21,6 +26,7 @@ const bodySchema = z.object({
   repo: z.string().min(1).max(120),
   branch: z.string().min(1).max(120).optional(),
   name: z.string().min(1).max(120).optional(),
+  autoDeploy: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -89,6 +95,8 @@ export async function POST(request: Request) {
 
   const { owner, repo, branch = "main" } = parsed.data;
   const name = parsed.data.name?.trim() || repo;
+  const autoDeploy = parsed.data.autoDeploy ?? true;
+  const webhookSecret = getGithubWebhookSecret();
 
   let zipBuffer: Buffer;
   try {
@@ -130,8 +138,34 @@ export async function POST(request: Request) {
       name,
       slug,
       status: DeploymentStatus.PENDING,
+      githubOwner: owner,
+      githubRepo: repo,
+      githubBranch: branch,
+      autoDeploy: autoDeploy && Boolean(webhookSecret),
     },
   });
+
+  if (autoDeploy && webhookSecret) {
+    try {
+      const hookId = await createGithubRepoWebhook({
+        accessToken: token,
+        owner,
+        repo,
+        callbackUrl: githubWebhookCallbackUrl(deployment.id),
+        secret: webhookSecret,
+      });
+      await prisma.deployment.update({
+        where: { id: deployment.id },
+        data: { githubWebhookId: hookId },
+      });
+    } catch (e) {
+      console.error("GitHub webhook setup failed", e);
+      await prisma.deployment.update({
+        where: { id: deployment.id },
+        data: { autoDeploy: false },
+      });
+    }
+  }
 
   await processDeploymentZip({
     deploymentId: deployment.id,

@@ -20,7 +20,7 @@ const STEPS = [
     step: "03",
     title: "Deploy & monetize",
     icon: "🚀",
-    desc: "Host on Mr.Software Cloud (coming), your VPS, Hostinger, or elsewhere — or sell in the marketplace.",
+    desc: "Host on Mr.Software Cloud with ZIP or GitHub — static sites, Next.js, PHP, and Python — or sell in the marketplace.",
   },
 ] as const;
 

@@ -578,6 +578,12 @@ model Deployment {
   runtimePort  Int?
   url          String?
   errorMessage String?           @db.Text
+  /** GitHub source when deployed from a repo */
+  githubOwner     String?
+  githubRepo      String?
+  githubBranch    String?
+  githubWebhookId Int?
+  autoDeploy      Boolean          @default(false)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 

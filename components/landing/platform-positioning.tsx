@@ -10,7 +10,7 @@ const PILLARS = [
   },
   {
     title: "Developer control",
-    desc: "Full code access, project export, and deploy on Mr.Software Cloud or external hosts — GitHub and ZIP export rolling out soon.",
+    desc: "Full code access, project export, and deploy on Mr.Software Cloud via ZIP or GitHub — Node, PHP, Python, and static builds supported.",
     icon: "</>",
   },
   {

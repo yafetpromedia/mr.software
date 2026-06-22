@@ -17,6 +17,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { GenerationLoading } from "@/components/startup/generation-loading";
+import { StartupOneClickDeploy } from "@/components/app/startup-one-click-deploy";
 import { StartupLanding } from "@/components/startup/startup-landing";
 import type { GeneratedStartupPayload } from "@/lib/startup/types";
 
@@ -314,7 +315,7 @@ export function StartupBuilder() {
           <p className="text-[0.7rem] leading-relaxed text-[var(--muted)]">
             Drafts are starting points — edit before sharing or deploying.{" "}
             {mode === "developer"
-              ? "Developer mode: export ZIP, GitHub, and external hosts coming soon."
+              ? "Developer mode: deploy via ZIP or GitHub, export builds, or host on your own VPS."
               : "Beginner mode: guided UI with lighter technical exposure."}
           </p>
 
@@ -436,6 +437,11 @@ export function StartupBuilder() {
                     Dashboard preview
                   </Link>
                 </div>
+                <StartupOneClickDeploy
+                  startupId={preview.id}
+                  projectName={preview.payload.name}
+                  onSuccess={() => router.push(`/projects`)}
+                />
                 <div className="ai-glow-ring overflow-hidden rounded-2xl border border-[var(--border)] shadow-2xl shadow-[var(--accent-glow)]">
                   <div className="max-h-[32rem] overflow-y-auto">
                     <StartupLanding

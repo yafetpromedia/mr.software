@@ -1,3 +1,4 @@
+import { DeploymentStatus } from "@prisma/client";
 import { ExternalLink } from "lucide-react";
 import { StatusPill } from "@/components/ui/status-pill";
 

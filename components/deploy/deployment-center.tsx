@@ -436,8 +436,8 @@ export function DeploymentCenter({
               </div>
 
               <p className="text-xs text-[var(--muted)]">
-                After generating a draft, return here with <strong className="text-[var(--foreground)]">Upload ZIP</strong>{" "}
-                to host it — full one-click AI deploy ships next.
+                Generate a draft in Startup Factory, then use <strong className="text-[var(--foreground)]">one-click deploy</strong>{" "}
+                or <strong className="text-[var(--foreground)]">Upload ZIP</strong> to go live.
               </p>
             </div>
           ) : null}
