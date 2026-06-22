@@ -44,3 +44,6 @@ next-env.d.ts
 
 # local static deploy artifacts
 /data/deployments
+
+# admin-uploaded assets (keep out of git)
+/public/brand/uploads/
