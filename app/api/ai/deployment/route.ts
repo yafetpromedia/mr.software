@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const plan = await adviseDeployment(parsed.data.idea);
+    const plan = await adviseDeployment(parsed.data.idea, session.id);
     return NextResponse.json({ plan });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Advice failed";

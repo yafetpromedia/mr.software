@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { completeJson } from "@/lib/ai/chat";
+import { appendCreatorContext, getCreatorContextBlock } from "@/lib/ai/developer-memory/context";
 import { MR_SOFTWARE_AI_IDENTITY } from "@/lib/ai/prompts";
 
 export const deploymentPlanSchema = z.object({
@@ -27,10 +28,13 @@ const DEPLOYMENT_ADVISOR_SYSTEM = `${MR_SOFTWARE_AI_IDENTITY}
 You are Mr.Software Deployment Advisor. Recommend practical deployment strategies for SaaS products.
 Consider Mr.Software cloud deploy, VPS, and marketplace distribution. Respond with JSON only.`;
 
-export async function adviseDeployment(idea: string): Promise<DeploymentPlan> {
+export async function adviseDeployment(idea: string, userId: string): Promise<DeploymentPlan> {
+  const creatorBlock = await getCreatorContextBlock(userId);
+  const systemPrompt = appendCreatorContext(DEPLOYMENT_ADVISOR_SYSTEM, creatorBlock);
+
   return completeJson(
     [
-      { role: "system", content: DEPLOYMENT_ADVISOR_SYSTEM },
+      { role: "system", content: systemPrompt },
       {
         role: "user",
         content: `Recommend a deployment plan for this product. JSON shape:

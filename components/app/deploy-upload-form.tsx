@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FileArchive, Upload } from "lucide-react";
+import { MAX_ZIP_BYTES, MAX_ZIP_MB } from "@/lib/deploy/constants";
 
 type Props = {
   defaultName?: string;
@@ -37,6 +38,10 @@ export function DeployUploadForm({
     }
     if (!next.name.toLowerCase().endsWith(".zip")) {
       setError("Only .zip archives are allowed");
+      return;
+    }
+    if (next.size > MAX_ZIP_BYTES) {
+      setError(`ZIP must be ${MAX_ZIP_MB} MB or smaller`);
       return;
     }
     setError(null);
@@ -116,7 +121,9 @@ export function DeployUploadForm({
       </div>
 
       <div>
-        <span className="block text-sm font-medium text-[var(--foreground)]">ZIP archive (max 50 MB)</span>
+        <span className="block text-sm font-medium text-[var(--foreground)]">
+          ZIP archive (max {MAX_ZIP_MB} MB)
+        </span>
         <div
           role="button"
           tabIndex={0}

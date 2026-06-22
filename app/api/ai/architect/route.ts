@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const plan = await planSoftwareArchitecture(parsed.data.idea, parsed.data.context);
+    const plan = await planSoftwareArchitecture(parsed.data.idea, parsed.data.context, session.id);
     return NextResponse.json({ plan });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Planning failed";

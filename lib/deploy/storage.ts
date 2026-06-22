@@ -1,6 +1,12 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import type { Deployment } from "@prisma/client";
 
 function getS3(): S3Client | null {
@@ -143,4 +149,37 @@ export async function readS3DeployFile(
   } catch {
     return null;
   }
+}
+
+export async function deleteDeploymentFiles(
+  deployment: Pick<Deployment, "userId" | "id">,
+): Promise<void> {
+  if (useS3Storage()) {
+    const client = getS3();
+    const bucket = process.env.S3_BUCKET?.trim();
+    if (!client || !bucket) return;
+
+    const prefix = `${keyPrefix(deployment)}/`;
+    let token: string | undefined;
+    do {
+      const listed = await client.send(
+        new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: prefix,
+          ContinuationToken: token,
+        }),
+      );
+      const keys = (listed.Contents ?? [])
+        .map((o) => o.Key)
+        .filter((k): k is string => Boolean(k));
+      await Promise.all(
+        keys.map((Key) => client.send(new DeleteObjectCommand({ Bucket: bucket, Key }))),
+      );
+      token = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+    } while (token);
+    return;
+  }
+
+  const dir = join(localDeployRoot(), deployment.userId, deployment.id);
+  await rm(dir, { recursive: true, force: true }).catch(() => {});
 }

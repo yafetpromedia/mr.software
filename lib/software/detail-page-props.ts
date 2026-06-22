@@ -14,6 +14,7 @@ export async function buildSoftwareDetailViewProps(
 
   const { item: rawItem, software } = bundle;
   const isOwner = session?.id === software.developerId;
+  if (!software.published && !isOwner) return null;
   let item = rawItem;
   if (!isOwner) {
     await recordSoftwareView(id, session?.id);

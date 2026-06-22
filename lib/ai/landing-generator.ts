@@ -1,5 +1,6 @@
 import { LANDING_GENERATOR_SYSTEM } from "@/lib/ai/prompts";
 import { completeJson } from "@/lib/ai/chat";
+import { appendCreatorContext, getCreatorContextBlock } from "@/lib/ai/developer-memory/context";
 import { isAiConfigured } from "@/lib/ai/config";
 import { aiLandingPayloadSchema } from "@/lib/startup/ai-landing-schema";
 import { generatedStartupPayloadSchema } from "@/lib/startup/schema";
@@ -40,16 +41,22 @@ export class AiGenerationError extends Error {
 }
 
 /** 100% Mr.Software AI — no templates, no keyword injection, no silent fallbacks. */
-export async function generateStartupWithAi(idea: string): Promise<GeneratedStartupPayload> {
+export async function generateStartupWithAi(
+  idea: string,
+  userId: string,
+): Promise<GeneratedStartupPayload> {
   if (!isAiConfigured()) {
     throw new AiGenerationError(
       "Mr.Software AI is not configured. Add AI_API_KEY to your .env file.",
     );
   }
 
+  const creatorBlock = await getCreatorContextBlock(userId);
+  const systemPrompt = appendCreatorContext(LANDING_GENERATOR_SYSTEM, creatorBlock);
+
   const raw = await completeJson(
     [
-      { role: "system", content: LANDING_GENERATOR_SYSTEM },
+      { role: "system", content: systemPrompt },
       { role: "user", content: `${AI_PAYLOAD_PROMPT}\n${idea}` },
     ],
     aiLandingPayloadSchema,

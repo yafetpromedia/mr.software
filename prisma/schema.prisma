@@ -84,6 +84,14 @@ enum DeploymentStatus {
   FAILED
 }
 
+/** How a deployment is served after build */
+enum DeployRuntime {
+  STATIC
+  NODE
+  PHP
+  PYTHON
+}
+
 /** Marketplace product verticals (Mr.Software 2.0 catalog). */
 enum SoftwareCategory {
   EDUCATION
@@ -160,6 +168,30 @@ model User {
   factorySessions         FactorySession[]
   ownershipRecords        OwnershipRecord[]
   softwareLicenseKeys     SoftwareLicenseKey[]
+  developerMemoryProfile  DeveloperMemoryProfile?
+}
+
+/** Personalized AI context for a creator — separate from legal ownership & license records. */
+model DeveloperMemoryProfile {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /** Creator identity: developer, vision, projects, skills */
+  profileJson    Json @default("{}")
+  /** Design language: style, colors, focus areas, values */
+  creatorDnaJson Json @default("{}")
+  /** AI team metadata (founder, aiArchitect, aiDeveloper) */
+  teamJson       Json @default("{}")
+
+  /** Active project focus injected into AI requests */
+  currentProjectName     String?
+  currentProjectCategory String?
+
+  /** Optional free-form notes for AI (not legal ownership data) */
+  aiContextNotes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 /** Public developer identity at `/@handle` — core of the 2.0 ecosystem model. */
@@ -410,6 +442,8 @@ model Software {
   developer     User     @relation("DeveloperSoftware", fields: [developerId], references: [id], onDelete: Cascade)
   /** Product detail page views */
   viewCount     Int      @default(0)
+  /** When false, hidden from marketplace and storefront (owner can still manage) */
+  published     Boolean  @default(true)
   createdAt     DateTime @default(now())
 
   purchases       Purchase[]
@@ -536,6 +570,12 @@ model Deployment {
   /** URL-safe segment; unique per user */
   slug         String
   status       DeploymentStatus  @default(PENDING)
+  /** STATIC = files · NODE = Next/Express · PHP · PYTHON */
+  runtime      DeployRuntime     @default(STATIC)
+  /** Detected stack, e.g. vite, nextjs, php, flask */
+  framework    String?
+  /** Local port when runtime is NODE, PHP, or PYTHON */
+  runtimePort  Int?
   url          String?
   errorMessage String?           @db.Text
   createdAt    DateTime          @default(now())

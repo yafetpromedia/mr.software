@@ -1,36 +1,22 @@
 import { mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { tmpdir } from "node:os";
 import { DeploymentStatus } from "@prisma/client";
 import { notifyDeploymentResult } from "@/lib/notifications/events";
 import { logSecurityEvent } from "@/lib/security/log";
 import { prisma } from "@/lib/prisma";
 import { MAX_ZIP_BYTES } from "./constants";
+import { detectFramework } from "./detect-framework";
+import { findProjectRoot } from "./find-project-root";
+import { prepareDeployArtifacts } from "./prepare-artifacts";
 import { appBaseUrlFromRequest, buildDeploymentPublicUrl } from "./public-url";
+import {
+  ensureNodeRuntime,
+  ensurePhpRuntime,
+  ensurePythonRuntime,
+} from "./runtime-manager";
 import { extractZipSafely } from "./safe-unzip";
-import { uploadExtractedSite } from "./storage";
-
-async function findIndexHtml(root: string): Promise<string | null> {
-  const { readdir } = await import("node:fs/promises");
-  const { join: j } = await import("node:path");
-
-  async function walk(dir: string): Promise<string | null> {
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const e of entries) {
-      const p = j(dir, e.name);
-      if (e.isFile() && e.name.toLowerCase() === "index.html") {
-        return p;
-      }
-      if (e.isDirectory()) {
-        const found = await walk(p);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-
-  return walk(root);
-}
+import { localDeployRoot, uploadExtractedSite } from "./storage";
 
 async function notifyDeployOutcome(deploymentId: string) {
   const row = await prisma.deployment.findUnique({
@@ -88,26 +74,14 @@ export async function processDeploymentZip(input: {
           e.message.includes("Too many") ||
           e.message.includes("Blocked file"))
       ) {
-        logSecurityEvent("SUSPICIOUS_ZIP", e.message, {
-          deploymentId,
-        });
+        logSecurityEvent("SUSPICIOUS_ZIP", e.message, { deploymentId });
       }
       throw e;
     }
 
-    const indexPath = await findIndexHtml(tmpRoot);
-    if (!indexPath) {
-      await prisma.deployment.update({
-        where: { id: deploymentId },
-        data: {
-          status: DeploymentStatus.FAILED,
-          errorMessage:
-            "No index.html found in the archive (static sites must include index.html).",
-        },
-      });
-      await notifyDeployOutcome(deploymentId);
-      return;
-    }
+    const projectRoot = await findProjectRoot(tmpRoot);
+    const detection = await detectFramework(projectRoot);
+    const prepared = await prepareDeployArtifacts(projectRoot, detection);
 
     const deployment = await prisma.deployment.findUnique({
       where: { id: deploymentId },
@@ -116,16 +90,45 @@ export async function processDeploymentZip(input: {
 
     await uploadExtractedSite({
       deployment,
-      extractRoot: tmpRoot,
+      extractRoot: prepared.serveRoot,
     });
 
+    const deployDir = join(localDeployRoot(), deployment.userId, deployment.id);
+    let runtimePort: number | null = null;
+
+    if (prepared.runtime === "NODE" && prepared.nodeEntry) {
+      const entryRel = relative(prepared.serveRoot, prepared.nodeEntry).replace(/\\/g, "/");
+      runtimePort = await ensureNodeRuntime({
+        deploymentId: deployment.id,
+        cwd: deployDir,
+        entry: entryRel || "server.js",
+      });
+    } else if (prepared.runtime === "PHP") {
+      runtimePort = await ensurePhpRuntime({
+        deploymentId: deployment.id,
+        cwd: deployDir,
+      });
+    } else if (prepared.runtime === "PYTHON") {
+      runtimePort = await ensurePythonRuntime({
+        deploymentId: deployment.id,
+        cwd: deployDir,
+        pythonModule: prepared.pythonModule,
+      });
+    }
+
     const base = appBaseUrlFromRequest(request);
-    const url = buildDeploymentPublicUrl(deployment, base);
+    const url = buildDeploymentPublicUrl(
+      { ...deployment, runtime: prepared.runtime },
+      base,
+    );
 
     await prisma.deployment.update({
       where: { id: deploymentId },
       data: {
         status: DeploymentStatus.ACTIVE,
+        runtime: prepared.runtime,
+        framework: prepared.frameworkLabel,
+        runtimePort,
         url,
         errorMessage: null,
       },
@@ -137,8 +140,7 @@ export async function processDeploymentZip(input: {
       where: { id: deploymentId },
       data: {
         status: DeploymentStatus.FAILED,
-        errorMessage:
-          e instanceof Error ? e.message : "Deployment processing failed",
+        errorMessage: e instanceof Error ? e.message : "Deployment processing failed",
       },
     });
     await notifyDeployOutcome(deploymentId);

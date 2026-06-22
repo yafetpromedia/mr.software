@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   const { idea, save } = parsed.data;
 
   try {
-    const payload = await generateStartupWithAi(idea);
+    const payload = await generateStartupWithAi(idea, session.id);
 
     if (save) {
       const record = await saveGeneratedStartup(session.id, idea, payload);

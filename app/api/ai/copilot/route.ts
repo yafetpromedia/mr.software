@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const reply = await runCopilotTurn(history, message);
+    const reply = await runCopilotTurn(history, message, session.id);
 
     const savedId = await appendCopilotExchange(
       session.id,

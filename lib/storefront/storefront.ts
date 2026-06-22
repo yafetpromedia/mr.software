@@ -135,7 +135,7 @@ export async function getStorefrontByHandle(
 
   const [products, deployments] = await Promise.all([
     prisma.software.findMany({
-      where: { developerId: storefront.userId },
+      where: { developerId: storefront.userId, published: true },
       orderBy: { createdAt: "desc" },
       include: { developer: { include: { storefront: true } } },
     }),

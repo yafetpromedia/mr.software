@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DeploymentDetailActions } from "@/components/app/deployment-detail-actions";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
 import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
@@ -45,8 +46,21 @@ export default async function ProjectDetailPage({ params }: Props) {
         <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">{d.name}</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
           Created {new Date(d.createdAt).toLocaleString()}
+          {d.framework ? ` · ${d.framework}` : ""}
         </p>
       </div>
+
+      <DeploymentDetailActions
+        deployment={{
+          id: d.id,
+          name: d.name,
+          status: d.status,
+          url: d.url,
+          createdAt: d.createdAt,
+          runtime: d.runtime,
+          framework: d.framework,
+        }}
+      />
 
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
         <dl className="space-y-4 text-sm">

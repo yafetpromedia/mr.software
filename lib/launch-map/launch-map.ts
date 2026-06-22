@@ -77,6 +77,7 @@ async function fetchLivePoints(limit = 24): Promise<LaunchMapPoint[]> {
       },
     }),
     prisma.software.findMany({
+      where: { published: true },
       orderBy: { createdAt: "desc" },
       take: limit,
       select: {

@@ -63,6 +63,7 @@ export function mapSoftwareToItem(
 
 export async function listSoftware(): Promise<SoftwareItem[]> {
   const rows = await prisma.software.findMany({
+    where: { published: true },
     orderBy: { createdAt: "desc" },
     include: { developer: { include: { storefront: true } }, ownershipRecord: true },
   });
@@ -188,4 +189,71 @@ export async function createSoftwareRecord(input: {
     ownershipRecordNumber: trust.ownershipRecordNumber,
     contentFingerprint: trust.contentFingerprint,
   };
+}
+
+export async function updateSoftwareListing(
+  softwareId: string,
+  developerId: string,
+  input: {
+    name?: string;
+    description?: string;
+    category?: SoftwareCategory;
+    pricingModel?: PricingModel;
+    price?: string;
+    priceCents?: number;
+    currency?: string;
+    thumbnailUrl?: string | null;
+    playStoreUrl?: string | null;
+    appStoreUrl?: string | null;
+    published?: boolean;
+  },
+): Promise<SoftwareItem | null> {
+  const existing = await prisma.software.findFirst({
+    where: { id: softwareId, developerId },
+  });
+  if (!existing) return null;
+
+  const row = await prisma.software.update({
+    where: { id: softwareId },
+    data: {
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.category !== undefined ? { category: input.category } : {}),
+      ...(input.pricingModel !== undefined ? { pricingModel: input.pricingModel } : {}),
+      ...(input.price !== undefined ? { price: input.price } : {}),
+      ...(input.priceCents !== undefined ? { priceCents: input.priceCents } : {}),
+      ...(input.currency !== undefined ? { currency: input.currency } : {}),
+      ...(input.thumbnailUrl !== undefined ? { thumbnailUrl: input.thumbnailUrl } : {}),
+      ...(input.playStoreUrl !== undefined ? { playStoreUrl: input.playStoreUrl } : {}),
+      ...(input.appStoreUrl !== undefined ? { appStoreUrl: input.appStoreUrl } : {}),
+      ...(input.published !== undefined ? { published: input.published } : {}),
+    },
+    include: { developer: { include: { storefront: true } }, ownershipRecord: true },
+  });
+
+  return mapSoftwareToItem(row, { includeStripe: true });
+}
+
+export async function deleteSoftwareListing(
+  softwareId: string,
+  developerId: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const existing = await prisma.software.findFirst({
+    where: { id: softwareId, developerId },
+    select: { id: true },
+  });
+  if (!existing) return { ok: false, reason: "Listing not found" };
+
+  const activeSales = await prisma.purchase.count({
+    where: { softwareId, status: "ACTIVE" },
+  });
+  if (activeSales > 0) {
+    return {
+      ok: false,
+      reason: "This product has active buyers. Hide it from the marketplace instead of deleting.",
+    };
+  }
+
+  await prisma.software.delete({ where: { id: softwareId } });
+  return { ok: true };
 }

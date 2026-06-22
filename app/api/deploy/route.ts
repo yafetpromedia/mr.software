@@ -2,7 +2,7 @@ import { DeploymentStatus, Plan, SubscriptionStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { userCanDeploy } from "@/lib/auth/user-can-deploy";
-import { MAX_ZIP_BYTES } from "@/lib/deploy/constants";
+import { MAX_ZIP_BYTES, MAX_ZIP_MB } from "@/lib/deploy/constants";
 import { processDeploymentZip } from "@/lib/deploy/process-deployment";
 import { slugifyProjectName } from "@/lib/deploy/slug";
 import { prisma } from "@/lib/prisma";
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
 
   if (file.size > MAX_ZIP_BYTES) {
     return NextResponse.json(
-      { error: `File too large (max ${MAX_ZIP_BYTES} bytes)` },
+      { error: `File too large (max ${MAX_ZIP_MB} MB)` },
       { status: 400 },
     );
   }

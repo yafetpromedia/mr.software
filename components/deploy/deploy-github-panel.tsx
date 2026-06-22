@@ -402,12 +402,13 @@ export function DeployGithubPanel({
           </ul>
 
           <p className="text-xs text-[var(--muted)]">
-            Static sites need <code className="text-[var(--foreground)]">index.html</code> in the repo.
-            Framework builds (Next.js, Vite) and push-to-deploy webhooks are coming next.{" "}
+            Mr.Software auto-detects Next.js, Vite, PHP, Python, and static sites — runs{" "}
+            <code className="text-[var(--foreground)]">npm run build</code> when needed. Push-to-deploy
+            webhooks are coming next.{" "}
             <Link href="/deploy?source=zip" className="font-medium text-[var(--accent)] hover:underline">
               Upload ZIP
             </Link>{" "}
-            works today for any build output.
+            also works for source or build output.
           </p>
         </>
       )}

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BookOpen, Clock, FileText } from "lucide-react";
+import { getCourseIcon } from "@/lib/academy/course-icons";
 import type { PublicAcademyCourse, PublicAcademySectionSettings } from "@/lib/academy/types";
 import type { AcademyCourseLevel } from "@prisma/client";
 
@@ -19,7 +21,15 @@ const CARD_ACCENT = [
   "from-violet-500/25 via-indigo-400/10 to-transparent",
   "from-emerald-500/25 via-teal-400/10 to-transparent",
   "from-sky-500/25 via-cyan-400/10 to-transparent",
+  "from-rose-500/25 via-pink-400/10 to-transparent",
+  "from-amber-500/25 via-orange-400/10 to-transparent",
 ] as const;
+
+const STAT_ICONS = [
+  { label: "Courses", key: "courses" as const, Icon: BookOpen },
+  { label: "Lessons", key: "lessons" as const, Icon: FileText },
+  { label: "Total time", key: "time" as const, Icon: Clock },
+];
 
 export function AcademyCatalog({
   settings,
@@ -59,28 +69,35 @@ export function AcademyCatalog({
 
           {courses.length > 0 ? (
             <div className="relative mt-8 flex flex-wrap gap-3">
-              {[
-                { label: "Courses", value: String(courses.length), icon: "📚" },
-                { label: "Lessons", value: String(totalLessons), icon: "📝" },
-                { label: "Total time", value: `~${totalMinutes} min`, icon: "⏱" },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="flex items-center gap-3 rounded-2xl border border-stone-200/80 bg-white px-4 py-3 dark:border-[var(--border)] dark:bg-[var(--background)]"
-                >
-                  <span className="text-lg" aria-hidden>
-                    {stat.icon}
-                  </span>
-                  <div>
-                    <p className="text-lg font-bold tabular-nums text-stone-900 dark:text-[var(--foreground)]">
-                      {stat.value}
-                    </p>
-                    <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-stone-500 dark:text-[var(--muted)]">
-                      {stat.label}
-                    </p>
+              {STAT_ICONS.map(({ label, key, Icon }) => {
+                const value =
+                  key === "courses"
+                    ? String(courses.length)
+                    : key === "lessons"
+                      ? String(totalLessons)
+                      : `~${totalMinutes} min`;
+                return (
+                  <div
+                    key={label}
+                    className="flex items-center gap-3 rounded-2xl border border-stone-200/80 bg-white px-4 py-3 dark:border-[var(--border)] dark:bg-[var(--background)]"
+                  >
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600 dark:bg-[var(--accent-muted)] dark:text-[var(--accent)]"
+                      aria-hidden
+                    >
+                      <Icon className="h-5 w-5" strokeWidth={1.75} />
+                    </span>
+                    <div>
+                      <p className="text-lg font-bold tabular-nums text-stone-900 dark:text-[var(--foreground)]">
+                        {value}
+                      </p>
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-stone-500 dark:text-[var(--muted)]">
+                        {label}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : null}
         </div>
@@ -91,7 +108,9 @@ export function AcademyCatalog({
           </p>
         ) : (
           <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {courses.map((course, i) => (
+            {courses.map((course, i) => {
+              const CourseIcon = getCourseIcon(course.slug);
+              return (
               <li key={course.id}>
                 <Link
                   href={`/academy/${course.slug}`}
@@ -104,6 +123,12 @@ export function AcademyCatalog({
                       className={`absolute left-5 top-5 rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide backdrop-blur-sm ${LEVEL_STYLE[course.level]}`}
                     >
                       {LEVEL_LABEL[course.level]}
+                    </span>
+                    <span
+                      className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-xl border border-white/60 bg-white/90 text-orange-600 shadow-sm dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--accent)]"
+                      aria-hidden
+                    >
+                      <CourseIcon className="h-5 w-5" strokeWidth={1.75} />
                     </span>
                     <p className="absolute bottom-4 left-5 right-5 text-xs font-semibold uppercase tracking-wider text-stone-600/80 dark:text-[var(--muted)]">
                       {course.lessonCount} lessons · ~{course.durationMinutes} min
@@ -130,7 +155,8 @@ export function AcademyCatalog({
                   </div>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>

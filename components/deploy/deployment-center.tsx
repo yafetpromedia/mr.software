@@ -284,7 +284,8 @@ export function DeploymentCenter({
                 <div>
                   <h2 className="text-lg font-semibold text-[var(--foreground)]">Deploy from GitHub</h2>
                   <p className="mt-1 text-sm text-[var(--muted)]">
-                    Connect once, pick a repository, and Mr.Software hosts your static site with a live URL.
+                    Connect once, pick a repository — Mr.Software detects your framework, builds if needed,
+                    and hosts static sites or Node/PHP/Python runtimes.
                   </p>
                 </div>
                 <DeployGithubPanel freeBlocked={freeBlocked} />
@@ -296,23 +297,42 @@ export function DeploymentCenter({
               <div>
                 <h2 className="text-lg font-semibold text-[var(--foreground)]">Upload ZIP</h2>
                 <p className="mt-1 text-sm text-[var(--muted)]">
-                  We extract your archive, find <code className="text-[var(--foreground)]">index.html</code>,
-                  and host it with SSL on Mr.Software Cloud.
+                  Upload source or build output — Mr.Software auto-detects your stack, runs{" "}
+                  <code className="text-[var(--foreground)]">npm run build</code> when needed, and hosts
+                  with a live URL.
                 </p>
                 <div className="mt-3">
                   <WorkflowSteps
-                    steps={["Website.zip", "Extract", "Validate", "Deploy", "Live URL"]}
+                    steps={["Upload ZIP", "Detect stack", "Build", "Deploy", "Live URL"]}
                   />
                 </div>
               </div>
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--background)]/60 p-3">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--muted)]">
-                  Framework detection (coming)
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  Auto-detect &amp; build
                 </p>
-                <p className="mt-1.5 text-xs leading-relaxed text-[var(--muted)]">
-                  <code>package.json</code> → Node · <code>next.config.js</code> → Next.js ·{" "}
-                  <code>vite.config.js</code> → Vite · static <code>index.html</code> → instant host
-                </p>
+                <ul className="mt-2 space-y-1 text-xs leading-relaxed text-[var(--muted)]">
+                  <li>
+                    <strong className="text-[var(--foreground)]">Static:</strong> HTML, Vite, CRA, Angular, Nuxt
+                    → instant host from <code>dist/</code> or <code>out/</code>
+                  </li>
+                  <li>
+                    <strong className="text-[var(--foreground)]">Node / Next.js:</strong> runs{" "}
+                    <code>npm install</code> + <code>build</code> — serves standalone or static export
+                  </li>
+                  <li>
+                    <strong className="text-[var(--foreground)]">PHP:</strong> built-in PHP server for{" "}
+                    <code>index.php</code> projects
+                  </li>
+                  <li>
+                    <strong className="text-[var(--foreground)]">Python:</strong> Django, Flask —{" "}
+                    <code>pip install</code> from <code>requirements.txt</code>
+                  </li>
+                  <li>
+                    <strong className="text-[var(--foreground)]">Databases:</strong> use external Postgres
+                    (Supabase, Neon, etc.) via <code>DATABASE_URL</code> in your <code>.env</code>
+                  </li>
+                </ul>
               </div>
               <DeployUploadForm />
             </div>

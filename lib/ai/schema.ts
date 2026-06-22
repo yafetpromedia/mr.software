@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { z } from "zod";
-
 function clip(text: string, max: number): string {
   const t = text.trim();
   return t.length <= max ? t : `${t.slice(0, max - 1)}…`;

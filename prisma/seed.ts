@@ -6,6 +6,12 @@ import { seedDefaultTeamContent } from "../lib/team";
 import { ensureAcademyDefaults } from "../lib/academy/academy";
 import { seedSampleReports } from "../lib/reports";
 import { applyTrustOnSoftwarePublish } from "../lib/trust/publish-trust";
+import { seedDeveloperMemoryProfile } from "../lib/ai/developer-memory/profile";
+import {
+  YAFET_DEMO_CREATOR_DNA,
+  YAFET_DEMO_PROFILE,
+  YAFET_DEMO_TEAM,
+} from "../lib/ai/developer-memory/defaults";
 
 const DEMO_PASSWORD = "password123";
 
@@ -210,6 +216,14 @@ async function main() {
       verifiedAt: new Date(),
       featured: true,
     },
+  });
+
+  await seedDeveloperMemoryProfile(developer.id, {
+    profile: YAFET_DEMO_PROFILE,
+    creatorDna: YAFET_DEMO_CREATOR_DNA,
+    team: YAFET_DEMO_TEAM,
+    currentProjectName: "CampusOne",
+    currentProjectCategory: "Education SaaS",
   });
 
   const academyCourses = [
@@ -597,6 +611,357 @@ Telebirr is offered **through Chapa's hosted checkout** — you don't integrate 
 ---
 
 You're ready to accept African payments. Test both flows and publish your listing.`,
+        },
+      ],
+    },
+    {
+      slug: "build-with-mr-software-ai",
+      title: "Build with Mr.Software AI",
+      description:
+        "Use Startup Advisor, Software Architect, Launchpad, and your Developer Memory Profile to go from idea to landing page — with AI that knows who you are.",
+      level: AcademyCourseLevel.BEGINNER,
+      durationMinutes: 65,
+      sortOrder: 4,
+      lessons: [
+        {
+          title: "Mr.Software AI overview",
+          summary: "The AI modules inside the platform and when to use each one.",
+          durationMinutes: 12,
+          sortOrder: 1,
+          content: `## Your AI co-pilot stack
+
+Mr.Software AI is built into the workspace — not a separate chatbot. Core modules:
+
+| Module | Best for |
+| --- | --- |
+| **Startup Advisor** | Validate ideas, pricing, market fit |
+| **Software Architect** | Stack, modules, API structure |
+| **Launchpad** | Landing pages and SaaS blueprints |
+| **Copilot** | Quick questions in the sidebar |
+| **Deployment Advisor** | Hosting and go-live strategy |
+
+> Mr.Software AI speaks as the platform — practical SaaS advice, not generic hype.
+
+## Sign in first
+
+All AI routes require an account. Add \`AI_API_KEY\` in your environment for production.
+
+---
+
+Next: run your first idea through Startup Advisor.`,
+        },
+        {
+          title: "Validate with Startup Advisor",
+          summary: "Turn a rough idea into problem, solution, features, and pricing.",
+          durationMinutes: 15,
+          sortOrder: 2,
+          content: `## From one sentence to a blueprint
+
+Open **Builder → Startup Advisor** and describe your product in plain language.
+
+Example:
+
+\`\`\`
+School management SaaS for private schools in Ethiopia —
+attendance, fees, parent portal, report cards.
+\`\`\`
+
+The Advisor returns structured JSON:
+
+- Project name and problem statement
+- Target users and feature list
+- Pricing ideas and business model
+- Technical architecture sketch
+- Deployment notes
+
+## Save your analysis
+
+Click **Save** to store the conversation. You can revisit it from the builder tab.
+
+> Use Advisor output as input to Architect and Launchpad — don't skip validation.`,
+        },
+        {
+          title: "Plan architecture & landing pages",
+          summary: "Software Architect for technical plans; Launchpad for marketing sites.",
+          durationMinutes: 18,
+          sortOrder: 3,
+          content: `## Software Architect
+
+Paste your validated idea (or Advisor summary) into **Software Architect**.
+
+You get:
+
+- Frontend / backend / database recommendations
+- Module breakdown
+- API structure
+- Deployment notes for Mr.Software Cloud
+
+## Launchpad (SaaS Blueprint)
+
+**Launchpad** generates a full landing package:
+
+- Name, tagline, feature bullets
+- Hero, showcase, pricing, and CTA sections
+- Brand colors and optional 3D visual style
+
+Preview at \`/startup/[id]/dashboard-preview\` before you publish anything.
+
+## Workflow tip
+
+\`\`\`
+Idea → Advisor → Architect → Launchpad → Deploy → Marketplace
+\`\`\`
+
+Each step builds on the last.`,
+        },
+        {
+          title: "Developer Memory Profile",
+          summary: "Teach the AI who you are — design DNA, team identity, current project.",
+          durationMinutes: 12,
+          sortOrder: 4,
+          content: `## Personalized AI context
+
+Go to **Settings → AI Memory** and fill in:
+
+- **Creator profile** — name, org, location, skills
+- **Creator DNA** — design style, colors, focus areas
+- **AI team** — founder + Mr.Software AI + Cursor attribution
+- **Current project** — e.g. CampusOne, Education SaaS
+
+Every AI request automatically receives this as YAML context.
+
+## What stays separate
+
+- **Ownership records** — legal proof when you publish (trust system)
+- **License keys** — buyer purchase proof
+- **AI Memory** — creative context only
+
+> Set your profile once. Every landing page and architecture plan matches your brand.`,
+        },
+        {
+          title: "Ship your first AI-generated draft",
+          summary: "Save, preview, and connect output to deploy and marketplace.",
+          durationMinutes: 8,
+          sortOrder: 5,
+          content: `## End-to-end checklist
+
+1. Complete **AI Memory** in Settings
+2. Run **Startup Advisor** on your idea — save
+3. Run **Architect** with the same idea
+4. Generate a **Launchpad** landing — save
+5. Deploy a static preview to Mr.Software Cloud
+6. Create a marketplace listing linking demo + download
+
+## Attribution
+
+Generated projects can include:
+
+\`\`\`
+Built by: [Your name]
+with Mr.Software AI and Cursor
+\`\`\`
+
+---
+
+Mark complete and open the **Startup Factory** when you're ready for the full wizard.`,
+        },
+      ],
+    },
+    {
+      slug: "trust-ownership-licensing",
+      title: "Trust, ownership & licensing",
+      description:
+        "Protect your IP with ownership records, license tiers, verification API, and distribution types — the trust stack for African software businesses.",
+      level: AcademyCourseLevel.INTERMEDIATE,
+      durationMinutes: 50,
+      sortOrder: 5,
+      lessons: [
+        {
+          title: "Why trust matters for founders",
+          summary: "Platform records vs patents — what Mr.Software proves for you.",
+          durationMinutes: 10,
+          sortOrder: 1,
+          content: `## You own what you create
+
+Mr.Software hosts and distributes — **you keep IP**. The trust stack gives buyers and partners confidence:
+
+1. **Ownership record** — timestamped proof you published
+2. **License keys** — proof of purchase
+3. **Verification API** — apps can validate keys at runtime
+
+> Especially valuable for African startups proving authorship and creation date.`,
+        },
+        {
+          title: "Ownership records",
+          summary: "MS-OWN numbers, fingerprints, and public certificate pages.",
+          durationMinutes: 12,
+          sortOrder: 2,
+          content: `## Created on publish
+
+When you publish to the marketplace, Mr.Software creates:
+
+- Record number: \`MS-OWN-2026-00001\`
+- Public page: \`/trust/ownership/[recordNumber]\`
+- Product fingerprint (SHA-256 from developer ID, name, asset, timestamp)
+
+## What it proves
+
+- Who uploaded
+- When it was published
+- Which product version was registered
+
+## What it does not replace
+
+Government patents or copyright registration — it's a **platform timestamp** for startups and schools.`,
+        },
+        {
+          title: "License tiers & keys",
+          summary: "Personal, commercial, enterprise, open source — and MRS-XXXX keys.",
+          durationMinutes: 14,
+          sortOrder: 3,
+          content: `## Choose a tier at publish
+
+| Tier | Typical use |
+| --- | --- |
+| Personal | Single user, no redistribution |
+| Commercial | Business use, unlimited employees |
+| Enterprise | Large orgs, custom support |
+| Open source | MIT, Apache, GPL, BSD templates |
+
+After purchase, buyers receive \`MRS-XXXX-XXXX-XXXX\` keys.
+
+## Verify from your app
+
+\`\`\`http
+POST /api/licenses/verify
+{ "licenseKey": "MRS-...", "domain": "school.edu.et" }
+\`\`\`
+
+Use domain lock for hosted school or SaaS installs.`,
+        },
+        {
+          title: "Distribution types",
+          summary: "Source code vs compiled vs hosted — pick the right model.",
+          durationMinutes: 14,
+          sortOrder: 4,
+          content: `## How buyers receive your product
+
+| Type | Buyer gets | Best for |
+| --- | --- | --- |
+| SOURCE_CODE | Download | Templates, starter kits |
+| COMPILED | Binary + key | Desktop apps |
+| HOSTED | Cloud URL only | CampusOne-style SaaS |
+
+**Hosted** blocks source downloads at the API — highest piracy protection, recurring revenue.
+
+## CampusOne model
+
+Sell cloud access (\`school1.mr.software\`), not source code. Updates and support stay under your control.
+
+---
+
+Publish with the right tier + distribution before marketing.`,
+        },
+      ],
+    },
+    {
+      slug: "saas-factory-go-to-market",
+      title: "SaaS factory & go-to-market",
+      description:
+        "From factory wizard to @handle storefront — package your product, launch publicly, and grow through marketplace discovery.",
+      level: AcademyCourseLevel.ADVANCED,
+      durationMinutes: 60,
+      sortOrder: 6,
+      lessons: [
+        {
+          title: "Startup factory workflow",
+          summary: "Idea → validation → package → deploy → storefront in one flow.",
+          durationMinutes: 15,
+          sortOrder: 1,
+          content: `## The factory steps
+
+The **Startup Factory** wizard guides:
+
+1. **Idea** — describe the product
+2. **Validation** — Advisor analysis
+3. **Package** — landing + blueprint JSON
+4. **Deploy** — Cloud preview
+5. **Storefront** — connect your @handle
+
+> Factory sessions persist so you can resume across days.`,
+        },
+        {
+          title: "Storefront as your sales hub",
+          summary: "Public @handle pages, social links, and featured creator status.",
+          durationMinutes: 15,
+          sortOrder: 2,
+          content: `## Your creator store
+
+Every developer gets \`mr.software/@handle\`:
+
+- Bio, tagline, website, social links
+- Theme (Classic, Minimal, Bold, Midnight)
+- Product grid and deployment previews
+- Optional public revenue display
+
+## Growth tactics
+
+- Claim a memorable handle early
+- Feature your flagship product first
+- Cross-link Academy certificates and trust records
+- Enable follow notifications for launches`,
+        },
+        {
+          title: "Marketplace discovery",
+          summary: "Categories, pricing display, and converting browsers to buyers.",
+          durationMinutes: 15,
+          sortOrder: 3,
+          content: `## Get found
+
+Listings appear in **Marketplace** by category:
+
+- Education, Healthcare, Business, AI Tools, Templates, etc.
+
+Optimize for conversion:
+
+- Strong thumbnail and first paragraph
+- ETB + USD pricing where relevant
+- Live demo button (linked deployment)
+- Testimonials from early customers
+
+## Payments
+
+Stripe for global cards; Chapa + Telebirr for Ethiopia. See the **African payments** course for setup.`,
+        },
+        {
+          title: "Launch playbook",
+          summary: "Week-one checklist for a credible public launch.",
+          durationMinutes: 15,
+          sortOrder: 4,
+          content: `## Launch week
+
+**Day 1–2**
+- Publish listing + ownership record
+- Deploy live demo
+- Storefront live with bio
+
+**Day 3–4**
+- Test purchase (Stripe sandbox + Chapa test)
+- Share on social with @handle link
+- Submit 2–3 testimonials
+
+**Day 5–7**
+- Monitor conversion demo → purchase
+- Respond to support within 24h
+- Ship v1.0.1 if early feedback needs fixes
+
+## Recurring revenue
+
+Prefer **subscription** or **hosted** models for school and business SaaS.
+
+---
+
+You now have the full learn → build → publish → protect → monetize loop.`,
         },
       ],
     },

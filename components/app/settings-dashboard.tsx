@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
-import { Bell, Code2, LogOut, Palette, Shield, User } from "lucide-react";
+import { Bell, Brain, Code2, LogOut, Palette, Shield, User } from "lucide-react";
 import {
   DeveloperAccessRequestForm,
 } from "@/components/app/developer-access-request-form";
+import { DeveloperMemoryForm } from "@/components/app/developer-memory-form";
 import { PasswordSettingsForm } from "@/components/app/password-settings-form";
 import { PortalSettingsForm } from "@/components/app/portal-settings-form";
 import { ProfileSettingsForm } from "@/components/app/profile-settings-form";
@@ -22,7 +23,7 @@ export type SettingsProfile = {
   stripeLinked?: boolean;
 };
 
-const BASE_SECTION_IDS = ["profile", "appearance", "security", "notifications", "session"] as const;
+const BASE_SECTION_IDS = ["profile", "ai-memory", "appearance", "security", "notifications", "session"] as const;
 type BaseSectionId = (typeof BASE_SECTION_IDS)[number];
 type SectionId = BaseSectionId | "developer";
 
@@ -88,6 +89,7 @@ export function SettingsDashboard({ profile, settingsHref, storefrontHandle }: P
 
   const nav: NavItem[] = [
     { id: "profile", label: "Profile", icon: <User className="h-4 w-4" aria-hidden /> },
+    { id: "ai-memory", label: "AI Memory", icon: <Brain className="h-4 w-4" aria-hidden /> },
     { id: "appearance", label: "Appearance", icon: <Palette className="h-4 w-4" aria-hidden /> },
     { id: "security", label: "Security", icon: <Shield className="h-4 w-4" aria-hidden /> },
     ...(showDeveloperAccess
@@ -163,6 +165,16 @@ export function SettingsDashboard({ profile, settingsHref, storefrontHandle }: P
                 memberSince={profile.memberSince}
                 stripeLinked={profile.stripeLinked}
               />
+            </SettingsSection>
+          ) : null}
+
+          {active === "ai-memory" ? (
+            <SettingsSection
+              title="Developer Memory Profile"
+              description="Who you are, how you build, and your AI team — injected into every Mr.Software AI request."
+              icon={<Brain className="h-4 w-4" aria-hidden />}
+            >
+              <DeveloperMemoryForm />
             </SettingsSection>
           ) : null}
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Package, Rocket, Store } from "lucide-react";
+import { ArrowRight, Package, Store } from "lucide-react";
 import { ListingCreateForm } from "@/components/app/listing-create-form";
+import { DeveloperListingsPanel } from "@/components/app/developer-listings-panel";
 import { getSession } from "@/lib/auth/session";
 import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
 import { assertCanUploadSoftware } from "@/lib/auth/governance";
@@ -25,6 +26,20 @@ export default async function ListingsPage() {
   ]);
 
   const canUpload = uploadGate.ok;
+
+  const serializedListings = items.map((s) => ({
+    id: s.id,
+    name: s.name,
+    description: s.description,
+    price: s.price,
+    pricingModel: s.pricingModel,
+    priceCents: s.priceCents,
+    currency: s.currency,
+    category: s.category,
+    categoryLabel: categoryLabel(s.category),
+    thumbnailUrl: s.thumbnailUrl,
+    published: s.published,
+  }));
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -147,43 +162,9 @@ export default async function ListingsPage() {
         </h2>
 
         {items.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-8 text-center text-sm text-[var(--muted)]">
-            No products yet. Use the form above to publish your first listing.
-          </p>
+          <DeveloperListingsPanel initialListings={[]} />
         ) : (
-          <ul className="space-y-3">
-            {items.map((s) => (
-              <li
-                key={s.id}
-                className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <p className="font-semibold text-[var(--foreground)]">{s.name}</p>
-                  <p className="mt-0.5 text-sm text-[var(--muted)]">
-                    {s.price} · {categoryLabel(s.category)} · {s.pricingModel.replace("_", " ").toLowerCase()}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex h-8 items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 text-xs font-medium text-emerald-800 dark:text-emerald-200">
-                    Live on marketplace
-                  </span>
-                  <Link
-                    href={`/app/software/${s.id}`}
-                    className="inline-flex h-8 items-center rounded-full border border-[var(--border)] px-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]/40"
-                  >
-                    View listing
-                  </Link>
-                  <Link
-                    href={`/deploy?source=import&listing=${s.id}`}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border)] px-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]/40"
-                  >
-                    <Rocket className="h-3.5 w-3.5 text-[var(--accent)]" aria-hidden />
-                    Deploy
-                  </Link>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <DeveloperListingsPanel initialListings={serializedListings} />
         )}
       </section>
     </div>

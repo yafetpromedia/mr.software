@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { ImagePlus, Loader2, X } from "lucide-react";
 import type { PricingModel, SoftwareCategory, ProductLicenseTier, OpenSourceLicense, DistributionType } from "@prisma/client";
 import { SOFTWARE_CATEGORIES, SOFTWARE_CATEGORY_LABELS } from "@/lib/marketplace/categories";
 import { LicenseTierFields } from "@/components/trust/license-tier-fields";
@@ -68,6 +70,8 @@ export function ListingCreateForm({
   const [amount, setAmount] = useState(initial?.amount ?? "");
   const [currency, setCurrency] = useState(defaultCurrency);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const [assetUrl, setAssetUrl] = useState("");
   const [playStoreUrl, setPlayStoreUrl] = useState("");
   const [appStoreUrl, setAppStoreUrl] = useState("");
@@ -144,6 +148,38 @@ export function ListingCreateForm({
   }
 
   const paid = pricingModel !== "FREE";
+
+  async function onCoverFileChange(file?: File) {
+    if (!file) return;
+    setCoverUploading(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const res = await fetch("/api/software/thumbnail/upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = (await res.json()) as { error?: string; url?: string };
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? "Cover upload failed");
+      }
+      setThumbnailUrl(data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Cover upload failed");
+    } finally {
+      setCoverUploading(false);
+      if (coverInputRef.current) coverInputRef.current.value = "";
+    }
+  }
+
+  function clearCover() {
+    setThumbnailUrl("");
+    if (coverInputRef.current) coverInputRef.current.value = "";
+  }
+
+  const coverPreview = thumbnailUrl.trim() || null;
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
@@ -258,17 +294,93 @@ export function ListingCreateForm({
         />
 
         <div className="sm:col-span-2">
-          <label htmlFor="listing-thumb" className="text-xs font-medium text-[var(--muted)]">
-            Cover image URL
-          </label>
-          <input
-            id="listing-thumb"
-            type="url"
-            value={thumbnailUrl}
-            onChange={(e) => setThumbnailUrl(e.target.value)}
-            className="mt-1 h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none ring-[var(--accent)]/30 focus:ring-2"
-            placeholder="https://…"
-          />
+          <p className="text-xs font-medium text-[var(--muted)]">Cover image</p>
+          <div className="mt-2 space-y-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
+            {coverPreview ? (
+              <div className="relative overflow-hidden rounded-xl border border-[var(--border)]">
+                <div className="relative aspect-[16/9] w-full max-w-md bg-[var(--surface)]">
+                  <Image
+                    src={coverPreview}
+                    alt="Cover preview"
+                    fill
+                    unoptimized={coverPreview.startsWith("/")}
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 400px"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={clearCover}
+                  className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)]/95 text-[var(--muted)] shadow-sm transition hover:text-[var(--foreground)]"
+                  aria-label="Remove cover image"
+                >
+                  <X className="h-4 w-4" strokeWidth={1.75} />
+                </button>
+              </div>
+            ) : (
+              <label
+                htmlFor="listing-cover-file"
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-8 transition ${
+                  coverUploading
+                    ? "border-[var(--accent)]/40 bg-[var(--accent-muted)]/30"
+                    : "border-[var(--border)] hover:border-[var(--accent)]/40 hover:bg-[var(--accent-muted)]/20"
+                }`}
+              >
+                {coverUploading ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" strokeWidth={1.75} />
+                ) : (
+                  <ImagePlus className="h-8 w-8 text-[var(--accent)]" strokeWidth={1.75} />
+                )}
+                <span className="mt-3 text-sm font-semibold text-[var(--foreground)]">
+                  {coverUploading ? "Uploading…" : "Upload cover image"}
+                </span>
+                <span className="mt-1 text-xs text-[var(--muted)]">PNG, JPG, WebP, or GIF · max 5 MB</span>
+              </label>
+            )}
+
+            <input
+              ref={coverInputRef}
+              id="listing-cover-file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="sr-only"
+              disabled={coverUploading}
+              onChange={(e) => void onCoverFileChange(e.target.files?.[0])}
+            />
+
+            {coverPreview ? (
+              <button
+                type="button"
+                disabled={coverUploading}
+                onClick={() => coverInputRef.current?.click()}
+                className="text-sm font-medium text-[var(--accent)] hover:underline disabled:opacity-50"
+              >
+                Replace image
+              </button>
+            ) : null}
+
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-[var(--border)]" aria-hidden />
+              <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--muted)]">
+                or paste URL
+              </span>
+              <span className="h-px flex-1 bg-[var(--border)]" aria-hidden />
+            </div>
+
+            <div>
+              <label htmlFor="listing-thumb" className="sr-only">
+                Cover image URL
+              </label>
+              <input
+                id="listing-thumb"
+                type="url"
+                value={thumbnailUrl}
+                onChange={(e) => setThumbnailUrl(e.target.value)}
+                className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm outline-none ring-[var(--accent)]/30 focus:ring-2"
+                placeholder="https://…"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="sm:col-span-2">

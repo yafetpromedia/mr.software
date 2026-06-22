@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   const { idea, save } = parsed.data;
 
   try {
-    const analysis = { ...(await analyzeStartupIdea(idea)), source: "ai" as const };
+    const analysis = { ...(await analyzeStartupIdea(idea, session.id)), source: "ai" as const };
 
     if (save) {
       const conversation = await createAdvisorConversation(session.id, idea, analysis);

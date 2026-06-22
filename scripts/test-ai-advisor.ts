@@ -14,7 +14,7 @@ async function main() {
   const start = Date.now();
 
   try {
-    const analysis = await analyzeStartupIdea(idea);
+    const analysis = await analyzeStartupIdea(idea, "");
     const ms = Date.now() - start;
 
     console.log("SUCCESS: Real AI returned structured blueprint.\n");
