@@ -14,6 +14,10 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
+    "prod:secrets": "node scripts/generate-production-secrets.mjs",
+    "prod:check": "node scripts/check-production-env.mjs",
+    "prod:up": "docker compose -f docker-compose.prod.yml up -d --build",
+    "prod:down": "docker compose -f docker-compose.prod.yml down",
     "postinstall": "prisma generate"
   },
   "dependencies": {

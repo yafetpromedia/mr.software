@@ -1,0 +1,16 @@
+# Reverse proxy for mr.software on a VPS
+# Install Caddy: https://caddyserver.com/docs/install
+# Run from repo root: caddy run --config deploy/Caddyfile
+#
+# Requires ports 80/443 open. Caddy obtains TLS automatically.
+
+mr.software {
+	encode gzip zstd
+	reverse_proxy localhost:3000
+}
+
+# Optional: wildcard for branded deployment subdomains
+# *.mr.software {
+# 	encode gzip zstd
+# 	reverse_proxy localhost:3000
+# }

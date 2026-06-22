@@ -1,0 +1,42 @@
+# Mr.Software — production image (VPS / Docker)
+# Includes Node + PHP + Python for user deploy runtimes.
+
+FROM node:20-bookworm-slim AS base
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates php-cli python3 python3-pip \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NODE_ENV=production
+RUN npx prisma generate && npm run build
+
+FROM base AS runner
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/next.config.ts ./next.config.ts
+
+RUN mkdir -p /var/mr-software/deployments \
+  && chown -R nextjs:nodejs /var/mr-software /app
+
+USER nextjs
+EXPOSE 3000
+
+CMD ["npm", "run", "start"]

@@ -1,94 +1,172 @@
 # Production deployment — Mr.Software
 
-Use this checklist when hosting Mr.Software on a real domain (e.g. `mr.software`).
+Use this when hosting on **mr.software** (or your domain) on a VPS with Docker.
 
-## Required
+## Quick start (VPS)
+
+### 1. Server requirements
+
+- Ubuntu 22.04+ (or similar Linux)
+- Docker + Docker Compose
+- Domain DNS **A record** → server IP
+- Ports **80** and **443** (for Caddy TLS)
+
+### 2. Clone and configure
+
+```bash
+git clone https://github.com/yafetpromedia/mr.software.git
+cd mr.software
+cp .env.production.example .env.production
+npm run prod:secrets >> .env.production   # paste generated lines into the file
+```
+
+Edit `.env.production`:
+
+| Variable | Example |
+|----------|---------|
+| `NEXT_PUBLIC_APP_URL` | `https://mr.software` |
+| `AUTH_PUBLIC_ORIGIN` | `https://mr.software` |
+| `GITHUB_CLIENT_ID` / `SECRET` | From GitHub OAuth app |
+| `GITHUB_WEBHOOK_SECRET` | From `prod:secrets` |
+| `POSTGRES_PASSWORD` | Strong password |
+
+Validate:
+
+```bash
+npm run prod:check
+```
+
+### 3. Build and start
+
+```bash
+npm run prod:up
+docker compose -f docker-compose.prod.yml exec app npx prisma db push
+# Optional demo data (skip for clean launch):
+# docker compose -f docker-compose.prod.yml exec app npm run db:seed
+```
+
+App listens on `http://localhost:3000`.
+
+### 4. HTTPS with Caddy
+
+```bash
+sudo apt install -y caddy
+sudo caddy run --config deploy/Caddyfile
+# Or install as systemd service — see caddyserver.com/docs
+```
+
+### 5. Register external services
+
+| Service | URL to register |
+|---------|-----------------|
+| GitHub OAuth callback | `https://mr.software/api/github/callback` |
+| Stripe webhook | `https://mr.software/api/webhooks/stripe` |
+| Google OAuth (if used) | `https://mr.software/api/auth/google/callback` |
+
+GitHub **push webhooks** are created automatically per deployment when auto-deploy is enabled.
+
+---
+
+## Environment reference
+
+### Required
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Session signing (long random string) |
-| `NEXT_PUBLIC_APP_URL` | Public app URL, e.g. `https://mr.software` |
-| `AUTH_PUBLIC_ORIGIN` | Same as app URL if OAuth callbacks need a fixed origin |
+| `DATABASE_URL` | PostgreSQL (set automatically in Docker Compose) |
+| `JWT_SECRET` | Session signing (32+ random bytes) |
+| `NEXT_PUBLIC_APP_URL` | Public app URL |
+| `AUTH_PUBLIC_ORIGIN` | OAuth origin (same as app URL) |
 
-## GitHub deploy + auto-deploy on push
+### GitHub deploy + auto-deploy
 
 | Variable | Purpose |
 |----------|---------|
 | `GITHUB_CLIENT_ID` | OAuth app client ID |
 | `GITHUB_CLIENT_SECRET` | OAuth app secret |
-| `GITHUB_WEBHOOK_SECRET` | Random secret for `X-Hub-Signature-256` verification |
+| `GITHUB_WEBHOOK_SECRET` | Verifies `X-Hub-Signature-256` on push |
 
-**OAuth callback:** `https://your-domain.com/api/github/callback`
+### Deploy storage
 
-**Webhook URL pattern:** `https://your-domain.com/api/webhooks/github/{deploymentId}`  
-(Webhooks are registered automatically when “Auto-deploy on git push” is enabled.)
+**Docker (default):** persistent volume at `/var/mr-software/deployments`
 
-## Deploy storage
-
-### Local disk (dev / single VPS)
-
-```env
-LOCAL_DEPLOY_ROOT=/var/mr-software/deployments
-```
-
-Use a **persistent volume** — not ephemeral serverless disk.
-
-### S3-compatible storage (recommended for production)
+**S3 / R2 (recommended at scale):**
 
 ```env
 DEPLOY_STORAGE=s3
 S3_BUCKET=your-bucket
-S3_REGION=us-east-1
+S3_REGION=auto
 S3_ACCESS_KEY_ID=
 S3_SECRET_ACCESS_KEY=
-# Optional for MinIO / R2:
-# S3_ENDPOINT=https://...
-# S3_FORCE_PATH_STYLE=true
+S3_ENDPOINT=https://xxxx.r2.cloudflarestorage.com
 ```
 
-## Public deployment URLs
-
-Default: `https://your-domain.com/api/deploy-preview/{id}/`
-
-### Branded subdomains (optional)
+### Branded deployment subdomains (optional)
 
 ```env
 DEPLOYMENT_PUBLIC_HOST=mr.software
 DEPLOYMENT_USE_SUBDOMAIN=true
 ```
 
-Serves deployments at `https://{slug}-{userId}.mr.software` (requires DNS wildcard + reverse proxy).
+Requires `*.mr.software` DNS wildcard + proxy rules in `deploy/Caddyfile`.
 
-## Payments (marketplace)
-
-| Variable | Purpose |
-|----------|---------|
-| `STRIPE_SECRET_KEY` | Live secret key |
-| `STRIPE_WEBHOOK_SECRET` | `https://your-domain.com/api/webhooks/stripe` |
-
-## Runtime hosts (Node / PHP / Python deploys)
-
-The machine running Mr.Software must have:
-
-- **Node.js** (same major as your app) for Next.js / Express deploys
-- **PHP** in `PATH` for PHP projects
-- **Python 3 + pip** for Django / Flask
-
-Databases: use external Postgres (Supabase, Neon, etc.) via `DATABASE_URL` in the deployed app’s `.env` inside the ZIP/repo.
-
-## AI (optional)
+### Payments
 
 ```env
-AI_API_KEY=
-AI_BASE_URL=https://api.freemodel.dev/v1
-AI_MODEL=claude-t0
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-## Health check after deploy
+### Runtime deploys (Node / PHP / Python)
 
-1. Sign in as a developer
-2. **Deploy → Upload ZIP** with a static `index.html`
-3. Open the live URL
-4. **Deploy → GitHub** with auto-deploy enabled; push to the default branch
-5. Confirm webhook delivery in GitHub repo → Settings → Webhooks
+The Docker image includes **Node 20**, **PHP**, and **Python 3** for user deploy runtimes.
+
+User apps use external Postgres via `DATABASE_URL` in their own `.env` (Supabase, Neon, etc.).
+
+---
+
+## npm scripts
+
+| Command | Action |
+|---------|--------|
+| `npm run prod:secrets` | Generate JWT, webhook, and DB passwords |
+| `npm run prod:check` | Validate `.env.production` |
+| `npm run prod:up` | Build and start Docker stack |
+| `npm run prod:down` | Stop stack |
+
+---
+
+## Health check after go-live
+
+1. Open `https://mr.software` — homepage loads
+2. Sign in as developer (`dev@mrsoftware.local` only if you ran seed)
+3. **Deploy → Upload ZIP** with `index.html` → live URL works
+4. **Deploy → GitHub** → connect repo → enable auto-deploy → push → redeploys
+5. **Startup Factory** → generate → one-click deploy
+6. Change default admin password if seed was used
+
+---
+
+## Bare metal (no Docker)
+
+```bash
+npm ci
+cp .env.production.example .env.production
+# Set DATABASE_URL to managed Postgres
+npm run prod:check
+npx prisma db push
+npm run build
+npm start
+```
+
+Use **pm2** or **systemd** to keep the process running. Point Caddy at port 3000.
+
+---
+
+## Security checklist
+
+- [ ] Unique `JWT_SECRET` and `GITHUB_WEBHOOK_SECRET` per environment
+- [ ] HTTPS only (`NEXT_PUBLIC_APP_URL` uses `https://`)
+- [ ] Do not run `db:seed` on production unless you want demo accounts
+- [ ] Rotate `admin@mrsoftware.local` password
+- [ ] S3 bucket is private; app uses IAM keys with minimal scope

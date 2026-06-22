@@ -1,0 +1,12 @@
+node_modules
+.next
+node_modules/.cache
+.git
+.env
+.env.local
+.env.production
+data/deployments
+*.md
+!docs/DEPLOY-PRODUCTION.md
+.cursor
+terminals

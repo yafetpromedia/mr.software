@@ -39,7 +39,9 @@ Use this when connecting **mr.software** and going live. Check items off in orde
 - [ ] Set production env:
   - `GITHUB_CLIENT_ID`
   - `GITHUB_CLIENT_SECRET`
+  - `GITHUB_WEBHOOK_SECRET` (generate: `npm run prod:secrets`)
 - [ ] Test: Developer connects GitHub → selects repo → receives live URL
+- [ ] Test: Enable **Auto-deploy on git push** → push to default branch → site updates
 
 ---
 
@@ -57,7 +59,8 @@ Use this when connecting **mr.software** and going live. Check items off in orde
 
 - [ ] If using S3: `AWS_*` or compatible object storage env vars set
 - [ ] If local disk only: ensure persistent volume on host (not ephemeral serverless without S3)
-- [ ] Max upload size aligned with deploy limits (ZIP 50 MB)
+- [ ] Max upload size aligned with deploy limits (ZIP 100 MB)
+- [ ] See **`docs/DEPLOY-PRODUCTION.md`** for Docker VPS setup (`npm run prod:up`)
 
 ---
 
