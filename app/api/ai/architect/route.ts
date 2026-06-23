@@ -44,7 +44,13 @@ export async function POST(request: Request) {
     const plan = await planSoftwareArchitecture(parsed.data.idea, parsed.data.context, session.id);
     return NextResponse.json({ plan });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Planning failed";
+    console.error("POST /api/ai/architect", err);
+    const message =
+      err instanceof Error && err.name === "ZodError"
+        ? "Mr.Software AI returned an invalid plan. Please try again."
+        : err instanceof Error
+          ? err.message
+          : "Planning failed";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

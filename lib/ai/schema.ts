@@ -58,15 +58,25 @@ export const startupAdvisorAnalysisSchema = z
 
 export type StartupAdvisorAnalysis = z.infer<typeof startupAdvisorAnalysisSchema>;
 
-export const softwareArchitectSchema = z.object({
-  summary: z.string().min(1).max(400),
-  frontend: z.string().min(1).max(120),
-  backend: z.string().min(1).max(120),
-  database: z.string().min(1).max(120),
-  modules: z.array(z.string().min(1).max(120)).min(2).max(12),
-  apiStructure: z.array(z.string().min(1).max(200)).min(2).max(10),
-  deploymentNotes: z.string().min(1).max(500),
-});
+export const softwareArchitectSchema = z
+  .object({
+    summary: z.string().min(1),
+    frontend: z.string().min(1),
+    backend: z.string().min(1),
+    database: z.string().min(1),
+    modules: z.array(z.string().min(1)).min(1),
+    apiStructure: z.array(z.string().min(1)).min(1),
+    deploymentNotes: z.string().min(1),
+  })
+  .transform((data) => ({
+    summary: clip(data.summary, 400),
+    frontend: clip(data.frontend, 200),
+    backend: clip(data.backend, 200),
+    database: clip(data.database, 200),
+    modules: data.modules.slice(0, 12).map((m) => clip(m, 160)),
+    apiStructure: data.apiStructure.slice(0, 12).map((a) => clip(a, 240)),
+    deploymentNotes: clip(data.deploymentNotes, 800),
+  }));
 
 export type SoftwareArchitectPlan = z.infer<typeof softwareArchitectSchema>;
 
