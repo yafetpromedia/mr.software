@@ -13,6 +13,8 @@ export function messageForGoogleOAuthError(code: string): string | null {
       return "Your Google account email is not verified. Verify it with Google, then try again.";
     case "link":
       return "This Google account cannot be linked to the existing profile for that email.";
+    case "auth_lock":
+      return "Sign-in and registration are temporarily disabled while maintenance is in progress. Only administrators can sign in.";
     case "banned":
       return "This account has been banned.";
     case "db":

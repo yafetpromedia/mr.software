@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
 import { RegisterForm } from "./register-form";
 import { messageForGoogleOAuthError } from "@/lib/auth/google-oauth-errors";
+import { isAuthLocked } from "@/lib/auth/auth-lock";
 import { safeInternalPath } from "@/lib/safe-redirect";
 
 export const metadata: Metadata = {
@@ -60,6 +61,7 @@ export default async function RegisterPage({ searchParams }: Props) {
       </header>
       <RegisterForm
         redirectTo={redirectTo}
+        authLocked={isAuthLocked()}
         initialOauthError={
           typeof oauth_error === "string"
             ? messageForGoogleOAuthError(oauth_error)

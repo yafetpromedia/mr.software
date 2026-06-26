@@ -5,6 +5,7 @@ import {
   signGoogleOAuthState,
 } from "@/lib/auth/google-oauth";
 import { oauthPublicOrigin } from "@/lib/auth/oauth-public-origin";
+import { isAuthLocked } from "@/lib/auth/auth-lock";
 import { safeInternalPath } from "@/lib/safe-redirect";
 
 export async function GET(request: Request) {
@@ -15,6 +16,13 @@ export async function GET(request: Request) {
   );
   const fromRaw = url.searchParams.get("from");
   const from = fromRaw === "register" ? "register" : "login";
+
+  if (isAuthLocked() && from === "register") {
+    const dest = new URL("/auth/register", url.origin);
+    dest.searchParams.set("oauth_error", "auth_lock");
+    dest.searchParams.set("next", next);
+    return NextResponse.redirect(dest);
+  }
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();

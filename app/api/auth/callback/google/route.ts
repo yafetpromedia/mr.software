@@ -8,6 +8,10 @@ import {
   verifyGoogleOAuthState,
 } from "@/lib/auth/google-oauth";
 import { signAuthToken } from "@/lib/auth/jwt";
+import {
+  canSignInWhileLocked,
+  isAuthLocked,
+} from "@/lib/auth/auth-lock";
 import { userFacingDbError } from "@/lib/db-errors";
 import { oauthPublicOrigin } from "@/lib/auth/oauth-public-origin";
 import { prisma } from "@/lib/prisma";
@@ -106,14 +110,19 @@ export async function GET(request: Request) {
   const displayName =
     profile.name.trim() || profile.email.split("@")[0] || "Google user";
 
+  const authLocked = isAuthLocked();
+
   let user;
   try {
     const existingByGoogle = await prisma.user.findUnique({
       where: { googleId: profile.sub },
-      select: { id: true },
+      select: userSelect,
     });
 
     if (existingByGoogle) {
+      if (authLocked && !canSignInWhileLocked(existingByGoogle.role)) {
+        return redirectOAuthError(request, from, "auth_lock", next);
+      }
       user = await prisma.user.update({
         where: { id: existingByGoogle.id },
         data: { name: displayName },
@@ -126,6 +135,9 @@ export async function GET(request: Request) {
       });
 
       if (byEmail) {
+        if (authLocked && !canSignInWhileLocked(byEmail.role)) {
+          return redirectOAuthError(request, from, "auth_lock", next);
+        }
         if (byEmail.googleId && byEmail.googleId !== profile.sub) {
           return redirectOAuthError(request, from, "link", next);
         }
@@ -135,6 +147,9 @@ export async function GET(request: Request) {
           select: userSelect,
         });
       } else {
+        if (authLocked) {
+          return redirectOAuthError(request, from, "auth_lock", next);
+        }
         user = await prisma.user.create({
           data: {
             name: displayName,

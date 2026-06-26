@@ -7,10 +7,18 @@ import { hashPassword } from "@/lib/auth/password";
 import { getClientIp } from "@/lib/security/client-ip";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { logSecurityEvent } from "@/lib/security/log";
+import {
+  AUTH_LOCK_REGISTER_MESSAGE,
+  isAuthLocked,
+} from "@/lib/auth/auth-lock";
 import { registerBodySchema } from "@/lib/validation/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
+  if (isAuthLocked()) {
+    return NextResponse.json({ error: AUTH_LOCK_REGISTER_MESSAGE }, { status: 503 });
+  }
+
   const ip = getClientIp(request);
   const rl = checkRateLimit(`register:${ip}`, 8, 3_600_000);
   if (!rl.ok) {

@@ -6,6 +6,7 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 type Props = {
   redirectTo: string;
+  authLocked?: boolean;
   initialOauthError?: string | null;
 };
 
@@ -66,7 +67,7 @@ function FieldIconLock() {
   );
 }
 
-export function RegisterForm({ redirectTo, initialOauthError }: Props) {
+export function RegisterForm({ redirectTo, authLocked = false, initialOauthError }: Props) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -78,6 +79,7 @@ export function RegisterForm({ redirectTo, initialOauthError }: Props) {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (authLocked) return;
     setError(null);
     setPending(true);
     try {
@@ -123,10 +125,19 @@ export function RegisterForm({ redirectTo, initialOauthError }: Props) {
 
   return (
     <div className="flex flex-col gap-5">
+      {authLocked ? (
+        <div
+          className="rounded-2xl border border-amber-300/60 bg-amber-500/5 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200"
+          role="status"
+        >
+          Registration is temporarily disabled while maintenance is in progress.
+        </div>
+      ) : null}
       <GoogleSignInButton
         redirectTo={redirectTo}
         from="register"
         label="Sign up with Google"
+        disabled={authLocked}
       />
       <div className="relative flex items-center gap-4 py-1">
         <div className="h-px flex-1 bg-[var(--border)]" />
@@ -143,7 +154,11 @@ export function RegisterForm({ redirectTo, initialOauthError }: Props) {
           {error}
         </div>
       ) : null}
-      <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-5">
+      <form
+        onSubmit={(e) => void onSubmit(e)}
+        className="flex flex-col gap-5"
+        aria-disabled={authLocked}
+      >
       <label className="block">
         <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
           Name
@@ -161,6 +176,7 @@ export function RegisterForm({ redirectTo, initialOauthError }: Props) {
             onChange={(e) => setName(e.target.value)}
             placeholder="Jane Cooper"
             className={inputInner}
+            disabled={authLocked}
           />
         </div>
       </label>
@@ -181,6 +197,7 @@ export function RegisterForm({ redirectTo, initialOauthError }: Props) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@company.com"
             className={inputInner}
+            disabled={authLocked}
           />
         </div>
       </label>
@@ -202,6 +219,7 @@ export function RegisterForm({ redirectTo, initialOauthError }: Props) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="At least 8 characters"
             className={inputInner}
+            disabled={authLocked}
           />
         </div>
         <div className="mt-2 flex items-center gap-2">
@@ -232,7 +250,7 @@ export function RegisterForm({ redirectTo, initialOauthError }: Props) {
       </label>
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || authLocked}
         className="group relative mt-1 inline-flex h-12 w-full items-center justify-center overflow-hidden rounded-2xl bg-[var(--accent)] text-sm font-semibold text-white shadow-lg shadow-[var(--accent-glow)] transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
       >
         <span className="relative z-10 flex items-center gap-2">

@@ -6,6 +6,11 @@ import { verifyPassword } from "@/lib/auth/password";
 import { getClientIp } from "@/lib/security/client-ip";
 import { logSecurityEvent } from "@/lib/security/log";
 import { checkRateLimit } from "@/lib/security/rate-limit";
+import {
+  AUTH_LOCK_MESSAGE,
+  canSignInWhileLocked,
+  isAuthLocked,
+} from "@/lib/auth/auth-lock";
 import { loginBodySchema } from "@/lib/validation/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -116,6 +121,10 @@ export async function POST(request: Request) {
       { error: "Account is not active. Contact support." },
       { status: 403 },
     );
+  }
+
+  if (isAuthLocked() && !canSignInWhileLocked(user.role)) {
+    return NextResponse.json({ error: AUTH_LOCK_MESSAGE }, { status: 503 });
   }
 
   let token: string;

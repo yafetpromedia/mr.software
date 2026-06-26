@@ -7,6 +7,7 @@ import { postLoginPath } from "@/lib/auth/post-login-redirect";
 
 type Props = {
   redirectTo: string;
+  authLocked?: boolean;
   initialOauthError?: string | null;
 };
 
@@ -48,7 +49,7 @@ function FieldIconLock() {
   );
 }
 
-export function LoginForm({ redirectTo, initialOauthError }: Props) {
+export function LoginForm({ redirectTo, authLocked = false, initialOauthError }: Props) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -96,6 +97,14 @@ export function LoginForm({ redirectTo, initialOauthError }: Props) {
 
   return (
     <div className="flex flex-col gap-5">
+      {authLocked ? (
+        <div
+          className="rounded-2xl border border-amber-300/60 bg-amber-500/5 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200"
+          role="status"
+        >
+          Maintenance mode is on. Only administrator accounts can sign in right now.
+        </div>
+      ) : null}
       <GoogleSignInButton redirectTo={redirectTo} from="login" />
       <div className="relative flex items-center gap-4 py-1">
         <div className="h-px flex-1 bg-[var(--border)]" />

@@ -3,6 +3,7 @@ type Props = {
   /** Which auth page started the flow (for error redirects). */
   from: "login" | "register";
   label?: string;
+  disabled?: boolean;
 };
 
 function GoogleMark() {
@@ -32,12 +33,25 @@ export function GoogleSignInButton({
   redirectTo,
   from,
   label = "Continue with Google",
+  disabled = false,
 }: Props) {
   const qs = new URLSearchParams({
     next: redirectTo,
     from,
   });
   const href = `/api/auth/google?${qs.toString()}`;
+
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-sm font-semibold text-[var(--muted)] opacity-60"
+      >
+        <GoogleMark />
+        {label}
+      </span>
+    );
+  }
 
   return (
     <a
