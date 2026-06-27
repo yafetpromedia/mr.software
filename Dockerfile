@@ -3,7 +3,7 @@
 
 FROM node:20-bookworm-slim AS base
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates php-cli python3 python3-pip \
+  && apt-get install -y --no-install-recommends openssl ca-certificates php-cli python3 python3-pip gosu \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
@@ -25,6 +25,7 @@ FROM base AS runner
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV SITE_UPLOAD_ROOT=/var/mr-software/site-uploads
 
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
@@ -37,14 +38,14 @@ COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/next.config.ts ./next.config.ts
-
-COPY --from=builder /app/next.config.ts ./next.config.ts
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 RUN mkdir -p public/brand/uploads/logo public/brand/uploads/partners public/brand/uploads/team \
+  /var/mr-software/site-uploads/logo /var/mr-software/site-uploads/partners /var/mr-software/site-uploads/team \
   /var/mr-software/deployments \
   && chown -R nextjs:nodejs /var/mr-software /app
 
-USER nextjs
 EXPOSE 3000
-
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "start"]

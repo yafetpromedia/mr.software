@@ -48,6 +48,10 @@ const nextConfig: NextConfig = {
         source: "/@:handle",
         destination: "/store/:handle",
       },
+      {
+        source: "/brand/uploads/:path*",
+        destination: "/api/site-assets/:path*",
+      },
     ];
   },
   // Multiple lockfiles (e.g. in a parent folder) can make Turbopack pick the wrong root

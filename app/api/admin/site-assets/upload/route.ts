@@ -2,6 +2,11 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import {
+  siteUploadAbsoluteDir,
+  siteUploadPublicUrl,
+  type SiteUploadScope,
+} from "@/lib/branding/site-uploads";
 import { isActiveAdmin } from "@/lib/auth/rbac";
 import { getSession } from "@/lib/auth/session";
 
@@ -91,26 +96,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unsupported image type" }, { status: 400 });
   }
 
-  const folder =
-    scope === "logo"
-      ? "public/brand/uploads/logo"
-      : scope === "partner"
-        ? "public/brand/uploads/partners"
-        : "public/brand/uploads/team";
-  const absoluteFolder = path.join(process.cwd(), folder);
+  const uploadScope = scope as SiteUploadScope;
+  const absoluteFolder = siteUploadAbsoluteDir(uploadScope);
   await mkdir(absoluteFolder, { recursive: true });
 
   const fileName = `${Date.now()}-${randomUUID()}${ext}`;
   const absoluteTarget = path.join(absoluteFolder, fileName);
   const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(absoluteTarget, bytes);
 
-  const publicUrl =
-    scope === "logo"
-      ? `/brand/uploads/logo/${fileName}`
-      : scope === "partner"
-        ? `/brand/uploads/partners/${fileName}`
-        : `/brand/uploads/team/${fileName}`;
+  try {
+    await writeFile(absoluteTarget, bytes);
+  } catch (error) {
+    console.error("site-assets upload write failed", error);
+    return NextResponse.json(
+      {
+        error:
+          "Could not save the uploaded file on the server. Check upload directory permissions.",
+      },
+      { status: 500 },
+    );
+  }
 
-  return NextResponse.json({ url: publicUrl });
+  return NextResponse.json({ url: siteUploadPublicUrl(uploadScope, fileName) });
 }

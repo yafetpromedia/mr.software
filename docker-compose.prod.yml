@@ -34,11 +34,12 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mr_software}?schema=public
       LOCAL_DEPLOY_ROOT: /var/mr-software/deployments
+      SITE_UPLOAD_ROOT: /var/mr-software/site-uploads
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
       - mr_software_deployments:/var/mr-software/deployments
-      - mr_software_site_uploads:/app/public/brand/uploads
+      - mr_software_site_uploads:/var/mr-software/site-uploads
 
 volumes:
   mr_software_pg_data:

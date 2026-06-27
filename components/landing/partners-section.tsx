@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
+import { BrandAssetImage } from "@/components/brand/brand-asset-image";
 import { motion, useReducedMotion } from "framer-motion";
-import { isRuntimeBrandUpload } from "@/lib/branding/upload-path";
 import { defaultPartners, normalizePartnerHref, type Partner } from "@/lib/landing/partners";
 
 function PartnerLogo({ p }: { p: Partner }) {
@@ -10,11 +9,10 @@ function PartnerLogo({ p }: { p: Partner }) {
   const href = normalizePartnerHref(p.href);
   const inner = p.logo ? (
     <div className="relative h-11 w-[9.5rem] sm:h-12 sm:w-[10.5rem]">
-      <Image
+      <BrandAssetImage
         src={p.logo}
         alt={label}
         fill
-        unoptimized={isRuntimeBrandUpload(p.logo)}
         className="object-contain object-center opacity-80 transition duration-300 group-hover:opacity-100"
         sizes="(max-width: 640px) 140px, 168px"
       />

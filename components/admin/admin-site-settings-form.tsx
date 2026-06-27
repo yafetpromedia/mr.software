@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import type { LaunchMapMode } from "@prisma/client";
+import { BrandAssetImage } from "@/components/brand/brand-asset-image";
 import type { Partner } from "@/lib/landing/partners";
-import { isRuntimeBrandUpload } from "@/lib/branding/upload-path";
 
 type SiteSettings = {
   logoUrl: string;
@@ -264,12 +263,11 @@ export function AdminSiteSettingsForm({
           <p className="mb-1 text-xs font-medium text-[var(--muted)]">Preview</p>
           {logoUrl.trim().length > 0 ? (
             <div className="inline-flex items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--background)] p-2">
-              <Image
+              <BrandAssetImage
                 src={logoUrl}
                 alt="Brand logo preview"
                 width={48}
                 height={48}
-                unoptimized={isRuntimeBrandUpload(logoUrl)}
                 className="h-12 w-12 rounded-lg object-contain"
               />
             </div>
@@ -364,8 +362,9 @@ export function AdminSiteSettingsForm({
                   <input
                     value={partner.logo ?? ""}
                     onChange={(e) => updatePartner(index, "logo", e.target.value)}
-                    className="mt-1 h-9 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none ring-[var(--accent)]/30 focus:ring-2"
-                    placeholder="/brand/partners/acme.svg"
+                    className="mt-1 h-9 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 font-mono text-xs outline-none ring-[var(--accent)]/30 focus:ring-2"
+                    placeholder="/brand/uploads/partners/your-logo.png"
+                    spellCheck={false}
                   />
                   <div className="mt-2">
                     <label className="inline-flex">
@@ -388,12 +387,11 @@ export function AdminSiteSettingsForm({
                     </p>
                     {partner.logo?.trim() ? (
                       <div className="inline-flex h-12 w-44 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--background)] p-2">
-                        <Image
+                        <BrandAssetImage
                           src={partner.logo}
                           alt={partner.label?.trim() || partner.name?.trim() || "Partner logo preview"}
                           width={160}
                           height={40}
-                          unoptimized={isRuntimeBrandUpload(partner.logo)}
                           className="h-full w-full object-contain"
                         />
                       </div>

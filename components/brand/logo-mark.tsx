@@ -1,8 +1,7 @@
 ﻿"use client";
 
-import Image from "next/image";
+import { BrandAssetImage } from "@/components/brand/brand-asset-image";
 import { useBrandSettings } from "@/components/brand/brand-settings-provider";
-import { isRuntimeBrandUpload } from "@/lib/branding/upload-path";
 
 const DIM = { sm: 32, md: 36, lg: 44 } as const;
 
@@ -33,13 +32,12 @@ export function LogoMark({
       className={`relative inline-flex shrink-0 overflow-hidden bg-transparent ring-1 ring-inset ring-black/[0.08] dark:ring-white/[0.12] ${roundedCls[rounded]} ${className ?? ""}`}
       style={{ width: dim, height: dim }}
     >
-      <Image
+      <BrandAssetImage
         src={resolvedSrc}
         alt="Mr.Software"
         width={dim}
         height={dim}
         priority={priority}
-        unoptimized={isRuntimeBrandUpload(resolvedSrc)}
         className="object-contain p-[2px]"
         sizes={`${dim}px`}
       />
