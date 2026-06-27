@@ -163,7 +163,7 @@ export async function POST(request: Request) {
       canWithdraw: user.canWithdraw,
     },
   });
-  const cookie = buildAuthCookie(token);
+  const cookie = buildAuthCookie(token, request);
   res.cookies.set(cookie.name, cookie.value, cookie.options);
   return res;
 }

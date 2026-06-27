@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     }
 
     const res = NextResponse.json({ user }, { status: 201 });
-    const cookie = buildAuthCookie(token);
+    const cookie = buildAuthCookie(token, request);
     res.cookies.set(cookie.name, cookie.value, cookie.options);
     return res;
   } catch (e: unknown) {

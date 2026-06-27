@@ -232,7 +232,7 @@ export async function GET(request: Request) {
 
   const dest = new URL(postLoginPath(user.role, next), url.origin);
   const res = NextResponse.redirect(dest);
-  const cookie = buildAuthCookie(token);
+  const cookie = buildAuthCookie(token, request);
   res.cookies.set(cookie.name, cookie.value, cookie.options);
   return res;
 }
