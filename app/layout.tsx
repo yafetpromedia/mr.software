@@ -6,6 +6,8 @@ import { getPublicSiteSettings } from "@/lib/site-settings";
 import { geistMono, inter, spaceGrotesk } from "./fonts";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublicSiteSettings();
   return {

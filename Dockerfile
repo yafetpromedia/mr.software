@@ -15,6 +15,8 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NODE_ENV=production
+# `next build` evaluates the root layout (site settings → Prisma). No DB exists during image build.
+ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 RUN npx prisma generate && npm run build
 
 FROM base AS runner

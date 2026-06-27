@@ -46,6 +46,9 @@ function parsePartnersJson(partnersJson: string): Partner[] {
 }
 
 export async function getPublicSiteSettings(): Promise<SiteSettingsPayload> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return { logoUrl: DEFAULT_LOGO_URL, partners: defaultPartners };
+  }
   try {
     const rows = (await prisma.$queryRawUnsafe(
       'SELECT "logoUrl", "partnersJson" FROM "SiteSettings" WHERE "id" = $1 LIMIT 1',
