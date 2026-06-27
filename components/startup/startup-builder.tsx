@@ -337,9 +337,7 @@ export function StartupBuilder() {
                       className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${
                         isLive
                           ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                          : opt.status === "Coming soon"
-                            ? "bg-[var(--surface-elevated)] text-[var(--muted)]"
-                            : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                          : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                       }`}
                     >
                       {opt.status}

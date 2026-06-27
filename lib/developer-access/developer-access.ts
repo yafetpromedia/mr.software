@@ -35,7 +35,7 @@ export class DeveloperAccessValidationError extends Error {
 type RequestDelegate = {
   findFirst: (args: unknown) => Promise<RequestRow | null>;
   findMany: (args: unknown) => Promise<RequestRow[]>;
-  findUnique: (args: { where: { id: string } }) => Promise<RequestRow | null>;
+  findUnique: (args: unknown) => Promise<RequestRow | null>;
   create: (args: unknown) => Promise<RequestRow>;
   update: (args: unknown) => Promise<RequestRow>;
   count: (args?: { where?: { status?: DeveloperAccessRequestStatus } }) => Promise<number>;

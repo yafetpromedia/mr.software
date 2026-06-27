@@ -133,7 +133,7 @@ async function loadAcademySettings(): Promise<PublicAcademySectionSettings> {
         id: SETTINGS_ID,
         ...DEFAULT_ACADEMY_SECTION,
       },
-      update: {},
+      update: DEFAULT_ACADEMY_SECTION,
     });
     return toPublicSettings(created);
   } catch {
@@ -150,7 +150,7 @@ async function ensureAcademySectionSettings(): Promise<AcademySectionSettings | 
       id: SETTINGS_ID,
       ...DEFAULT_ACADEMY_SECTION,
     },
-    update: {},
+    update: DEFAULT_ACADEMY_SECTION,
   });
 }
 

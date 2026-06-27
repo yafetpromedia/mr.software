@@ -27,7 +27,7 @@ export async function createChapaCheckout(input: {
   softwareId: string;
   amount: number;
   currency?: string;
-  provider?: PaymentProvider.CHAPA | PaymentProvider.TELEBIRR;
+  provider?: Extract<PaymentProvider, "CHAPA" | "TELEBIRR">;
 }): Promise<{ url: string; txRef: string }> {
   const secret = process.env.CHAPA_SECRET_KEY?.trim();
   if (!secret) {

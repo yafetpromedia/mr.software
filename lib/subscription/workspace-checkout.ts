@@ -95,7 +95,7 @@ export async function createWorkspaceChapaCheckout(input: {
   userId: string;
   email: string;
   name: string;
-  method?: PaymentProvider.CHAPA | PaymentProvider.TELEBIRR;
+  method?: Extract<PaymentProvider, "CHAPA" | "TELEBIRR">;
 }): Promise<{ url: string }> {
   if (!isChapaConfigured()) {
     throw new Error("Chapa is not configured (CHAPA_SECRET_KEY)");

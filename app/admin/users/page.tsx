@@ -90,11 +90,13 @@ export default async function AdminUsersPage({ searchParams }: Props) {
       label: "Developers",
       value: String(developerCount),
       icon: UserCheck,
+      hint: undefined,
     },
     {
       label: "Active",
       value: String(activeCount),
       icon: Shield,
+      hint: undefined,
     },
   ] as const;
 

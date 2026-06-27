@@ -25,6 +25,7 @@ function providerLabel(provider: string | null | undefined): string | null {
   if (provider === "STRIPE") return "Stripe";
   if (provider === "TELEBIRR") return "Telebirr";
   if (provider === "DEV_GRANT") return "Dev grant";
+  return provider;
 }
 
 export const metadata = { title: "Purchases & billing" };
