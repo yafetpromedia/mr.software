@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const fromRaw = url.searchParams.get("from");
   const from = fromRaw === "register" ? "register" : "login";
 
-  if (isAuthLocked() && from === "register") {
+  if ((await isAuthLocked()) && from === "register") {
     const dest = new URL("/auth/register", url.origin);
     dest.searchParams.set("oauth_error", "auth_lock");
     dest.searchParams.set("next", next);

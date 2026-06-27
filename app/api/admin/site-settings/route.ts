@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { logAdminAction } from "@/lib/admin/audit";
+import { getAuthLockState, setAuthLockEnabled } from "@/lib/auth/auth-lock";
 import { isActiveAdmin } from "@/lib/auth/rbac";
 import { getSession } from "@/lib/auth/session";
+import { getLaunchMapMode, updateLaunchMapMode } from "@/lib/launch-map/launch-map";
 import { getPublicSiteSettings, upsertSiteSettings } from "@/lib/site-settings";
-import { updateLaunchMapMode, getLaunchMapMode } from "@/lib/launch-map/launch-map";
 import { adminSiteSettingsBodySchema } from "@/lib/validation/site-settings";
 
 export async function GET() {
@@ -15,11 +16,15 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [settings, launchMapMode] = await Promise.all([
+  const [settings, launchMapMode, authLock] = await Promise.all([
     getPublicSiteSettings(),
     getLaunchMapMode(),
+    getAuthLockState(),
   ]);
-  return NextResponse.json({ settings: { ...settings, launchMapMode } });
+  return NextResponse.json({
+    settings: { ...settings, launchMapMode, authLock: authLock.adminToggle },
+    authLock,
+  });
 }
 
 export async function PATCH(request: Request) {
@@ -49,6 +54,7 @@ export async function PATCH(request: Request) {
   try {
     const before = await getPublicSiteSettings();
     const beforeMode = await getLaunchMapMode();
+    const beforeAuthLock = await getAuthLockState();
     const settings = await upsertSiteSettings({
       logoUrl: parsed.data.logoUrl,
       partners: parsed.data.partners,
@@ -57,6 +63,11 @@ export async function PATCH(request: Request) {
       parsed.data.launchMapMode !== undefined
         ? await updateLaunchMapMode(parsed.data.launchMapMode)
         : beforeMode;
+    const authLock =
+      parsed.data.authLock !== undefined
+        ? await setAuthLockEnabled(parsed.data.authLock)
+        : beforeAuthLock.adminToggle;
+    const authLockState = await getAuthLockState();
     await logAdminAction({
       adminId: session.id,
       action: "site.settings",
@@ -69,9 +80,14 @@ export async function PATCH(request: Request) {
         partnersCountTo: settings.partners.length,
         launchMapModeFrom: beforeMode,
         launchMapModeTo: launchMapMode,
+        authLockFrom: beforeAuthLock.adminToggle,
+        authLockTo: authLock,
       },
     });
-    return NextResponse.json({ settings: { ...settings, launchMapMode } });
+    return NextResponse.json({
+      settings: { ...settings, launchMapMode, authLock },
+      authLock: authLockState,
+    });
   } catch (error) {
     console.error(error);
     const message =

@@ -123,7 +123,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (isAuthLocked() && !canSignInWhileLocked(user.role)) {
+  if (await isAuthLocked() && !canSignInWhileLocked(user.role)) {
     return NextResponse.json({ error: AUTH_LOCK_MESSAGE }, { status: 503 });
   }
 

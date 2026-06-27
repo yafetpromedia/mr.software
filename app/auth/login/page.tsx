@@ -18,6 +18,7 @@ type Props = {
 export default async function LoginPage({ searchParams }: Props) {
   const { next, oauth_error } = await searchParams;
   const redirectTo = safeInternalPath(next, "/app");
+  const authLocked = await isAuthLocked();
 
   return (
     <AuthSplitLayout
@@ -58,7 +59,7 @@ export default async function LoginPage({ searchParams }: Props) {
       </header>
       <LoginForm
         redirectTo={redirectTo}
-        authLocked={isAuthLocked()}
+        authLocked={authLocked}
         initialOauthError={
           typeof oauth_error === "string"
             ? messageForGoogleOAuthError(oauth_error)

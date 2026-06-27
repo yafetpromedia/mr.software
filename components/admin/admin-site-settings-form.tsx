@@ -9,6 +9,7 @@ type SiteSettings = {
   logoUrl: string;
   partners: Partner[];
   launchMapMode: LaunchMapMode;
+  authLock: boolean;
 };
 
 const LAUNCH_MAP_MODES: { value: LaunchMapMode; label: string; hint: string }[] = [
@@ -35,13 +36,16 @@ function emptyPartner(): Partner {
 
 export function AdminSiteSettingsForm({
   initialSettings,
+  authLockEnvOverride = false,
 }: {
   initialSettings: SiteSettings;
+  authLockEnvOverride?: boolean;
 }) {
   const [logoUrl, setLogoUrl] = useState(initialSettings.logoUrl);
   const [launchMapMode, setLaunchMapMode] = useState<LaunchMapMode>(
     initialSettings.launchMapMode ?? "HYBRID",
   );
+  const [authLock, setAuthLock] = useState(initialSettings.authLock ?? false);
   const [partners, setPartners] = useState<Partner[]>(
     initialSettings.partners.length > 0 ? initialSettings.partners : [emptyPartner()],
   );
@@ -58,6 +62,7 @@ export function AdminSiteSettingsForm({
     return {
       logoUrl: (nextLogoUrl ?? logoUrl).trim(),
       launchMapMode,
+      authLock,
       partners: sourcePartners
         .map((p) => ({
           name: p.name?.trim() ?? "",
@@ -188,6 +193,38 @@ export function AdminSiteSettingsForm({
 
   return (
     <div className="space-y-6">
+      <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-xl">
+            <h2 className="text-sm font-semibold text-[var(--foreground)]">
+              Maintenance mode
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
+              When on, only administrators can sign in or register. Public pages stay visible;
+              existing user sessions are not revoked.
+            </p>
+            {authLockEnvOverride ? (
+              <p className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">
+                Locked by server env (<code>AUTH_LOCK=true</code>). Remove it from{" "}
+                <code>.env.production</code> to control this from admin.
+              </p>
+            ) : null}
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-3">
+            <span className="text-sm font-medium text-[var(--foreground)]">
+              {authLock || authLockEnvOverride ? "On" : "Off"}
+            </span>
+            <input
+              type="checkbox"
+              checked={authLock || authLockEnvOverride}
+              disabled={authLockEnvOverride}
+              onChange={(e) => setAuthLock(e.target.checked)}
+              className="h-5 w-5 rounded border-[var(--border)] accent-[var(--accent)]"
+            />
+          </label>
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
         <h2 className="text-sm font-semibold text-[var(--foreground)]">
           Brand logo

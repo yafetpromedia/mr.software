@@ -110,7 +110,7 @@ export async function GET(request: Request) {
   const displayName =
     profile.name.trim() || profile.email.split("@")[0] || "Google user";
 
-  const authLocked = isAuthLocked();
+  const authLocked = await isAuthLocked();
 
   let user;
   try {

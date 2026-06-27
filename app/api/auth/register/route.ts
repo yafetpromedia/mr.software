@@ -15,7 +15,7 @@ import { registerBodySchema } from "@/lib/validation/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
-  if (isAuthLocked()) {
+  if (await isAuthLocked()) {
     return NextResponse.json({ error: AUTH_LOCK_REGISTER_MESSAGE }, { status: 503 });
   }
 

@@ -16,4 +16,5 @@ export const adminSiteSettingsBodySchema = z.object({
     .regex(/^\//, "Logo URL must be a public path starting with /"),
   partners: z.array(partnerSchema).max(24, "Too many partner entries"),
   launchMapMode: z.nativeEnum(LaunchMapMode).optional(),
+  authLock: z.boolean().optional(),
 });

@@ -600,6 +600,8 @@ model SiteSettings {
   logoUrl        String         @default("/brand/logo-mark.png")
   partnersJson   String         @default("[]") @db.Text
   launchMapMode  LaunchMapMode  @default(HYBRID)
+  /** When true, only admins can sign in or register (admin toggle). */
+  authLock       Boolean        @default(false)
   updatedAt      DateTime       @updatedAt
 }
 
