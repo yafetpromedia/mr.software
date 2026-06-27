@@ -38,7 +38,9 @@ services:
       - "${APP_PORT:-3000}:3000"
     volumes:
       - mr_software_deployments:/var/mr-software/deployments
+      - mr_software_site_uploads:/app/public/brand/uploads
 
 volumes:
   mr_software_pg_data:
   mr_software_deployments:
+  mr_software_site_uploads:

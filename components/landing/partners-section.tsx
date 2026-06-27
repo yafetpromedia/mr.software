@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
+import { isRuntimeBrandUpload } from "@/lib/branding/upload-path";
 import { defaultPartners, normalizePartnerHref, type Partner } from "@/lib/landing/partners";
 
 function PartnerLogo({ p }: { p: Partner }) {
@@ -13,6 +14,7 @@ function PartnerLogo({ p }: { p: Partner }) {
         src={p.logo}
         alt={label}
         fill
+        unoptimized={isRuntimeBrandUpload(p.logo)}
         className="object-contain object-center opacity-80 transition duration-300 group-hover:opacity-100"
         sizes="(max-width: 640px) 140px, 168px"
       />

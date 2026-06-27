@@ -38,7 +38,10 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/next.config.ts ./next.config.ts
 
-RUN mkdir -p /var/mr-software/deployments \
+COPY --from=builder /app/next.config.ts ./next.config.ts
+
+RUN mkdir -p public/brand/uploads/logo public/brand/uploads/partners public/brand/uploads/team \
+  /var/mr-software/deployments \
   && chown -R nextjs:nodejs /var/mr-software /app
 
 USER nextjs

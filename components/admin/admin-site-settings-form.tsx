@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import type { LaunchMapMode } from "@prisma/client";
 import type { Partner } from "@/lib/landing/partners";
+import { isRuntimeBrandUpload } from "@/lib/branding/upload-path";
 
 type SiteSettings = {
   logoUrl: string;
@@ -268,6 +269,7 @@ export function AdminSiteSettingsForm({
                 alt="Brand logo preview"
                 width={48}
                 height={48}
+                unoptimized={isRuntimeBrandUpload(logoUrl)}
                 className="h-12 w-12 rounded-lg object-contain"
               />
             </div>
@@ -391,6 +393,7 @@ export function AdminSiteSettingsForm({
                           alt={partner.label?.trim() || partner.name?.trim() || "Partner logo preview"}
                           width={160}
                           height={40}
+                          unoptimized={isRuntimeBrandUpload(partner.logo)}
                           className="h-full w-full object-contain"
                         />
                       </div>

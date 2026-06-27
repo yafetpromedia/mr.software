@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useBrandSettings } from "@/components/brand/brand-settings-provider";
+import { isRuntimeBrandUpload } from "@/lib/branding/upload-path";
 
 const DIM = { sm: 32, md: 36, lg: 44 } as const;
 
@@ -38,6 +39,7 @@ export function LogoMark({
         width={dim}
         height={dim}
         priority={priority}
+        unoptimized={isRuntimeBrandUpload(resolvedSrc)}
         className="object-contain p-[2px]"
         sizes={`${dim}px`}
       />
