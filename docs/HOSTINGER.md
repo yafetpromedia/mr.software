@@ -88,10 +88,18 @@ npm run prod:up
 docker compose -f docker-compose.prod.yml exec app npx prisma db push
 ```
 
-Optional first-time admin (skip if you will register manually):
+Optional first-time admin (works in Docker — use this instead of `db:seed`):
 
 ```bash
-docker compose -f docker-compose.prod.yml exec app npm run db:seed
+docker compose -f docker-compose.prod.yml exec app npm run db:bootstrap-admin
+```
+
+Sign in with `admin@mrsoftware.local` / `password123`, then change the password.
+
+Full demo data (local dev only — requires full source tree):
+
+```bash
+npm run db:seed
 ```
 
 App runs on **http://YOUR_VPS_IP:3000** (HTTPS comes next).
@@ -169,6 +177,7 @@ npm run prod:up
 | Site not loading | Check DNS A record, firewall ports **80** and **443** open on VPS |
 | OAuth fails | Redirect URI must match exactly (https, no trailing slash) |
 | Database error | `docker compose -f docker-compose.prod.yml ps` — ensure `db` is healthy |
+| Admin login fails / seed error | Run `docker compose -f docker-compose.prod.yml exec app npm run db:bootstrap-admin` |
 | “Maintenance mode” for users | Remove `AUTH_LOCK=true` from `.env.production` and restart containers |
 
 See also [DEPLOY-PRODUCTION.md](./DEPLOY-PRODUCTION.md) for full env reference.

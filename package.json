@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
+    "db:bootstrap-admin": "node scripts/bootstrap-admin.mjs",
     "db:studio": "prisma studio",
     "prod:secrets": "node scripts/generate-production-secrets.mjs",
     "prod:check": "node scripts/check-production-env.mjs",
