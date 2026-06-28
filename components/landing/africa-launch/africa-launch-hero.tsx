@@ -59,7 +59,7 @@ function AfricaLaunchHeroInner() {
           </>
         ) : null}
         <div
-          className="africa-launch-hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-24 sm:h-28"
+          className="africa-launch-hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-32 sm:h-40"
           aria-hidden
         />
       </motion.div>

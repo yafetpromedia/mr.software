@@ -12,9 +12,9 @@ import { RealEarthGlobe } from "@/components/landing/africa-launch/real-earth-gl
 import { GlobeArcFlow } from "@/components/landing/africa-launch/globe-arc-flow";
 import type { Group } from "three";
 
-const GLOBE_Y = -40;
-const VIEW_FOCUS = new THREE.Vector3(8, 4, 0);
-const CAMERA_DISTANCE = GLOBE_RADIUS * 2.42;
+const GLOBE_Y = -54;
+const VIEW_FOCUS = new THREE.Vector3(6, 2, 0);
+const CAMERA_DISTANCE = GLOBE_RADIUS * 2.58;
 const AUTO_ROTATE_DELAY_MS = 1800;
 
 function cameraPositionForAfrica(): THREE.Vector3 {
@@ -104,7 +104,7 @@ export function AfricaGlobeScene({
       className={`africa-globe-canvas-root ${isLight ? "africa-globe-canvas-root--light" : ""} ${loaded && introComplete ? "africa-globe-canvas-root--ready" : "africa-globe-canvas-root--loading"} ${className ?? ""}`}
     >
       <Canvas
-        camera={{ position: initialCam.toArray(), fov: 33 }}
+        camera={{ position: initialCam.toArray(), fov: 36 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         dpr={[1, 1.75]}
         style={{ width: "100%", height: "100%", background: "transparent", touchAction: "none" }}

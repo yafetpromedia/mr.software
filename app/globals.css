@@ -249,6 +249,44 @@ body {
 
 .africa-globe-scene-wrap {
   transform: none;
+  transform-origin: 50% 42%;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 58%,
+    rgba(0, 0, 0, 0.92) 72%,
+    rgba(0, 0, 0, 0.45) 84%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 58%,
+    rgba(0, 0, 0, 0.92) 72%,
+    rgba(0, 0, 0, 0.45) 84%,
+    transparent 100%
+  );
+}
+
+@media (max-width: 640px) {
+  .africa-globe-scene-wrap {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 52%,
+      rgba(0, 0, 0, 0.95) 68%,
+      rgba(0, 0, 0, 0.55) 82%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 52%,
+      rgba(0, 0, 0, 0.95) 68%,
+      rgba(0, 0, 0, 0.55) 82%,
+      transparent 100%
+    );
+  }
 }
 
 .africa-globe-loading-placeholder {
@@ -314,9 +352,10 @@ body {
 
 .africa-globe-vignette {
   background: radial-gradient(
-    ellipse 76% 58% at 54% 61%,
-    transparent 38%,
-    rgba(0, 0, 0, 0.5) 100%
+    ellipse 82% 68% at 50% 54%,
+    transparent 32%,
+    rgba(0, 0, 0, 0.35) 72%,
+    rgba(0, 0, 0, 0.72) 100%
   );
 }
 
@@ -479,11 +518,14 @@ body {
 }
 
 .africa-launch-hero-fade {
+  z-index: 2;
   background: linear-gradient(
     to top,
-    var(--landing-hero-fade),
-    color-mix(in srgb, var(--landing-hero-fade) 70%, transparent),
-    transparent
+    var(--landing-hero-fade) 0%,
+    var(--landing-hero-fade) 28%,
+    color-mix(in srgb, var(--landing-hero-fade) 88%, transparent) 52%,
+    color-mix(in srgb, var(--landing-hero-fade) 45%, transparent) 72%,
+    transparent 100%
   );
 }
 
