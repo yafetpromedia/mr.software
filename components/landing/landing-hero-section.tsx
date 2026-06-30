@@ -4,7 +4,10 @@ import { getLaunchMapPayload } from "@/lib/launch-map/launch-map";
 
 export async function LandingHeroSection() {
   const [stores, initialLaunchMap] = await Promise.all([
-    listFeaturedStorefronts(1),
+    listFeaturedStorefronts(1).catch((e) => {
+      console.error("listFeaturedStorefronts failed", e);
+      return [];
+    }),
     getLaunchMapPayload(),
   ]);
   const featured = stores[0] ?? {

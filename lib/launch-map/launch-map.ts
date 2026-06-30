@@ -257,8 +257,15 @@ export async function getLaunchMapMode(): Promise<LaunchMapMode> {
 }
 
 export async function getLaunchMapPayload(): Promise<LaunchMapPayload> {
-  const mode = await getLaunchMapMode();
-  const live = await fetchLivePoints();
+  let mode: LaunchMapMode = LaunchMapMode.HYBRID;
+  let live: LaunchMapPoint[] = [];
+  try {
+    mode = await getLaunchMapMode();
+    live = await fetchLivePoints();
+  } catch (e) {
+    console.error("getLaunchMapPayload: live data unavailable", e);
+  }
+
   const demo = demoPoints();
 
   let points: LaunchMapPoint[];
