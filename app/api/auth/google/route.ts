@@ -4,7 +4,7 @@ import {
   buildGoogleAuthorizeUrl,
   signGoogleOAuthState,
 } from "@/lib/auth/google-oauth";
-import { oauthPublicOrigin } from "@/lib/auth/oauth-public-origin";
+import { appPublicOrigin } from "@/lib/auth/oauth-public-origin";
 import { isAuthLocked } from "@/lib/auth/auth-lock";
 import { safeInternalPath } from "@/lib/safe-redirect";
 
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const from = fromRaw === "register" ? "register" : "login";
 
   if ((await isAuthLocked()) && from === "register") {
-    const dest = new URL("/auth/register", url.origin);
+    const dest = new URL("/auth/register", appPublicOrigin(request));
     dest.searchParams.set("oauth_error", "auth_lock");
     dest.searchParams.set("next", next);
     return NextResponse.redirect(dest);
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const redirectUri = `${oauthPublicOrigin(request)}${GOOGLE_OAUTH_CALLBACK_PATH}`;
+  const redirectUri = `${appPublicOrigin(request)}${GOOGLE_OAUTH_CALLBACK_PATH}`;
   const googleUrl = buildGoogleAuthorizeUrl({
     clientId,
     redirectUri,

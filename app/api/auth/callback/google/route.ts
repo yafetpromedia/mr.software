@@ -13,7 +13,7 @@ import {
   isAuthLocked,
 } from "@/lib/auth/auth-lock";
 import { userFacingDbError } from "@/lib/db-errors";
-import { oauthPublicOrigin } from "@/lib/auth/oauth-public-origin";
+import { appPublicOrigin } from "@/lib/auth/oauth-public-origin";
 import { prisma } from "@/lib/prisma";
 import { safeInternalPath } from "@/lib/safe-redirect";
 import { postLoginPath } from "@/lib/auth/post-login-redirect";
@@ -25,7 +25,7 @@ function redirectOAuthError(
   code: string,
   next: string,
 ) {
-  const base = new URL(request.url).origin;
+  const base = appPublicOrigin(request);
   const path = from === "register" ? "/auth/register" : "/auth/login";
   const u = new URL(path, base);
   u.searchParams.set("oauth_error", code);
@@ -82,7 +82,7 @@ export async function GET(request: Request) {
     return redirectOAuthError(request, from, "config", next);
   }
 
-  const redirectUri = `${oauthPublicOrigin(request)}${GOOGLE_OAUTH_CALLBACK_PATH}`;
+  const redirectUri = `${appPublicOrigin(request)}${GOOGLE_OAUTH_CALLBACK_PATH}`;
 
   let accessToken: string;
   try {
@@ -236,7 +236,7 @@ export async function GET(request: Request) {
     return redirectOAuthError(request, from, "unknown", next);
   }
 
-  const dest = new URL(postLoginPath(user.role, next), url.origin);
+  const dest = new URL(postLoginPath(user.role, next), appPublicOrigin(request));
   const res = NextResponse.redirect(dest);
   const cookie = buildAuthCookie(token, request);
   res.cookies.set(cookie.name, cookie.value, cookie.options);

@@ -6,6 +6,7 @@ import {
   HEADER_USER_ID,
   HEADER_USER_ROLE,
 } from "@/lib/auth/constants";
+import { appPublicOrigin } from "@/lib/auth/oauth-public-origin";
 import { isDeveloperWorkspacePath } from "@/lib/auth/post-login-redirect";
 
 const INTERNAL_HEADER_PREFIX = "x-mr-software-";
@@ -45,6 +46,21 @@ function withPathname(headers: Headers, pathname: string): Headers {
   return next;
 }
 
+function publicRedirect(
+  request: NextRequest,
+  pathname: string,
+  opts?: { search?: string; searchParams?: Record<string, string> },
+) {
+  const url = new URL(pathname, appPublicOrigin(request));
+  if (opts?.search !== undefined) url.search = opts.search;
+  if (opts?.searchParams) {
+    for (const [key, value] of Object.entries(opts.searchParams)) {
+      url.searchParams.set(key, value);
+    }
+  }
+  return NextResponse.redirect(url);
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const method = request.method;
@@ -63,9 +79,9 @@ export async function middleware(request: NextRequest) {
       const role = payload.role;
       const handle = decodeURIComponent(publicStorefrontHandle);
       if (role === "ADMIN") {
-        return NextResponse.redirect(new URL(`/store/${handle}`, request.url));
+        return publicRedirect(request, `/store/${handle}`);
       }
-      return NextResponse.redirect(new URL(`/app/store/${handle}`, request.url));
+      return publicRedirect(request, `/app/store/${handle}`);
     } catch {
       // Invalid token — show public storefront
     }
@@ -85,9 +101,9 @@ export async function middleware(request: NextRequest) {
       const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
       const role = payload.role;
       if (role === "USER" || role === "DEVELOPER") {
-        const dest = new URL(catalogPortalPath, request.url);
-        dest.search = request.nextUrl.search;
-        return NextResponse.redirect(dest);
+        return publicRedirect(request, catalogPortalPath, {
+          search: request.nextUrl.search,
+        });
       }
     } catch {
       // Invalid token — show public catalog
@@ -99,9 +115,9 @@ export async function middleware(request: NextRequest) {
   const isSoftwareApi = pathname.startsWith("/api/software");
 
   if (isAdminUi && (!token || !secret)) {
-    const login = new URL("/auth/login", request.url);
-    login.searchParams.set("next", pathname);
-    return NextResponse.redirect(login);
+    return publicRedirect(request, "/auth/login", {
+      searchParams: { next: pathname },
+    });
   }
 
   if (isAdminPath && (!token || !secret)) {
@@ -127,10 +143,10 @@ export async function middleware(request: NextRequest) {
       headers.set(HEADER_USER_ID, sub);
       headers.set(HEADER_USER_ROLE, role);
       if ((pathname === "/app" || pathname === "/app/") && role === "USER") {
-        return NextResponse.redirect(new URL("/app/home", request.url));
+        return publicRedirect(request, "/app/home");
       }
       if (role === "ADMIN" && status === "ACTIVE" && isDeveloperWorkspacePath(pathname)) {
-        return NextResponse.redirect(new URL("/admin", request.url));
+        return publicRedirect(request, "/admin");
       }
     }
 
@@ -148,7 +164,7 @@ export async function middleware(request: NextRequest) {
 
     if (isAdminUi) {
       if (!isRole(role) || role !== "ADMIN" || status !== "ACTIVE") {
-        return NextResponse.redirect(new URL("/app", request.url));
+        return publicRedirect(request, "/app");
       }
     }
 
@@ -177,9 +193,9 @@ export async function middleware(request: NextRequest) {
       return jsonMessage("Unauthorized", 401);
     }
     if (isAdminUi) {
-      const login = new URL("/auth/login", request.url);
-      login.searchParams.set("next", pathname);
-      return NextResponse.redirect(login);
+      return publicRedirect(request, "/auth/login", {
+        searchParams: { next: pathname },
+      });
     }
     return NextResponse.next({
       request: { headers: withPathname(headers, pathname) },

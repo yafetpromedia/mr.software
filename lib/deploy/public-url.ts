@@ -1,4 +1,5 @@
 import type { Deployment } from "@prisma/client";
+import { appPublicOrigin } from "@/lib/auth/oauth-public-origin";
 import { userShortId } from "./slug";
 
 /**
@@ -26,11 +27,5 @@ export function buildDeploymentPublicUrl(
 }
 
 export function appBaseUrlFromRequest(request: Request): string {
-  const env =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.AUTH_PUBLIC_ORIGIN?.trim();
-  if (env) {
-    return env.replace(/\/$/, "");
-  }
-  return new URL(request.url).origin;
+  return appPublicOrigin(request);
 }
