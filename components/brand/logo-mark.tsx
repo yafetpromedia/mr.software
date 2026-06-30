@@ -2,6 +2,7 @@
 
 import { BrandAssetImage } from "@/components/brand/brand-asset-image";
 import { useBrandSettings } from "@/components/brand/brand-settings-provider";
+import { BRAND_NAME } from "@/lib/branding/constants";
 
 const DIM = { sm: 32, md: 36, lg: 44 } as const;
 
@@ -34,7 +35,7 @@ export function LogoMark({
     >
       <BrandAssetImage
         src={resolvedSrc}
-        alt="Mr.Software"
+        alt={BRAND_NAME}
         width={dim}
         height={dim}
         priority={priority}

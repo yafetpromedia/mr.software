@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BrandSettingsProvider } from "@/components/brand/brand-settings-provider";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeScript } from "@/components/theme/theme-script";
+import { BRAND_NAME } from "@/lib/branding/constants";
 import { getPublicSiteSettings } from "@/lib/site-settings";
 import { geistMono, inter, spaceGrotesk } from "./fonts";
 import "./globals.css";
@@ -12,8 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublicSiteSettings();
   return {
     title: {
-      default: "Mr.Software",
-      template: "%s | Mr.Software",
+      default: BRAND_NAME,
+      template: `%s | ${BRAND_NAME}`,
     },
     description:
       "AI-assisted startup building with full developer control — design, draft, deploy anywhere, and monetize in an open builder ecosystem.",

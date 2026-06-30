@@ -13,6 +13,7 @@ import {
 } from "@/lib/storefront/social-links";
 import { STOREFRONT_THEMES } from "@/lib/storefront/themes";
 import type { OwnStorefront } from "@/lib/storefront/storefront";
+import { BRAND_DOMAIN } from "@/lib/branding/constants";
 
 type Props = {
   initial: OwnStorefront | null;
@@ -111,7 +112,7 @@ export function StorefrontSettingsForm({ initial }: Props) {
         <p className="mt-1 font-mono text-sm text-[var(--foreground)]">
           {publicUrl ? (
             <Link href={publicUrl} className="text-[var(--accent)] hover:underline">
-              mr.software{publicUrl}
+              {BRAND_DOMAIN}{publicUrl}
             </Link>
           ) : (
             "Set a handle below"

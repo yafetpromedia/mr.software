@@ -10,6 +10,7 @@ import {
   SIDEBAR_STORAGE_KEYS,
   type SidebarVisibility,
 } from "@/lib/sidebar-state";
+import { BRAND_AI_NAME, BRAND_NAME } from "@/lib/branding/constants";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, Suspense, type ComponentType, type ReactNode, type SVGProps } from "react";
 
@@ -101,7 +102,7 @@ function IconSpark({ className }: { className?: string }) {
 
 const libraryNav: NavItem[] = [
   { href: "/app/home", label: "Home", icon: IconHome },
-  { href: "/app/ai", label: "Mr.Software AI", icon: IconSpark },
+  { href: "/app/ai", label: BRAND_AI_NAME, icon: IconSpark },
   { href: "/app/marketplace", label: "Marketplace", icon: IconStore },
   { href: "/app/my-software", label: "My software", icon: IconPackage },
   { href: "/app/billing", label: "Billing", icon: IconCard },
@@ -211,7 +212,7 @@ export function ConsumerWorkspaceShell({ children, userName, userEmail, role }: 
           className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm font-semibold tracking-tight text-[var(--foreground)]"
         >
           <LogoMark size="sm" rounded="lg" />
-          Mr.Software
+          {BRAND_NAME}
         </Link>
         <p className="px-2 pt-1 text-xs text-[var(--muted)]">Your software library</p>
       </div>

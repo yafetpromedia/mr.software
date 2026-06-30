@@ -5,9 +5,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { AfricaGlobeCanvas } from "@/components/landing/africa-launch/africa-globe-canvas";
 import { useHeroIntro } from "@/components/landing/africa-launch/use-hero-intro";
-import { EthiopiaFlagIcon } from "@/components/icons/ethiopia-flag-icon";
-import { LaunchMapLiveDock } from "@/components/launch-map/launch-map-live-dock";
 import { LaunchMapProvider, useLaunchMap } from "@/components/launch-map/launch-map-provider";
+import { BRAND_NAME } from "@/lib/branding/constants";
 import type { LaunchMapPayload } from "@/lib/launch-map/types";
 
 const REVEAL_EASE = [0.16, 1, 0.3, 1] as const;
@@ -22,7 +21,7 @@ function AfricaLaunchHeroInner() {
   const { data } = useLaunchMap();
 
   return (
-    <section className="africa-launch-hero relative isolate flex h-[calc(100dvh-3.5rem)] w-full flex-col overflow-hidden sm:h-[calc(100dvh-4rem)]">
+    <section className="africa-launch-hero relative isolate flex h-[calc(100svh-3.5rem)] w-full flex-col overflow-hidden sm:h-[calc(100svh-4rem)]">
       <div className="africa-hero-stars pointer-events-none absolute inset-0 opacity-[0.18]" aria-hidden />
       <div className="africa-hero-noise pointer-events-none absolute inset-0 opacity-[0.035]" aria-hidden />
 
@@ -35,7 +34,6 @@ function AfricaLaunchHeroInner() {
             : { opacity: 0, scale: 0.92, y: 20 }
         }
         transition={{ duration: 1.05, ease: REVEAL_EASE }}
-        style={{ visibility: intro.globeReady ? "visible" : "hidden" }}
       >
         {intro.globeRevealed ? (
           <div className="africa-globe-soft-shadow pointer-events-none absolute inset-0" aria-hidden />
@@ -59,7 +57,7 @@ function AfricaLaunchHeroInner() {
           </>
         ) : null}
         <div
-          className="africa-launch-hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-32 sm:h-40"
+          className="africa-launch-hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-8 sm:h-10 lg:hidden"
           aria-hidden
         />
       </motion.div>
@@ -81,16 +79,12 @@ function AfricaLaunchHeroInner() {
           transition={{ duration: 0.7, ease: REVEAL_EASE }}
           className="pointer-events-none mx-auto max-w-3xl"
         >
-          <p className="africa-hero-eyebrow mb-4 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.2em]">
-            <EthiopiaFlagIcon className="h-3.5 w-5 shrink-0 rounded-[2px] shadow-sm" />
-            Africa → World
-          </p>
           <h1 className="africa-launch-hero-title font-display text-[clamp(2.35rem,7vw,4.35rem)] font-bold leading-[1.02] tracking-[-0.045em]">
             Build. Launch.{" "}
             <span className="africa-hero-accent">Monetize.</span>
           </h1>
           <p className="africa-launch-hero-subtitle mx-auto mt-4 max-w-md text-[0.9375rem] leading-relaxed sm:text-base">
-            Software from Africa to the world — on Mr.Software.
+            Design, deploy, and monetize your software — all on {BRAND_NAME}.
           </p>
           <div className="pointer-events-auto mt-6 flex flex-col items-center justify-center gap-3 sm:mt-7 sm:flex-row">
             <Link href="/app/factory" className="africa-hero-cta-primary group">
@@ -104,8 +98,6 @@ function AfricaLaunchHeroInner() {
         </motion.div>
 
         <div className="min-h-0 flex-1 pointer-events-none" aria-hidden />
-
-        {intro.copyVisible ? <LaunchMapLiveDock /> : null}
 
         <motion.p
           className="africa-launch-hero-hint pointer-events-none mt-auto pb-4 text-xs sm:pb-5"

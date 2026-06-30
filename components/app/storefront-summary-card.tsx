@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ExternalLink, Eye, Package, Users } from "lucide-react";
 import { VerifiedBadge } from "@/components/storefront/verified-badge";
 import type { StorefrontAnalytics } from "@/lib/storefront/storefront";
+import { storefrontPublicLabel } from "@/lib/branding/constants";
 
 type Props = {
   storefront: StorefrontAnalytics;
@@ -45,7 +46,7 @@ export function StorefrontSummaryCard({
             <p className="mt-1.5 text-sm text-[var(--muted)]">
               Live at{" "}
               <code className="rounded-md border border-[var(--border)] bg-[var(--background)] px-1.5 py-0.5 text-xs">
-                mr.software/@{storefront.handle}
+                {storefrontPublicLabel(storefront.handle)}
               </code>
             </p>
           </div>

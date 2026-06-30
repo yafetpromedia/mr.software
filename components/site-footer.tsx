@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/brand/logo-mark";
+import { BRAND_AI_NAME, BRAND_NAME } from "@/lib/branding/constants";
 
 const product = [
   { href: "/marketplace", label: "Explore marketplace" },
-  { href: "/app/ai", label: "Mr.Software AI" },
+  { href: "/app/ai", label: BRAND_AI_NAME },
   { href: "/app/ai/blueprint", label: "SaaS Blueprint" },
   { href: "/#features", label: "Features" },
   { href: "/app", label: "Workspace" },
@@ -41,7 +42,7 @@ export function SiteFooter() {
               className="inline-flex items-center gap-2 text-sm font-semibold tracking-tight text-[var(--foreground)]"
             >
               <LogoMark size="md" rounded="xl" />
-              Mr.Software
+              {BRAND_NAME}
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-[var(--muted)]">
               AI helps you design, build, and launch startups — with full control over code,
@@ -123,7 +124,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-12 flex flex-col gap-3 border-t border-[var(--border)] pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-[var(--muted)]">© {year} Mr.Software. All rights reserved.</p>
+          <p className="text-xs text-[var(--muted)]">© {year} {BRAND_NAME}. All rights reserved.</p>
           <p className="text-xs text-[var(--muted)]">
             Created by{" "}
             <span className="font-semibold text-[var(--foreground)]">

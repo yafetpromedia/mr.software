@@ -6,9 +6,11 @@ import { messageForGoogleOAuthError } from "@/lib/auth/google-oauth-errors";
 import { isAuthLocked } from "@/lib/auth/auth-lock";
 import { safeInternalPath } from "@/lib/safe-redirect";
 
+import { BRAND_NAME } from "@/lib/branding/constants";
+
 export const metadata: Metadata = {
   title: "Log in",
-  description: "Sign in to Mr.Software — infrastructure for your software business.",
+  description: `Sign in to ${BRAND_NAME} — infrastructure for your software business.`,
 };
 
 type Props = {

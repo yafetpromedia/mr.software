@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowUpRight, Globe2, Rocket, ShoppingBag, Sparkles } from "lucide-react";
 import { AfricaGlobeCanvas } from "@/components/landing/africa-launch/africa-globe-canvas";
 import { LaunchMapProvider, useLaunchMap } from "@/components/launch-map/launch-map-provider";
+import { BRAND_NAME } from "@/lib/branding/constants";
 import type { LaunchMapEventType, LaunchMapPayload } from "@/lib/launch-map/types";
 
 type Filter = "all" | LaunchMapEventType;
@@ -61,10 +62,10 @@ function LaunchMapExploreInner() {
                 Global infrastructure map
               </p>
               <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
-                Launches across Africa &amp; the world
+                Live launches worldwide
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--muted)] sm:text-base">
-                Real deployments, marketplace listings, and sales from Mr.Software builders —
+                Real deployments, marketplace listings, and sales from {BRAND_NAME} builders —
                 updated live every 30 seconds.
               </p>
             </div>
@@ -95,15 +96,16 @@ function LaunchMapExploreInner() {
               3D globe · arc view
             </p>
           </div>
-          <div className="relative aspect-[4/3] min-h-[16rem] bg-[#050508] sm:min-h-[20rem]">
+          <div className="relative aspect-square min-h-[18rem] overflow-hidden bg-[#050508] sm:min-h-[22rem] lg:min-h-[24rem]">
             <AfricaGlobeCanvas
               className="absolute inset-0 h-full w-full"
+              variant="embedded"
               reduceMotion={!!reduce}
               isLight={false}
               introComplete
               deploymentArcs={data.arcs}
             />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#050508] to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#050508] to-transparent" />
           </div>
         </div>
 

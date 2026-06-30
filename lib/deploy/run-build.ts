@@ -1,24 +1,43 @@
 import { spawn } from "node:child_process";
+import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import { DEPLOY_BUILD_TIMEOUT_MS } from "@/lib/deploy/constants";
 
-function runCommand(
+/** Writable HOME/cache for npm/pip when the app runs as a system user (e.g. HOME=/nonexistent in Docker). */
+async function deployCommandEnv(cwd: string): Promise<NodeJS.ProcessEnv> {
+  const home = join(cwd, ".deploy-home");
+  const npmCache = join(cwd, ".npm-cache");
+  const pipCache = join(cwd, ".pip-cache");
+  await mkdir(home, { recursive: true });
+  await mkdir(npmCache, { recursive: true });
+  await mkdir(pipCache, { recursive: true });
+  return {
+    ...process.env,
+    HOME: home,
+    USERPROFILE: home,
+    npm_config_cache: npmCache,
+    PIP_CACHE_DIR: pipCache,
+    npm_config_update_notifier: "false",
+    NODE_ENV: "production",
+    CI: "true",
+    npm_config_audit: "false",
+    npm_config_fund: "false",
+  };
+}
+
+async function runCommand(
   cwd: string,
   command: string,
   args: string[],
   timeoutMs: number,
 ): Promise<{ code: number; log: string }> {
+  const env = await deployCommandEnv(cwd);
   return new Promise((resolve, reject) => {
     const chunks: string[] = [];
     const child = spawn(command, args, {
       cwd,
       shell: process.platform === "win32",
-      env: {
-        ...process.env,
-        NODE_ENV: "production",
-        CI: "true",
-        npm_config_audit: "false",
-        npm_config_fund: "false",
-      },
+      env,
     });
 
     const timer = setTimeout(() => {

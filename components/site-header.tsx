@@ -8,6 +8,7 @@ import { AuthNav } from "@/components/auth-nav";
 import { useAuthMe, workspaceHrefFor } from "@/components/auth/use-auth-me";
 import { PUBLIC_SITE_NAV, signedInSiteNav } from "@/components/site-nav-links";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { BRAND_NAME } from "@/lib/branding/constants";
 
 export function SiteHeader() {
   const me = useAuthMe();
@@ -58,7 +59,7 @@ export function SiteHeader() {
           onClick={() => setMenuOpen(false)}
         >
           <LogoMark size="sm" priority rounded="lg" />
-          <span className="truncate">Mr.Software</span>
+          <span className="truncate">{BRAND_NAME}</span>
         </Link>
 
         <nav

@@ -1,5 +1,6 @@
 import type { AuthMe } from "@/components/auth/use-auth-me";
 import { workspaceHrefFor } from "@/components/auth/use-auth-me";
+import { BRAND_AI_NAME } from "@/lib/branding/constants";
 
 export type SiteNavLink = { href: string; label: string };
 
@@ -10,7 +11,7 @@ export const PUBLIC_SITE_NAV: SiteNavLink[] = [
   { href: "/#partners", label: "Partners" },
   { href: "/#testimonials", label: "Stories" },
   { href: "/#team", label: "Team" },
-  { href: "/app/ai", label: "Mr.Software AI" },
+  { href: "/app/ai", label: BRAND_AI_NAME },
 ];
 
 export function signedInSiteNav(me: AuthMe): SiteNavLink[] {
@@ -25,7 +26,7 @@ export function signedInSiteNav(me: AuthMe): SiteNavLink[] {
     { href: workspaceHrefFor(me), label: workspaceLabel },
     { href: "/app/marketplace", label: "Marketplace" },
     { href: "/academy", label: "Academy" },
-    { href: "/app/ai", label: "Mr.Software AI" },
+    { href: "/app/ai", label: BRAND_AI_NAME },
   ];
 
   if (me.role === "DEVELOPER") {

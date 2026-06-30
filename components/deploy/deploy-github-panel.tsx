@@ -12,6 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import { GithubIcon } from "@/components/icons/github-icon";
+import { BRAND_NAME } from "@/lib/branding/constants";
 
 type GithubRepo = {
   id: number;
@@ -238,7 +239,7 @@ export function DeployGithubPanel({
       <div>
         <h2 className="text-lg font-semibold text-[var(--foreground)]">Deploy from GitHub</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Connect your account, pick a repository, and Mr.Software builds and hosts your app. Enable
+          Connect your account, pick a repository, and {BRAND_NAME} builds and hosts your app. Enable
           auto-deploy to redeploy on every <code className="text-[var(--foreground)]">git push</code>.
         </p>
         <div className="mt-3">
@@ -295,7 +296,7 @@ export function DeployGithubPanel({
           <GithubIcon className="mx-auto h-10 w-10 text-[var(--foreground)]" />
           <p className="mt-3 text-sm font-medium text-[var(--foreground)]">Connect GitHub</p>
           <p className="mt-1 text-xs text-[var(--muted)]">
-            Authorize Mr.Software to list repositories and deploy static sites.
+            Authorize {BRAND_NAME} to list repositories and deploy static sites.
           </p>
           <a
             href={connectNextUrl}
@@ -420,7 +421,7 @@ export function DeployGithubPanel({
           </ul>
 
           <p className="text-xs text-[var(--muted)]">
-            Mr.Software auto-detects Next.js, Vite, PHP, Python, and static sites — runs{" "}
+            {BRAND_NAME} auto-detects Next.js, Vite, PHP, Python, and static sites — runs{" "}
             <code className="text-[var(--foreground)]">npm run build</code> when needed.{" "}
             <Link href="/deploy?source=zip" className="font-medium text-[var(--accent)] hover:underline">
               Upload ZIP

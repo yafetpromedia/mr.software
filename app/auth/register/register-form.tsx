@@ -87,7 +87,7 @@ export function RegisterForm({ redirectTo, authLocked = false, initialOauthError
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email: email.trim().toLowerCase(), password }),
       });
       const data: unknown = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -200,6 +200,9 @@ export function RegisterForm({ redirectTo, authLocked = false, initialOauthError
             disabled={authLocked}
           />
         </div>
+        <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
+          Use a real email you can access. Temporary or disposable addresses are not allowed.
+        </p>
       </label>
       <label className="block">
         <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">

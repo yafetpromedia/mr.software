@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Server misconfiguration: JWT_SECRET is missing. Add it to your .env file in the mr-software folder.",
+          "Server misconfiguration: JWT_SECRET is missing. Add it to your .env.production file.",
       },
       { status: 500 },
     );

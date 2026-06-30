@@ -1,11 +1,5 @@
 import { z } from "zod";
-
-const emailField = z
-  .string()
-  .trim()
-  .max(320)
-  .email("Valid email is required")
-  .transform((s) => s.toLowerCase());
+import { emailField } from "@/lib/validation/email-field";
 
 export const accountProfileSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120, "Name is too long"),

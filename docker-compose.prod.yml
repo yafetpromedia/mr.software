@@ -2,21 +2,20 @@
 #
 # 1. cp .env.production.example .env.production
 # 2. Fill secrets (run: npm run prod:secrets)
-# 3. docker compose -f docker-compose.prod.yml up -d --build
-# 4. docker compose -f docker-compose.prod.yml exec app npx prisma db push
+# 3. Set DATABASE_URL host to `db` (see .env.production.example)
+# 4. npm run prod:up
+# 5. docker compose -f docker-compose.prod.yml --env-file .env.production exec app npx prisma db push
 
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
-      POSTGRES_DB: ${POSTGRES_DB:-mr_software}
+    env_file:
+      - .env.production
     volumes:
       - mr_software_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-mr_software}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mr_software"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -32,11 +31,10 @@ services:
     env_file:
       - .env.production
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mr_software}?schema=public
       LOCAL_DEPLOY_ROOT: /var/mr-software/deployments
       SITE_UPLOAD_ROOT: /var/mr-software/site-uploads
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "3000:3000"
     volumes:
       - mr_software_deployments:/var/mr-software/deployments
       - mr_software_site_uploads:/var/mr-software/site-uploads

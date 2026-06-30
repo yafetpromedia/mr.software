@@ -248,45 +248,49 @@ body {
 }
 
 .africa-globe-scene-wrap {
-  transform: none;
-  transform-origin: 50% 42%;
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    #000 58%,
-    rgba(0, 0, 0, 0.92) 72%,
-    rgba(0, 0, 0, 0.45) 84%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    #000 58%,
-    rgba(0, 0, 0, 0.92) 72%,
-    rgba(0, 0, 0, 0.45) 84%,
-    transparent 100%
-  );
+  transform: translateY(5.5%);
 }
 
-@media (max-width: 640px) {
+@media (min-width: 640px) {
   .africa-globe-scene-wrap {
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 52%,
-      rgba(0, 0, 0, 0.95) 68%,
-      rgba(0, 0, 0, 0.55) 82%,
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 52%,
-      rgba(0, 0, 0, 0.95) 68%,
-      rgba(0, 0, 0, 0.55) 82%,
-      transparent 100%
-    );
+    transform: translateY(3%);
   }
+
+  .africa-globe-canvas-root:not(.africa-globe-canvas-root--embedded) {
+    transform: scale(1.06);
+    transform-origin: 50% 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .africa-globe-scene-wrap {
+    top: 0;
+    bottom: -12%;
+    height: auto;
+    transform: translateY(7%);
+  }
+
+  .africa-globe-canvas-root:not(.africa-globe-canvas-root--embedded) {
+    transform: scale(1.38);
+    transform-origin: 50% 100%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .africa-globe-scene-wrap {
+    bottom: -14%;
+    transform: translateY(9%);
+  }
+
+  .africa-globe-canvas-root:not(.africa-globe-canvas-root--embedded) {
+    transform: scale(1.52);
+    transform-origin: 50% 100%;
+  }
+}
+
+.africa-globe-canvas-root--embedded {
+  transform: none !important;
+  transform-origin: center center;
 }
 
 .africa-globe-loading-placeholder {
@@ -342,7 +346,6 @@ body {
 
 .africa-globe-canvas-root--loading {
   opacity: 0;
-  visibility: hidden;
   pointer-events: none;
 }
 
@@ -352,11 +355,22 @@ body {
 
 .africa-globe-vignette {
   background: radial-gradient(
-    ellipse 82% 68% at 50% 54%,
-    transparent 32%,
-    rgba(0, 0, 0, 0.35) 72%,
-    rgba(0, 0, 0, 0.72) 100%
+    ellipse 102% 72% at 50% 72%,
+    transparent 48%,
+    rgba(0, 0, 0, 0.28) 88%,
+    rgba(0, 0, 0, 0.38) 100%
   );
+}
+
+@media (min-width: 1024px) {
+  .africa-globe-vignette {
+    background: radial-gradient(
+      ellipse 108% 82% at 50% 78%,
+      transparent 52%,
+      rgba(0, 0, 0, 0.22) 90%,
+      rgba(0, 0, 0, 0.32) 100%
+    );
+  }
 }
 
 .africa-globe-limb-haze {
@@ -518,15 +532,18 @@ body {
 }
 
 .africa-launch-hero-fade {
-  z-index: 2;
   background: linear-gradient(
     to top,
     var(--landing-hero-fade) 0%,
-    var(--landing-hero-fade) 28%,
-    color-mix(in srgb, var(--landing-hero-fade) 88%, transparent) 52%,
-    color-mix(in srgb, var(--landing-hero-fade) 45%, transparent) 72%,
+    color-mix(in srgb, var(--landing-hero-fade) 55%, transparent) 55%,
     transparent 100%
   );
+}
+
+@media (min-width: 1024px) {
+  .africa-launch-hero-fade {
+    display: none;
+  }
 }
 
 .africa-launch-hero-title {

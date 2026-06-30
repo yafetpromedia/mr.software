@@ -67,7 +67,7 @@ export function LoginForm({ redirectTo, authLocked = false, initialOauthError }:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;

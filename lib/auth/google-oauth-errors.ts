@@ -11,6 +11,8 @@ export function messageForGoogleOAuthError(code: string): string | null {
       return "Could not finish signing in with Google. Please try again.";
     case "email":
       return "Your Google account email is not verified. Verify it with Google, then try again.";
+    case "email_policy":
+      return "Use a real email address you can access. Temporary or disposable inboxes aren't allowed.";
     case "link":
       return "This Google account cannot be linked to the existing profile for that email.";
     case "auth_lock":

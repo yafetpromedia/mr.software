@@ -1,3 +1,5 @@
+import { BRAND_DOMAIN, BRAND_NAME } from "@/lib/branding/constants";
+
 type SendEmailInput = {
   to: string;
   subject: string;
@@ -14,7 +16,7 @@ export async function sendEmail(input: SendEmailInput): Promise<boolean> {
   if (!apiKey) return false;
 
   const from =
-    process.env.EMAIL_FROM?.trim() || "Mr.Software <notifications@mrsoftware.local>";
+    process.env.EMAIL_FROM?.trim() || `${BRAND_NAME} <notifications@${BRAND_DOMAIN}>`;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

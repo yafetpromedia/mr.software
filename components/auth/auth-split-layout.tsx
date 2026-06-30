@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LogoMark } from "@/components/brand/logo-mark";
+import { BRAND_NAME } from "@/lib/branding/constants";
 
 const DEFAULT_HIGHLIGHTS = [
   "Secure JWT sessions · HTTP-only cookies",
@@ -73,7 +74,7 @@ export function AuthSplitLayout({
             className="inline-flex items-center gap-2.5 text-[var(--foreground)] transition hover:opacity-80"
           >
             <LogoMark size="md" rounded="xl" />
-            <span className="font-display text-base font-semibold tracking-tight">Mr.Software</span>
+            <span className="font-display text-base font-semibold tracking-tight">{BRAND_NAME}</span>
           </Link>
 
           <p className="mt-8 inline-flex rounded-full border border-[var(--border)] bg-[var(--surface)]/80 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
@@ -111,7 +112,7 @@ export function AuthSplitLayout({
                   className="flex items-center gap-2 text-sm font-semibold text-[var(--foreground)]"
                 >
                   <LogoMark size="md" rounded="xl" />
-                  Mr.Software
+                  {BRAND_NAME}
                 </Link>
               </div>
               {children}

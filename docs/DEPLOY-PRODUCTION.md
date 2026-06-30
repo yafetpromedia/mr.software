@@ -1,6 +1,6 @@
-# Production deployment — Mr.Software
+# Production deployment — MrSoftware ET (mrsoftware-et.com)
 
-Use this when hosting on **mr.software** (or your domain) on a VPS with Docker.
+Use this when hosting on **mrsoftware-et.com** (or your domain) on a VPS with Docker.
 
 ## Quick start (VPS)
 
@@ -24,8 +24,8 @@ Edit `.env.production`:
 
 | Variable | Example |
 |----------|---------|
-| `NEXT_PUBLIC_APP_URL` | `https://mr.software` |
-| `AUTH_PUBLIC_ORIGIN` | `https://mr.software` |
+| `NEXT_PUBLIC_APP_URL` | `https://mrsoftware-et.com` |
+| `AUTH_PUBLIC_ORIGIN` | `https://mrsoftware-et.com` |
 | `GITHUB_CLIENT_ID` / `SECRET` | From GitHub OAuth app |
 | `GITHUB_WEBHOOK_SECRET` | From `prod:secrets` |
 | `POSTGRES_PASSWORD` | Strong password |
@@ -59,9 +59,9 @@ sudo caddy run --config deploy/Caddyfile
 
 | Service | URL to register |
 |---------|-----------------|
-| GitHub OAuth callback | `https://mr.software/api/github/callback` |
-| Stripe webhook | `https://mr.software/api/webhooks/stripe` |
-| Google OAuth (if used) | `https://mr.software/api/auth/google/callback` |
+| GitHub OAuth callback | `https://mrsoftware-et.com/api/github/callback` |
+| Stripe webhook | `https://mrsoftware-et.com/api/webhooks/stripe` |
+| Google OAuth (if used) | `https://mrsoftware-et.com/api/auth/callback/google` |
 
 GitHub **push webhooks** are created automatically per deployment when auto-deploy is enabled.
 
@@ -104,11 +104,11 @@ S3_ENDPOINT=https://xxxx.r2.cloudflarestorage.com
 ### Branded deployment subdomains (optional)
 
 ```env
-DEPLOYMENT_PUBLIC_HOST=mr.software
+DEPLOYMENT_PUBLIC_HOST=mrsoftware-et.com
 DEPLOYMENT_USE_SUBDOMAIN=true
 ```
 
-Requires `*.mr.software` DNS wildcard + proxy rules in `deploy/Caddyfile`.
+Requires `*.mrsoftware-et.com` DNS wildcard + proxy rules in `deploy/Caddyfile`.
 
 ### Payments
 
@@ -138,7 +138,7 @@ User apps use external Postgres via `DATABASE_URL` in their own `.env` (Supabase
 
 ## Health check after go-live
 
-1. Open `https://mr.software` — homepage loads
+1. Open `https://mrsoftware-et.com` — homepage loads
 2. Sign in as developer (`dev@mrsoftware.local` only if you ran seed)
 3. **Deploy → Upload ZIP** with `index.html` → live URL works
 4. **Deploy → GitHub** → connect repo → enable auto-deploy → push → redeploys

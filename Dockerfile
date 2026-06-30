@@ -1,4 +1,4 @@
-# Mr.Software — production image (VPS / Docker)
+# MrSoftware ET — production image (VPS / Docker)
 # Includes Node + PHP + Python for user deploy runtimes.
 
 FROM node:20-bookworm-slim AS base
@@ -25,10 +25,13 @@ FROM base AS runner
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV HOME=/home/nextjs
 ENV SITE_UPLOAD_ROOT=/var/mr-software/site-uploads
 
 RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 nextjs
+  && adduser --system --uid 1001 --home /home/nextjs nextjs \
+  && mkdir -p /home/nextjs \
+  && chown nextjs:nodejs /home/nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next

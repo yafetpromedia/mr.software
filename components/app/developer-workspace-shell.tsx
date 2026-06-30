@@ -18,6 +18,7 @@ import {
   type WorkspacePanelSide,
   type WorkspacePanelState,
 } from "@/lib/workspace-panels";
+import { BRAND_AI_NAME, BRAND_NAME } from "@/lib/branding/constants";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, Suspense, type ComponentType, type ReactNode, type SVGProps } from "react";
 
@@ -190,7 +191,7 @@ function IconFactory({ className }: { className?: string }) {
 
 const studioNav: NavItem[] = [
   { href: "/app/factory", label: "Startup Factory", icon: IconFactory },
-  { href: "/app/ai", label: "Mr.Software AI", icon: IconSpark },
+  { href: "/app/ai", label: BRAND_AI_NAME, icon: IconSpark },
   { href: "/app", label: "Command center", icon: IconOverview },
   { href: "/app/storefront", label: "Storefront", icon: IconStorefront },
   { href: "/deploy", label: "Deploy", icon: IconDeploy },
@@ -352,7 +353,7 @@ export function DeveloperWorkspaceShell({ children, userName, userEmail, role }:
                 className={`flex items-center rounded-xl py-1.5 text-sm font-semibold tracking-tight text-[var(--foreground)] ${
                   sidebarMinimized ? "lg:justify-center lg:px-1 lg:py-2" : "gap-2.5 px-2"
                 }`}
-                title="Mr.Software"
+                title={BRAND_NAME}
                 onClick={
                   sidebarMinimized
                     ? (event) => {
@@ -363,7 +364,7 @@ export function DeveloperWorkspaceShell({ children, userName, userEmail, role }:
                 }
               >
                 <LogoMark size="sm" rounded="lg" />
-                <span className={sidebarMinimized ? "lg:sr-only" : ""}>Mr.Software</span>
+                <span className={sidebarMinimized ? "lg:sr-only" : ""}>{BRAND_NAME}</span>
               </Link>
               <PanelSectionControls
                 side="left"

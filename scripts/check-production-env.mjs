@@ -8,6 +8,7 @@ const recommended = [
   "GITHUB_CLIENT_SECRET",
   "GITHUB_WEBHOOK_SECRET",
   "DATABASE_URL",
+  "POSTGRES_PASSWORD",
 ];
 const optional = ["STRIPE_SECRET_KEY", "AI_API_KEY", "DEPLOY_STORAGE", "S3_BUCKET"];
 

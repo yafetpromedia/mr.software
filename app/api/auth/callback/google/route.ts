@@ -17,6 +17,7 @@ import { oauthPublicOrigin } from "@/lib/auth/oauth-public-origin";
 import { prisma } from "@/lib/prisma";
 import { safeInternalPath } from "@/lib/safe-redirect";
 import { postLoginPath } from "@/lib/auth/post-login-redirect";
+import { getEmailPolicyError } from "@/lib/validation/email-policy";
 
 function redirectOAuthError(
   request: Request,
@@ -105,6 +106,11 @@ export async function GET(request: Request) {
 
   if (!profile.email_verified) {
     return redirectOAuthError(request, from, "email", next);
+  }
+
+  const emailPolicyError = getEmailPolicyError(profile.email);
+  if (emailPolicyError) {
+    return redirectOAuthError(request, from, "email_policy", next);
   }
 
   const displayName =
