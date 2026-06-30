@@ -4,13 +4,18 @@ import { join } from "node:path";
 import { DEPLOY_BUILD_TIMEOUT_MS } from "@/lib/deploy/constants";
 
 /** Writable HOME/cache for npm/pip when the app runs as a system user (e.g. HOME=/nonexistent in Docker). */
-async function deployCommandEnv(cwd: string): Promise<NodeJS.ProcessEnv> {
+async function deployCommandEnv(
+  cwd: string,
+  phase: "install" | "build" = "build",
+): Promise<NodeJS.ProcessEnv> {
   const home = join(cwd, ".deploy-home");
   const npmCache = join(cwd, ".npm-cache");
   const pipCache = join(cwd, ".pip-cache");
   await mkdir(home, { recursive: true });
   await mkdir(npmCache, { recursive: true });
   await mkdir(pipCache, { recursive: true });
+  // Install must include devDependencies (typescript, etc.) for Next/Vite builds.
+  const includeDev = phase === "install";
   return {
     ...process.env,
     HOME: home,
@@ -18,7 +23,8 @@ async function deployCommandEnv(cwd: string): Promise<NodeJS.ProcessEnv> {
     npm_config_cache: npmCache,
     PIP_CACHE_DIR: pipCache,
     npm_config_update_notifier: "false",
-    NODE_ENV: "production",
+    NODE_ENV: includeDev ? "development" : "production",
+    npm_config_production: includeDev ? "false" : "true",
     CI: "true",
     npm_config_audit: "false",
     npm_config_fund: "false",
@@ -30,8 +36,9 @@ async function runCommand(
   command: string,
   args: string[],
   timeoutMs: number,
+  phase: "install" | "build" = "build",
 ): Promise<{ code: number; log: string }> {
-  const env = await deployCommandEnv(cwd);
+  const env = await deployCommandEnv(cwd, phase);
   return new Promise((resolve, reject) => {
     const chunks: string[] = [];
     const child = spawn(command, args, {
@@ -66,8 +73,9 @@ export async function runNpmBuild(
   const install = await runCommand(
     projectRoot,
     "npm",
-    ["install", "--no-audit", "--no-fund"],
+    ["install", "--include=dev", "--no-audit", "--no-fund"],
     DEPLOY_BUILD_TIMEOUT_MS,
+    "install",
   );
   if (install.code !== 0) {
     return { ok: false, log: `npm install failed:\n${install.log}` };
@@ -78,6 +86,7 @@ export async function runNpmBuild(
     "npm",
     ["run", buildScript],
     DEPLOY_BUILD_TIMEOUT_MS,
+    "build",
   );
   if (build.code !== 0) {
     return { ok: false, log: `npm run ${buildScript} failed:\n${build.log}` };
