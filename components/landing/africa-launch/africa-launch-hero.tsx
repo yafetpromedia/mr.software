@@ -79,11 +79,11 @@ function AfricaLaunchHeroInner() {
           transition={{ duration: 0.7, ease: REVEAL_EASE }}
           className="pointer-events-none mx-auto max-w-3xl"
         >
-          <h1 className="africa-launch-hero-title font-display text-[clamp(2.35rem,7vw,4.35rem)] font-bold leading-[1.02] tracking-[-0.045em]">
+          <h1 className="africa-launch-hero-title font-display text-[clamp(2.75rem,8.5vw,5.5rem)] font-bold leading-[1.02] tracking-[-0.045em]">
             Build. Launch.{" "}
             <span className="africa-hero-accent">Monetize.</span>
           </h1>
-          <p className="africa-launch-hero-subtitle mx-auto mt-4 max-w-md text-[0.9375rem] leading-relaxed sm:text-base">
+          <p className="africa-launch-hero-subtitle mx-auto mt-4 max-w-lg text-base leading-relaxed sm:text-lg">
             Design, deploy, and monetize your software — all on {BRAND_NAME}.
           </p>
           <div className="pointer-events-auto mt-6 flex flex-col items-center justify-center gap-3 sm:mt-7 sm:flex-row">
