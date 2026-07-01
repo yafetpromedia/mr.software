@@ -60,6 +60,10 @@ if (missing.length) {
   for (const k of missing) console.error(`  - ${k}`);
 }
 
+if (env.DATABASE_URL?.includes("@localhost:") || env.DATABASE_URL?.includes("@127.0.0.1:")) {
+  weak.push("DATABASE_URL uses localhost — for Docker use host `db` (see .env.production.example)");
+}
+
 if (weak.length) {
   console.error("\nWarnings:");
   for (const w of weak) console.error(`  - ${w}`);
