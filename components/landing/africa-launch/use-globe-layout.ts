@@ -18,27 +18,27 @@ export type GlobeSceneLayout = {
 
 const LAYOUTS: Record<GlobeLayoutTier, Omit<GlobeSceneLayout, "tier">> = {
   mobile: {
-    globeY: 0,
-    viewFocus: new THREE.Vector3(0, 0, 0),
-    cameraDistance: GLOBE_RADIUS * 2.68,
+    globeY: -42,
+    viewFocus: new THREE.Vector3(0, 18, 0),
+    cameraDistance: GLOBE_RADIUS * 2.72,
     fov: 40,
   },
   tablet: {
-    globeY: 0,
-    viewFocus: new THREE.Vector3(0, 0, 0),
-    cameraDistance: GLOBE_RADIUS * 2.58,
+    globeY: -48,
+    viewFocus: new THREE.Vector3(0, 20, 0),
+    cameraDistance: GLOBE_RADIUS * 2.62,
     fov: 41,
   },
   desktop: {
-    globeY: 0,
-    viewFocus: new THREE.Vector3(0, 0, 0),
-    cameraDistance: GLOBE_RADIUS * 2.48,
+    globeY: -54,
+    viewFocus: new THREE.Vector3(0, 22, 0),
+    cameraDistance: GLOBE_RADIUS * 2.52,
     fov: 42,
   },
   wide: {
-    globeY: 0,
-    viewFocus: new THREE.Vector3(0, 0, 0),
-    cameraDistance: GLOBE_RADIUS * 2.4,
+    globeY: -58,
+    viewFocus: new THREE.Vector3(0, 24, 0),
+    cameraDistance: GLOBE_RADIUS * 2.44,
     fov: 42,
   },
 };

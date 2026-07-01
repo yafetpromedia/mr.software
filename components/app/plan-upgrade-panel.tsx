@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Loader2, Ticket } from "lucide-react";
 import type { WorkspacePlanDefinition } from "@/lib/subscription/plans";
 import { formatPlanPrice } from "@/lib/subscription/plans";
 
@@ -27,8 +28,9 @@ export function PlanUpgradePanel({
   usedSlots,
 }: Props) {
   const searchParams = useSearchParams();
-  const [busy, setBusy] = useState<"stripe" | "chapa" | "telebirr" | "dev" | null>(null);
+  const [busy, setBusy] = useState<"stripe" | "chapa" | "telebirr" | "dev" | "coupon" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
 
   useEffect(() => {
     const upgrade = searchParams.get("upgrade");
@@ -93,6 +95,41 @@ export function PlanUpgradePanel({
         return;
       }
       window.location.href = "/payouts?upgrade=success";
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function redeemCoupon(e: React.FormEvent) {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+    setBusy("coupon");
+    setMessage(null);
+    try {
+      const res = await fetch("/api/subscription/redeem-coupon", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode.trim() }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        expiresAt?: string;
+        durationDays?: number;
+      };
+      if (!res.ok) {
+        setMessage(data.error ?? "Invalid coupon code");
+        return;
+      }
+      const until = data.expiresAt
+        ? new Date(data.expiresAt).toLocaleDateString()
+        : "soon";
+      setMessage(
+        `Pro activated for ${data.durationDays ?? 30} days — active until ${until}. Refreshing…`,
+      );
+      window.setTimeout(() => {
+        window.location.href = "/payouts?upgrade=success";
+      }, 1200);
     } finally {
       setBusy(null);
     }
@@ -245,6 +282,45 @@ export function PlanUpgradePanel({
           );
         })}
       </div>
+
+      {!isPro ? (
+        <form
+          onSubmit={(e) => void redeemCoupon(e)}
+          className="rounded-2xl border border-dashed border-[var(--accent)]/35 bg-[var(--accent-muted)]/20 p-4 sm:p-5"
+        >
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-muted)] text-[var(--accent)]">
+              <Ticket className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-[var(--foreground)]">Have a coupon code?</p>
+              <p className="mt-0.5 text-xs text-[var(--muted)]">
+                Redeem a friend or promo code for free Pro workspace access.
+              </p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <input
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="FRIENDS-PRO"
+                  className="min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 font-mono text-sm uppercase tracking-wide outline-none ring-[var(--accent)]/30 focus:ring-2"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button
+                  type="submit"
+                  disabled={!!busy || !couponCode.trim()}
+                  className="btn-brand inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold disabled:opacity-50"
+                >
+                  {busy === "coupon" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : null}
+                  Redeem
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      ) : null}
     </div>
   );
 }

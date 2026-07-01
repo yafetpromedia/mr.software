@@ -83,23 +83,34 @@ export async function ensureNodeRuntime(input: {
   deploymentId: string;
   cwd: string;
   entry: string;
+  startMode?: "file" | "next-start";
 }): Promise<number> {
   const existing = registry().get(input.deploymentId);
   if (existing?.runtime === "NODE") return existing.port;
 
   const port = await getFreePort();
   const dotenv = await loadDotEnv(input.cwd);
-  const child = spawn(process.execPath, [input.entry], {
-    cwd: input.cwd,
-    env: {
-      ...process.env,
-      ...dotenv,
-      PORT: String(port),
-      HOSTNAME: "127.0.0.1",
-      NODE_ENV: "production",
-    },
-    stdio: "ignore",
-  });
+  const env = {
+    ...process.env,
+    ...dotenv,
+    PORT: String(port),
+    HOSTNAME: "127.0.0.1",
+    NODE_ENV: "production",
+  };
+
+  const child =
+    input.startMode === "next-start"
+      ? spawn("npx", ["next", "start", "-p", String(port), "-H", "127.0.0.1"], {
+          cwd: input.cwd,
+          env,
+          stdio: "ignore",
+          shell: process.platform === "win32",
+        })
+      : spawn(process.execPath, [input.entry], {
+          cwd: input.cwd,
+          env,
+          stdio: "ignore",
+        });
 
   trackProcess(input.deploymentId, port, "NODE", child);
   await new Promise((r) => setTimeout(r, 1500));

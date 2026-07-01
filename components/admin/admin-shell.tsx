@@ -21,6 +21,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/software": "Software",
   "/admin/deployments": "Deployments",
   "/admin/payments": "Payments",
+  "/admin/coupons": "Coupons",
   "/admin/reports": "Reports",
   "/admin/moderation": "Moderation",
   "/admin/system": "System",
@@ -94,6 +95,15 @@ const nav: { href: string; label: string; icon: ReactNode }[] = [
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/admin/coupons",
+    label: "Coupons",
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
       </svg>
     ),
   },

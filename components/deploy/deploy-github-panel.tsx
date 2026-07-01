@@ -12,7 +12,9 @@ import {
   Zap,
 } from "lucide-react";
 import { GithubIcon } from "@/components/icons/github-icon";
+import { DeployProgressDialog } from "@/components/deploy/deploy-progress-dialog";
 import { BRAND_NAME } from "@/lib/branding/constants";
+import { formatDeployErrorMessage } from "@/lib/deploy/format-deploy-error";
 
 type GithubRepo = {
   id: number;
@@ -56,6 +58,13 @@ function WorkflowSteps() {
   );
 }
 
+type DeployModalState = {
+  repo: GithubRepo;
+  phase: "deploying" | "success" | "error";
+  deployment?: { id: string; url: string | null; name: string };
+  errorMessage?: string;
+};
+
 export function DeployGithubPanel({
   freeBlocked,
   connectNextUrl = "/api/github/connect?next=%2Fdeploy%3Fsource%3Dgithub",
@@ -74,6 +83,7 @@ export function DeployGithubPanel({
   const [loading, setLoading] = useState(true);
   const [loadingRepos, setLoadingRepos] = useState(false);
   const [deployingId, setDeployingId] = useState<number | null>(null);
+  const [deployModal, setDeployModal] = useState<DeployModalState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deploySuccess, setDeploySuccess] = useState<{
     id: string;
@@ -153,11 +163,15 @@ export function DeployGithubPanel({
   async function handleDeploy(repo: GithubRepo) {
     if (freeBlocked || deployingId) return;
     setDeployingId(repo.id);
+    setDeployModal({ repo, phase: "deploying" });
     setError(null);
+    setDeploySuccess(null);
 
     const [owner, repoName] = repo.fullName.split("/");
     if (!owner || !repoName) {
-      setError("Invalid repository name.");
+      const message = "Invalid repository name.";
+      setError(message);
+      setDeployModal({ repo, phase: "error", errorMessage: message });
       setDeployingId(null);
       return;
     }
@@ -177,27 +191,53 @@ export function DeployGithubPanel({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(typeof data.error === "string" ? data.error : "Deploy failed");
+        const message = formatDeployErrorMessage(
+          typeof data.error === "string"
+            ? data.error
+            : typeof data.deployment?.errorMessage === "string"
+              ? data.deployment.errorMessage
+              : "Deploy failed",
+        );
+        setError(message);
+        setDeployModal({ repo, phase: "error", errorMessage: message });
         return;
       }
-      const id = data.deployment?.id as string | undefined;
-      const url = (data.deployment?.url as string | undefined) ?? null;
-      const name = (data.deployment?.name as string | undefined) ?? repo.name;
+      const deploymentRow = data.deployment as
+        | { id?: string; url?: string | null; name?: string; status?: string; errorMessage?: string | null }
+        | undefined;
+      if (deploymentRow?.status === "FAILED") {
+        const message = formatDeployErrorMessage(deploymentRow.errorMessage ?? "Deploy failed");
+        setError(message);
+        setDeployModal({ repo, phase: "error", errorMessage: message });
+        return;
+      }
+      const id = deploymentRow?.id;
+      const url = deploymentRow?.url ?? null;
+      const name = deploymentRow?.name ?? repo.name;
       if (id) {
-        setDeploySuccess({ id, url, name });
+        const deployment = { id, url, name };
+        setDeploySuccess(deployment);
+        setDeployModal({ repo, phase: "success", deployment });
         onDeploySuccess?.({ id });
         if (redirectOnSuccess) {
           window.setTimeout(() => {
+            setDeployModal(null);
             router.push(`/projects/${id}`);
             router.refresh();
-          }, 4000);
+          }, 2800);
         }
       }
     } catch {
-      setError("Network error during deploy.");
+      const message = "Network error during deploy.";
+      setError(message);
+      setDeployModal({ repo, phase: "error", errorMessage: message });
     } finally {
       setDeployingId(null);
     }
+  }
+
+  function closeDeployModal() {
+    setDeployModal(null);
   }
 
   if (loading) {
@@ -236,6 +276,17 @@ export function DeployGithubPanel({
 
   return (
     <div className="space-y-5">
+      <DeployProgressDialog
+        open={deployModal !== null}
+        projectName={deployModal?.repo.fullName ?? deployModal?.deployment?.name ?? "Project"}
+        sourceLabel="GitHub"
+        phase={deployModal?.phase ?? "deploying"}
+        errorMessage={deployModal?.errorMessage}
+        liveUrl={deployModal?.deployment?.url}
+        deploymentId={deployModal?.deployment?.id}
+        onClose={closeDeployModal}
+      />
+
       <div>
         <h2 className="text-lg font-semibold text-[var(--foreground)]">Deploy from GitHub</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
@@ -247,7 +298,7 @@ export function DeployGithubPanel({
         </div>
       </div>
 
-      {deploySuccess ? (
+      {deploySuccess && !deployModal ? (
         <div className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 p-4">
           <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
             {deploySuccess.name} is live

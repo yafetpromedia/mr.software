@@ -44,7 +44,7 @@ function GlobeCamera({
       controls.object.position.copy(camPos);
       controls.update();
     }
-  }, [camera, controlsRef, layout.tier, layout.fov, layout.viewFocus, layout.cameraDistance]);
+  }, [camera, controlsRef, layout.tier, layout.fov, layout.viewFocus, layout.cameraDistance, layout.globeY]);
 
   return null;
 }

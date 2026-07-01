@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FileArchive, Upload } from "lucide-react";
 import { MAX_ZIP_BYTES, MAX_ZIP_MB } from "@/lib/deploy/constants";
+import { formatDeployErrorMessage } from "@/lib/deploy/format-deploy-error";
 
 type Props = {
   defaultName?: string;
@@ -75,10 +76,24 @@ export function DeployUploadForm({
         credentials: "include",
       });
 
-      const data = (await res.json()) as { error?: string; deployment?: { id: string } };
+      const data = (await res.json()) as {
+        error?: string;
+        deployment?: { id: string; status?: string; errorMessage?: string | null };
+      };
 
       if (!res.ok) {
-        setError(data.error ?? "Deployment failed");
+        setError(
+          formatDeployErrorMessage(
+            data.error ?? data.deployment?.errorMessage ?? "Deployment failed",
+          ),
+        );
+        setProgress(null);
+        setBusy(false);
+        return;
+      }
+
+      if (data.deployment?.status === "FAILED") {
+        setError(formatDeployErrorMessage(data.deployment.errorMessage ?? "Deployment failed"));
         setProgress(null);
         setBusy(false);
         return;

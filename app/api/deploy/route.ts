@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { userCanDeploy } from "@/lib/auth/user-can-deploy";
 import { MAX_ZIP_BYTES, MAX_ZIP_MB } from "@/lib/deploy/constants";
 import { processDeploymentZip } from "@/lib/deploy/process-deployment";
+import { jsonAfterDeploymentProcess } from "@/lib/deploy/deployment-response";
 import { slugifyProjectName } from "@/lib/deploy/slug";
 import { prisma } from "@/lib/prisma";
 import { assertCanCreateDeployment } from "@/lib/subscription/limits";
@@ -148,10 +149,5 @@ export async function POST(request: Request) {
     where: { id: deployment.id },
   });
 
-  return NextResponse.json(
-    {
-      deployment: updated,
-    },
-    { status: 201 },
-  );
+  return jsonAfterDeploymentProcess(updated);
 }

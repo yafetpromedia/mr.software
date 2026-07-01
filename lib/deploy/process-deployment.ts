@@ -96,12 +96,16 @@ export async function processDeploymentZip(input: {
     const deployDir = join(localDeployRoot(), deployment.userId, deployment.id);
     let runtimePort: number | null = null;
 
-    if (prepared.runtime === "NODE" && prepared.nodeEntry) {
-      const entryRel = relative(prepared.serveRoot, prepared.nodeEntry).replace(/\\/g, "/");
+    if (prepared.runtime === "NODE" && (prepared.nodeEntry || prepared.nodeStartMode === "next-start")) {
+      const entryRel =
+        prepared.nodeStartMode === "next-start"
+          ? "server.js"
+          : relative(prepared.serveRoot, prepared.nodeEntry!).replace(/\\/g, "/");
       runtimePort = await ensureNodeRuntime({
         deploymentId: deployment.id,
         cwd: deployDir,
         entry: entryRel || "server.js",
+        startMode: prepared.nodeStartMode ?? "file",
       });
     } else if (prepared.runtime === "PHP") {
       runtimePort = await ensurePhpRuntime({

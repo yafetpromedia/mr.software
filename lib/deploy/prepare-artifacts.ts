@@ -2,6 +2,7 @@ import { cp, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { DeployRuntime } from "@prisma/client";
 import type { FrameworkDetection } from "@/lib/deploy/detect-framework";
+import { ensureNextStandaloneConfig } from "@/lib/deploy/ensure-next-standalone-config";
 import { directoryHasIndexHtml, findIndexHtml } from "@/lib/deploy/find-project-root";
 import { runNpmBuild, runPipInstall } from "@/lib/deploy/run-build";
 
@@ -11,6 +12,7 @@ export type PreparedDeploy = {
   framework: string;
   frameworkLabel: string;
   nodeEntry?: string;
+  nodeStartMode?: "file" | "next-start";
   pythonModule?: string;
   buildLog?: string;
 };
@@ -67,6 +69,27 @@ async function prepareNextStandalone(projectRoot: string): Promise<PreparedDeplo
     framework: "nextjs",
     frameworkLabel: "Next.js (server)",
     nodeEntry: serverJs,
+    nodeStartMode: "file",
+  };
+}
+
+async function prepareNextProjectStart(
+  projectRoot: string,
+  buildLog?: string,
+): Promise<PreparedDeploy | null> {
+  if (!(await exists(join(projectRoot, ".next")))) return null;
+  const hasNext =
+    (await exists(join(projectRoot, "node_modules", "next"))) ||
+    (await exists(join(projectRoot, "node_modules", ".bin", "next")));
+  if (!hasNext) return null;
+
+  return {
+    serveRoot: projectRoot,
+    runtime: "NODE",
+    framework: "nextjs",
+    frameworkLabel: "Next.js (server)",
+    nodeStartMode: "next-start",
+    buildLog,
   };
 }
 
@@ -75,6 +98,10 @@ export async function prepareDeployArtifacts(
   detection: FrameworkDetection,
 ): Promise<PreparedDeploy> {
   let buildLog: string | undefined;
+
+  if (detection.framework === "nextjs" && detection.needsBuild) {
+    await ensureNextStandaloneConfig(extractRoot);
+  }
 
   if (detection.needsBuild && detection.buildScript) {
     const built = await runNpmBuild(extractRoot, detection.buildScript);
@@ -99,8 +126,12 @@ export async function prepareDeployArtifacts(
         buildLog,
       };
     }
+    const nextStart = await prepareNextProjectStart(extractRoot, buildLog);
+    if (nextStart) {
+      return nextStart;
+    }
     throw new Error(
-      "Next.js build did not produce out/ or .next/standalone. Add output: 'export' or output: 'standalone' in next.config.",
+      "Next.js build did not produce deployable output. Ensure `npm run build` succeeds and add output: 'standalone' in next.config, or use output: 'export' for static sites.",
     );
   }
 

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { userCanDeploy } from "@/lib/auth/user-can-deploy";
 import { processDeploymentZip } from "@/lib/deploy/process-deployment";
+import { jsonAfterDeploymentProcess } from "@/lib/deploy/deployment-response";
 import { slugifyProjectName } from "@/lib/deploy/slug";
 import { getGeneratedStartupById } from "@/lib/startup/db";
 import { packageStartupStaticZip } from "@/lib/startup/package-static-zip";
@@ -86,5 +87,5 @@ export async function POST(request: Request, context: RouteContext) {
   });
 
   const updated = await prisma.deployment.findUnique({ where: { id: deployment.id } });
-  return NextResponse.json({ deployment: updated }, { status: 201 });
+  return jsonAfterDeploymentProcess(updated);
 }

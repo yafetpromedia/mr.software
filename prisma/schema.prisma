@@ -111,6 +111,7 @@ enum PaymentProvider {
   CHAPA
   TELEBIRR
   DEV_GRANT
+  COUPON
 }
 
 enum AcademyCourseLevel {
@@ -169,6 +170,7 @@ model User {
   ownershipRecords        OwnershipRecord[]
   softwareLicenseKeys     SoftwareLicenseKey[]
   developerMemoryProfile  DeveloperMemoryProfile?
+  workspaceCouponRedemptions WorkspaceCouponRedemption[]
 }
 
 /** Personalized AI context for a creator — separate from legal ownership & license records. */
@@ -560,6 +562,38 @@ model WorkspacePlanCheckout {
 
   @@index([userId])
   @@index([status])
+}
+
+/** Promo codes for workspace Pro (friends, campaigns, etc.). */
+model WorkspaceCoupon {
+  id               String    @id @default(cuid())
+  /** Uppercase alphanumeric + hyphens, e.g. FRIENDS-PRO */
+  code             String    @unique
+  label            String?
+  durationDays     Int       @default(30)
+  maxRedemptions   Int       @default(10)
+  redemptionCount  Int       @default(0)
+  expiresAt        DateTime?
+  active           Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  redemptions WorkspaceCouponRedemption[]
+
+  @@index([active])
+}
+
+model WorkspaceCouponRedemption {
+  id         String   @id @default(cuid())
+  couponId   String
+  userId     String
+  redeemedAt DateTime @default(now())
+
+  coupon WorkspaceCoupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([couponId, userId])
+  @@index([userId])
 }
 
 model Deployment {

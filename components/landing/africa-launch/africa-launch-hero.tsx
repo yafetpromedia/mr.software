@@ -25,16 +25,17 @@ function AfricaLaunchHeroInner() {
       <div className="africa-hero-stars pointer-events-none absolute inset-0 opacity-[0.18]" aria-hidden />
       <div className="africa-hero-noise pointer-events-none absolute inset-0 opacity-[0.035]" aria-hidden />
 
-      <motion.div
-        className="africa-globe-scene-wrap pointer-events-auto absolute inset-0 z-[1]"
-        initial={false}
-        animate={
-          intro.globeRevealed && intro.globeReady
-            ? { opacity: 1, scale: 1, y: 0 }
-            : { opacity: 0, scale: 0.92, y: 20 }
-        }
-        transition={{ duration: 1.05, ease: REVEAL_EASE }}
-      >
+      <div className="africa-globe-scene-wrap pointer-events-auto absolute z-[1]">
+        <motion.div
+          className="absolute inset-0"
+          initial={false}
+          animate={
+            intro.globeRevealed && intro.globeReady
+              ? { opacity: 1, scale: 1 }
+              : { opacity: 0, scale: 0.92 }
+          }
+          transition={{ duration: 1.05, ease: REVEAL_EASE }}
+        >
         {intro.globeRevealed ? (
           <div className="africa-globe-soft-shadow pointer-events-none absolute inset-0" aria-hidden />
         ) : null}
@@ -60,7 +61,8 @@ function AfricaLaunchHeroInner() {
           className="africa-launch-hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-8 sm:h-10 lg:hidden"
           aria-hidden
         />
-      </motion.div>
+        </motion.div>
+      </div>
 
       {!reduce ? (
         <motion.div

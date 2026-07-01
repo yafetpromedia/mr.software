@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { userCanDeploy } from "@/lib/auth/user-can-deploy";
 import { MAX_ZIP_BYTES } from "@/lib/deploy/constants";
 import { processDeploymentZip } from "@/lib/deploy/process-deployment";
+import { jsonAfterDeploymentProcess } from "@/lib/deploy/deployment-response";
 import { slugifyProjectName } from "@/lib/deploy/slug";
 import { downloadGithubRepoArchive } from "@/lib/github/api";
 import { getGithubAccessToken } from "@/lib/github/connection";
@@ -175,5 +176,5 @@ export async function POST(request: Request) {
 
   const updated = await prisma.deployment.findUnique({ where: { id: deployment.id } });
 
-  return NextResponse.json({ deployment: updated }, { status: 201 });
+  return jsonAfterDeploymentProcess(updated);
 }
