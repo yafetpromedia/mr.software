@@ -19,7 +19,7 @@
     "prod:check": "node scripts/check-production-env.mjs",
     "prod:up": "docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build",
     "prod:down": "docker compose -f docker-compose.prod.yml --env-file .env.production down",
-    "prod:db-push": "docker compose -f docker-compose.prod.yml --env-file .env.production exec app npx prisma db push",
+    "prod:db-push": "node scripts/prod-db-push.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {

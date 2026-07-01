@@ -64,6 +64,20 @@ if (env.DATABASE_URL?.includes("@localhost:") || env.DATABASE_URL?.includes("@12
   weak.push("DATABASE_URL uses localhost — for Docker use host `db` (see .env.production.example)");
 }
 
+if (env.POSTGRES_PASSWORD?.trim() && env.DATABASE_URL?.includes("@")) {
+  try {
+    const parsed = new URL(env.DATABASE_URL.replace(/^postgresql:/, "http:"));
+    const urlPass = decodeURIComponent(parsed.password || "");
+    if (urlPass && urlPass !== env.POSTGRES_PASSWORD.trim()) {
+      weak.push(
+        "DATABASE_URL password does not match POSTGRES_PASSWORD — align them or rely on POSTGRES_* only",
+      );
+    }
+  } catch {
+    /* ignore parse errors */
+  }
+}
+
 if (weak.length) {
   console.error("\nWarnings:");
   for (const w of weak) console.error(`  - ${w}`);
