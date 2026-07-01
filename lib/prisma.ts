@@ -1,6 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
+import { resolveDatabaseUrl } from "@/lib/db/database-url";
 
 /** Bump when Prisma schema changes so dev HMR picks up a fresh client. */
 const PRISMA_CLIENT_GENERATION = "2026-06-21-distribution-type";
@@ -24,7 +25,7 @@ function clientHasRequiredModels(client: PrismaClient): boolean {
 }
 
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = resolveDatabaseUrl();
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set");
   }
