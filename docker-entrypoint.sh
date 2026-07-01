@@ -1,13 +1,10 @@
 #!/bin/sh
 set -e
 
-# Build DATABASE_URL from Postgres vars when not set explicitly (.env.production).
-if [ -z "${DATABASE_URL:-}" ] && [ -n "${POSTGRES_PASSWORD:-}" ]; then
+# Always derive DATABASE_URL from POSTGRES_* in Compose so it matches the `db` service.
+if [ -n "${POSTGRES_PASSWORD:-}" ]; then
   export DATABASE_URL="postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mr_software}?schema=public"
-fi
-
-# `.env.production` copied from local dev often uses localhost — inside Compose use service `db`.
-if [ -n "${DATABASE_URL:-}" ]; then
+elif [ -n "${DATABASE_URL:-}" ]; then
   case "$DATABASE_URL" in
     *@localhost:*|*@127.0.0.1:*)
       export DATABASE_URL="$(printf '%s' "$DATABASE_URL" | sed -e 's/@localhost:/@db:/' -e 's/@127.0.0.1:/@db:/')"
