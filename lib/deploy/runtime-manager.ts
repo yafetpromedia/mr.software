@@ -90,7 +90,7 @@ export async function ensureNodeRuntime(input: {
 
   const port = await getFreePort();
   const dotenv = await loadDotEnv(input.cwd);
-  const env = {
+  const env: NodeJS.ProcessEnv = {
     ...process.env,
     ...dotenv,
     PORT: String(port),
