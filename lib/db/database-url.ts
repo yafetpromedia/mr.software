@@ -7,13 +7,24 @@ function isBuildDatabaseUrl(url: string): boolean {
   return /\/build(\?|$)/.test(url);
 }
 
+function composeDatabaseUrl(): string | null {
+  const password = process.env.POSTGRES_PASSWORD?.trim();
+  if (!password || !existsSync("/.dockerenv")) return null;
+
+  const user = process.env.POSTGRES_USER?.trim() || "postgres";
+  const db = process.env.POSTGRES_DB?.trim() || "mr_software";
+  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@db:5432/${encodeURIComponent(db)}?schema=public`;
+}
+
 /**
- * Postgres in Compose is service `db`. `.env.production` copied from dev often uses localhost.
- * Rewrite only inside running app containers (not during image build with `/build` DB).
+ * Postgres in Compose is service `db`. Prefer POSTGRES_* in Docker so DATABASE_URL
+ * cannot drift from the password the `db` container was initialized with.
  */
 export function resolveDatabaseUrl(raw = process.env.DATABASE_URL): string {
-  const url = raw?.trim() || DEFAULT_URL;
+  const fromCompose = composeDatabaseUrl();
+  if (fromCompose) return fromCompose;
 
+  const url = raw?.trim() || DEFAULT_URL;
   if (isBuildDatabaseUrl(url) || !existsSync("/.dockerenv")) {
     return url;
   }
