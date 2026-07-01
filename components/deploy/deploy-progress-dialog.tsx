@@ -6,12 +6,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   CheckCircle2,
   ExternalLink,
-  Github,
   Loader2,
   Rocket,
   X,
   Zap,
 } from "lucide-react";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { BRAND_NAME } from "@/lib/branding/constants";
 
 const DEPLOY_STEPS = [
@@ -281,7 +281,7 @@ export function DeployProgressDialog({
               {phase === "deploying" ? (
                 <div className="mt-5 flex items-center justify-center gap-2 text-[0.65rem] text-[var(--muted)]">
                   {sourceLabel === "GitHub" ? (
-                    <Github className="h-3.5 w-3.5" aria-hidden />
+                    <GithubIcon className="h-3.5 w-3.5" />
                   ) : (
                     <Zap className="h-3.5 w-3.5" aria-hidden />
                   )}
