@@ -11,7 +11,6 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 COPY prisma.config.ts ./
-COPY lib/db/database-url.ts ./lib/db/database-url.ts
 RUN npm ci
 
 FROM base AS builder
