@@ -7,7 +7,7 @@ import { processDeploymentZip } from "@/lib/deploy/process-deployment";
 import { jsonAfterDeploymentProcess } from "@/lib/deploy/deployment-response";
 import { slugifyProjectName } from "@/lib/deploy/slug";
 import { prisma } from "@/lib/prisma";
-import { assertCanCreateDeployment } from "@/lib/subscription/limits";
+import { assertCanCreateDeployment, assertCanUploadDeployZip } from "@/lib/subscription/limits";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 
 export const runtime = "nodejs";
@@ -60,7 +60,26 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Upgrade required to deploy more projects. Free plan includes one deployment.",
+            "Upgrade required to deploy more projects. Free plan includes up to 5 active projects.",
+        },
+        { status: 402 },
+      );
+    }
+    throw e;
+  }
+
+  try {
+    await assertCanUploadDeployZip(session.id);
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      "code" in e &&
+      (e as Error & { code: string }).code === "ZIP_UPGRADE_REQUIRED"
+    ) {
+      return NextResponse.json(
+        {
+          error: e.message,
+          code: "ZIP_UPGRADE_REQUIRED",
         },
         { status: 402 },
       );

@@ -4,10 +4,16 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2, X } from "lucide-react";
-import type { PricingModel, SoftwareCategory, ProductLicenseTier, OpenSourceLicense, DistributionType } from "@prisma/client";
+import type { PricingModel, SoftwareCategory, ProductLicenseTier, OpenSourceLicense, DistributionType, ProductKind } from "@prisma/client";
 import { SOFTWARE_CATEGORIES, SOFTWARE_CATEGORY_LABELS } from "@/lib/marketplace/categories";
+import { PRODUCT_KINDS, PRODUCT_KIND_LABELS } from "@/lib/marketplace/product-types";
+import type { DeliveryPackageId } from "@/lib/marketplace/delivery-packages";
 import { LicenseTierFields } from "@/components/trust/license-tier-fields";
-import { DistributionTypeFields } from "@/components/trust/distribution-type-fields";
+import {
+  defaultDeliveryPackageId,
+  DeliveryPackageFields,
+} from "@/components/trust/delivery-package-fields";
+import Link from "next/link";
 
 type InitialValues = {
   name?: string;
@@ -22,6 +28,9 @@ type Props = {
   initial?: InitialValues;
   onSuccess?: (software: { id: string; name: string }) => void;
   submitLabel?: string;
+  canUploadSource?: boolean;
+  publishedCount?: number;
+  maxPublishedProducts?: number | "unlimited";
 };
 
 function formatPriceLabel(
@@ -61,6 +70,9 @@ export function ListingCreateForm({
   initial,
   onSuccess,
   submitLabel = "Publish to marketplace",
+  canUploadSource = false,
+  publishedCount = 0,
+  maxPublishedProducts = 5,
 }: Props) {
   const router = useRouter();
   const [name, setName] = useState(initial?.name ?? "");
@@ -78,6 +90,8 @@ export function ListingCreateForm({
   const [licenseTier, setLicenseTier] = useState<ProductLicenseTier>("PERSONAL");
   const [openSourceLicense, setOpenSourceLicense] = useState<OpenSourceLicense>("MIT");
   const [distributionType, setDistributionType] = useState<DistributionType>("COMPILED");
+  const [productKind, setProductKind] = useState<ProductKind>("WEBSITE");
+  const [deliveryPackageId, setDeliveryPackageId] = useState<DeliveryPackageId>("compiled");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
@@ -117,6 +131,7 @@ export function ListingCreateForm({
           licenseTier,
           openSourceLicense: licenseTier === "OPEN_SOURCE" ? openSourceLicense : undefined,
           distributionType,
+          productKind,
         }),
       });
 
@@ -138,6 +153,8 @@ export function ListingCreateForm({
         setLicenseTier("PERSONAL");
         setOpenSourceLicense("MIT");
         setDistributionType("COMPILED");
+        setProductKind("WEBSITE");
+        setDeliveryPackageId("compiled");
       }
       router.refresh();
     } catch (err) {
@@ -181,8 +198,28 @@ export function ListingCreateForm({
 
   const coverPreview = thumbnailUrl.trim() || null;
 
+  const atListingLimit =
+    maxPublishedProducts !== "unlimited" && publishedCount >= maxPublishedProducts;
+
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
+      {maxPublishedProducts !== "unlimited" ? (
+        <p className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-xs text-[var(--muted)]">
+          Free plan: {publishedCount}/{maxPublishedProducts} published products.{" "}
+          {atListingLimit ? (
+            <>
+              Upgrade to{" "}
+              <Link href="/payouts" className="font-semibold text-[var(--accent)] hover:underline">
+                Pro
+              </Link>{" "}
+              for unlimited listings and source-code sales.
+            </>
+          ) : (
+            "Compiled apps and demos are allowed on Free. Source-code (.zip) listings require Pro."
+          )}
+        </p>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="listing-name" className="text-xs font-medium text-[var(--muted)]">
@@ -215,8 +252,34 @@ export function ListingCreateForm({
         </div>
 
         <div>
+          <label htmlFor="listing-product-kind" className="text-xs font-medium text-[var(--muted)]">
+            Project type
+          </label>
+          <select
+            id="listing-product-kind"
+            value={productKind}
+            onChange={(e) => {
+              const kind = e.target.value as ProductKind;
+              setProductKind(kind);
+              if (kind === "SOURCE_CODE" && canUploadSource) {
+                setDeliveryPackageId("source");
+                setDistributionType("SOURCE_CODE");
+              }
+            }}
+            className="mt-1 h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none ring-[var(--accent)]/30 focus:ring-2"
+          >
+            {PRODUCT_KINDS.map((key) => (
+              <option key={key} value={key} disabled={key === "SOURCE_CODE" && !canUploadSource}>
+                {PRODUCT_KIND_LABELS[key]}
+                {key === "SOURCE_CODE" && !canUploadSource ? " (Pro)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
           <label htmlFor="listing-category" className="text-xs font-medium text-[var(--muted)]">
-            Category
+            Marketplace category
           </label>
           <select
             id="listing-category"
@@ -281,16 +344,34 @@ export function ListingCreateForm({
           </>
         ) : null}
 
+        <DeliveryPackageFields
+          deliveryPackageId={deliveryPackageId}
+          canUploadSource={canUploadSource}
+          onChange={({ packageId, distributionType: nextType, pricingModel, licenseTier: nextTier }) => {
+            setDeliveryPackageId(packageId);
+            setDistributionType(nextType);
+            if (pricingModel) setPricingModel(pricingModel);
+            if (nextTier) setLicenseTier(nextTier);
+            if (packageId === "source" || packageId === "source_commercial" || packageId === "source_lifetime") {
+              setProductKind("SOURCE_CODE");
+            }
+          }}
+        />
+
         <LicenseTierFields
           licenseTier={licenseTier}
           openSourceLicense={openSourceLicense}
-          onLicenseTierChange={setLicenseTier}
+          onLicenseTierChange={(tier) => {
+            setLicenseTier(tier);
+            setDeliveryPackageId(
+              defaultDeliveryPackageId({
+                distributionType,
+                pricingModel,
+                licenseTier: tier,
+              }),
+            );
+          }}
           onOpenSourceLicenseChange={setOpenSourceLicense}
-        />
-
-        <DistributionTypeFields
-          distributionType={distributionType}
-          onChange={setDistributionType}
         />
 
         <div className="sm:col-span-2">
@@ -396,11 +477,13 @@ export function ListingCreateForm({
             placeholder={distributionType === "HOSTED" ? "Optional — deploy from Deploy after listing" : "Optional — or deploy a build from Deploy"}
           />
           <p className="mt-1 text-xs text-[var(--muted)]">
-            {distributionType === "HOSTED"
-              ? "Hosted products run on Mr.Software Cloud. Buyers receive a URL — not source code or downloads."
+            {distributionType === "DEMO"
+              ? "Demo-only products show a live preview — buyers do not download files."
+              : distributionType === "HOSTED"
+              ? "Hosted products run on MrSoftware ET Cloud. Buyers receive a URL — not source code or downloads."
               : distributionType === "COMPILED"
                 ? "Buyers download a package and enter their license key at startup. Verify via POST /api/licenses/verify."
-                : "Buyers get this link after purchase. You can also host a static build via Deploy after listing."}
+                : "Pro plan: buyers download your source ZIP after purchase. Include README, LICENSE, and install guide."}
           </p>
         </div>
 
@@ -446,7 +529,7 @@ export function ListingCreateForm({
 
       <button
         type="submit"
-        disabled={saving}
+        disabled={saving || atListingLimit}
         className="btn-brand btn-brand-shine inline-flex h-10 items-center rounded-xl px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
       >
         {saving ? "Publishing…" : submitLabel}

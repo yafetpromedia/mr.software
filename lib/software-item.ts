@@ -1,6 +1,18 @@
 import type { StorefrontSocialLinks } from "@/lib/storefront/social-links";
 
-export type SoftwareDistributionType = "SOURCE_CODE" | "COMPILED" | "HOSTED";
+export type SoftwareDistributionType = "DEMO" | "SOURCE_CODE" | "COMPILED" | "HOSTED";
+export type SoftwareProductKind =
+  | "SAAS"
+  | "WEBSITE"
+  | "MOBILE_APP"
+  | "DESKTOP_APP"
+  | "UI_KIT"
+  | "TEMPLATE"
+  | "API"
+  | "AI_MODEL"
+  | "PLUGIN"
+  | "EXTENSION"
+  | "SOURCE_CODE";
 
 export type SoftwareItem = {
   id: string;
@@ -37,6 +49,8 @@ export type SoftwareItem = {
   /** How buyers receive the product */
   distributionType?: SoftwareDistributionType;
   distributionTypeLabel?: string;
+  productKind?: SoftwareProductKind;
+  productKindLabel?: string;
   /** Only on detail fetches — checkout wiring */
   stripePriceId?: string | null;
   /** Product detail page views */

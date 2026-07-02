@@ -12,7 +12,14 @@ export function isHostedOnly(type: DistributionType): boolean {
   return type === "HOSTED";
 }
 
+export function isDemoOnly(type: DistributionType): boolean {
+  return type === "DEMO";
+}
+
 export function distributionAccessLabel(type: DistributionType, entitled: boolean): string {
+  if (type === "DEMO") {
+    return entitled ? "Open live demo" : "Purchase for demo access";
+  }
   if (type === "HOSTED") {
     return entitled ? "Open your cloud instance" : "Purchase for a hosted URL";
   }

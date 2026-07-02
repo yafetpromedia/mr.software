@@ -1,12 +1,13 @@
 import { Suspense } from "react";
-import { Plan, SubscriptionStatus } from "@prisma/client";
+import { SubscriptionStatus } from "@prisma/client";
 import { StartupFactoryWizard } from "@/components/factory/startup-factory-wizard";
 import { getSession } from "@/lib/auth/session";
 import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
 import { getActiveFactorySession } from "@/lib/factory/factory-session";
 import { getFactoryProgress } from "@/lib/factory/progress";
 import { prisma } from "@/lib/prisma";
-import { countQuotaDeployments, getUserPlan } from "@/lib/subscription/limits";
+import { countQuotaDeployments, getUserPlan, isPaidWorkspacePlan } from "@/lib/subscription/limits";
+import { getPlanCapabilities } from "@/lib/subscription/capabilities";
 
 export const metadata = {
   title: "Startup Factory",
@@ -41,8 +42,12 @@ async function FactoryContent() {
     }),
   ]);
 
-  const proActive = sub?.status === SubscriptionStatus.ACTIVE && sub.plan === Plan.PRO;
-  const freeBlocked = plan === Plan.FREE && !proActive && used >= 1;
+  const paidActive =
+    isPaidWorkspacePlan(plan) && sub?.status === SubscriptionStatus.ACTIVE;
+  const caps = getPlanCapabilities(plan);
+  const maxSlots =
+    caps.maxDeployments === "unlimited" ? null : caps.maxDeployments;
+  const freeBlocked = !paidActive && maxSlots !== null && used >= maxSlots;
 
   return (
     <StartupFactoryWizard

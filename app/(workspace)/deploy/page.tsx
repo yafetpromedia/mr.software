@@ -1,10 +1,12 @@
 import { Suspense } from "react";
-import { Plan, SubscriptionStatus } from "@prisma/client";
+import { SubscriptionStatus } from "@prisma/client";
 import { DeploymentCenter } from "@/components/deploy/deployment-center";
 import { getSession } from "@/lib/auth/session";
 import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
 import { prisma } from "@/lib/prisma";
-import { countQuotaDeployments, getUserPlan } from "@/lib/subscription/limits";
+import { getPlanCapabilities } from "@/lib/subscription/capabilities";
+import { countQuotaDeployments, getUserPlan, isPaidWorkspacePlan } from "@/lib/subscription/limits";
+import { getWorkspacePlan, workspacePlanIdFromDb } from "@/lib/subscription/plans";
 
 export const metadata = {
   title: "Deployment Center",
@@ -60,14 +62,20 @@ async function DeployContent() {
     }),
   ]);
 
-  const proActive = sub?.status === SubscriptionStatus.ACTIVE && sub.plan === Plan.PRO;
-  const freeBlocked = plan === Plan.FREE && !proActive && used >= 1;
-  const planLabel = proActive || plan === Plan.PRO ? "Pro" : "Starter";
-  const maxSlots = proActive || plan === Plan.PRO ? null : 1;
+  const paidActive =
+    isPaidWorkspacePlan(plan) && sub?.status === SubscriptionStatus.ACTIVE;
+  const caps = getPlanCapabilities(plan);
+  const maxSlots =
+    caps.maxDeployments === "unlimited" ? null : caps.maxDeployments;
+  const freeBlocked = !paidActive && maxSlots !== null && used >= maxSlots;
+  const zipBlocked = !caps.zipUpload;
+  const planDef = getWorkspacePlan(workspacePlanIdFromDb(plan));
+  const planLabel = paidActive ? planDef.name : "Free";
 
   return (
     <DeploymentCenter
       freeBlocked={freeBlocked}
+      zipBlocked={zipBlocked}
       planLabel={planLabel}
       usedSlots={used}
       maxSlots={maxSlots}

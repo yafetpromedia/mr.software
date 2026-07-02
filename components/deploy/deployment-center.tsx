@@ -27,6 +27,7 @@ type RecentDeployment = Pick<
 
 type Props = {
   freeBlocked: boolean;
+  zipBlocked?: boolean;
   planLabel: string;
   usedSlots: number;
   maxSlots: number | null;
@@ -112,6 +113,7 @@ function WorkflowSteps({ steps }: { steps: string[] }) {
 
 export function DeploymentCenter({
   freeBlocked,
+  zipBlocked = false,
   planLabel,
   usedSlots,
   maxSlots,
@@ -209,10 +211,10 @@ export function DeploymentCenter({
 
       {freeBlocked ? (
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
-          <p className="font-medium text-[var(--foreground)]">Free plan limit reached</p>
+          <p className="font-medium text-[var(--foreground)]">Free plan project limit reached</p>
           <p className="mt-1 text-[var(--muted)]">
-            You already have an active or processing deployment. Upgrade to Pro for more apps, custom
-            domains, and team seats.
+            Free includes up to {maxSlots ?? 5} active projects. Upgrade to Pro for unlimited
+            deployments, ZIP uploads, and source-code listings.
           </p>
           <Link
             href="/payouts"
@@ -297,9 +299,7 @@ export function DeploymentCenter({
               <div>
                 <h2 className="text-lg font-semibold text-[var(--foreground)]">Upload ZIP</h2>
                 <p className="mt-1 text-sm text-[var(--muted)]">
-                  Upload source or build output — Mr.Software auto-detects your stack, runs{" "}
-                  <code className="text-[var(--foreground)]">npm run build</code> when needed, and hosts
-                  with a live URL.
+                  Upload source or build output — Pro and Studio plans can deploy ZIP archives up to 2 GB.
                 </p>
                 <div className="mt-3">
                   <WorkflowSteps
@@ -307,34 +307,53 @@ export function DeploymentCenter({
                   />
                 </div>
               </div>
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                  Auto-detect &amp; build
-                </p>
-                <ul className="mt-2 space-y-1 text-xs leading-relaxed text-[var(--muted)]">
-                  <li>
-                    <strong className="text-[var(--foreground)]">Static:</strong> HTML, Vite, CRA, Angular, Nuxt
-                    → instant host from <code>dist/</code> or <code>out/</code>
-                  </li>
-                  <li>
-                    <strong className="text-[var(--foreground)]">Node / Next.js:</strong> runs{" "}
-                    <code>npm install</code> + <code>build</code> — serves standalone or static export
-                  </li>
-                  <li>
-                    <strong className="text-[var(--foreground)]">PHP:</strong> built-in PHP server for{" "}
-                    <code>index.php</code> projects
-                  </li>
-                  <li>
-                    <strong className="text-[var(--foreground)]">Python:</strong> Django, Flask —{" "}
-                    <code>pip install</code> from <code>requirements.txt</code>
-                  </li>
-                  <li>
-                    <strong className="text-[var(--foreground)]">Databases:</strong> use external Postgres
-                    (Supabase, Neon, etc.) via <code>DATABASE_URL</code> in your <code>.env</code>
-                  </li>
-                </ul>
-              </div>
-              <DeployUploadForm />
+              {zipBlocked ? (
+                <div className="rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-muted)]/30 p-4 text-sm">
+                  <p className="font-medium text-[var(--foreground)]">ZIP uploads require Pro or Studio</p>
+                  <p className="mt-1 text-[var(--muted)]">
+                    Free plan can deploy from GitHub and sell compiled products. Upgrade to upload source-code
+                    ZIP files.
+                  </p>
+                  <Link
+                    href="/payouts"
+                    className="mt-3 inline-flex items-center gap-1 font-medium text-[var(--accent)] underline-offset-4 hover:underline"
+                  >
+                    View developer plans
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                      Auto-detect &amp; build
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs leading-relaxed text-[var(--muted)]">
+                      <li>
+                        <strong className="text-[var(--foreground)]">Static:</strong> HTML, Vite, CRA, Angular, Nuxt
+                        → instant host from <code>dist/</code> or <code>out/</code>
+                      </li>
+                      <li>
+                        <strong className="text-[var(--foreground)]">Node / Next.js:</strong> runs{" "}
+                        <code>npm install</code> + <code>build</code> — serves standalone or static export
+                      </li>
+                      <li>
+                        <strong className="text-[var(--foreground)]">PHP:</strong> built-in PHP server for{" "}
+                        <code>index.php</code> projects
+                      </li>
+                      <li>
+                        <strong className="text-[var(--foreground)]">Python:</strong> Django, Flask —{" "}
+                        <code>pip install</code> from <code>requirements.txt</code>
+                      </li>
+                      <li>
+                        <strong className="text-[var(--foreground)]">Databases:</strong> use external Postgres
+                        (Supabase, Neon, etc.) via <code>DATABASE_URL</code> in your <code>.env</code>
+                      </li>
+                    </ul>
+                  </div>
+                  <DeployUploadForm />
+                </>
+              )}
             </div>
           ) : null}
 

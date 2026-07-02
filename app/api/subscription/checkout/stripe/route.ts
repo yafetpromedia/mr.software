@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { Plan } from "@prisma/client";
 import { getSession } from "@/lib/auth/session";
 import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
 import { prisma } from "@/lib/prisma";
 import { createWorkspaceStripeCheckout } from "@/lib/subscription/workspace-checkout";
-import { getUserPlan } from "@/lib/subscription/limits";
-import { Plan } from "@prisma/client";
+import { getUserPlan, isPaidWorkspacePlan } from "@/lib/subscription/limits";
+import type { BillingInterval, WorkspacePlanId } from "@/lib/subscription/plans";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -14,8 +15,15 @@ export async function POST(request: Request) {
   assertDeveloperPortalUser(session);
 
   const plan = await getUserPlan(session.id);
-  if (plan === Plan.PRO) {
-    return NextResponse.json({ error: "You are already on Pro" }, { status: 400 });
+  if (isPaidWorkspacePlan(plan)) {
+    return NextResponse.json({ error: "You already have a paid workspace plan" }, { status: 400 });
+  }
+
+  let body: { planId?: WorkspacePlanId; interval?: BillingInterval } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    /* default pro monthly */
   }
 
   const user = await prisma.user.findUnique({
@@ -29,6 +37,8 @@ export async function POST(request: Request) {
       userId: session.id,
       email: session.email,
       stripeCustomerId: user?.stripeCustomerId,
+      planId: body.planId ?? "pro",
+      interval: body.interval ?? "month",
     });
     return NextResponse.json({ url });
   } catch (error) {

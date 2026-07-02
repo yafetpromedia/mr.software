@@ -1,4 +1,4 @@
-import { PricingModel, type DeveloperStorefront, type Software, type SoftwareCategory, type User, type ProductLicenseTier, type OpenSourceLicense, type DistributionType } from "@prisma/client";
+import { PricingModel, type DeveloperStorefront, type Software, type SoftwareCategory, type User, type ProductLicenseTier, type OpenSourceLicense, type DistributionType, type ProductKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { categoryLabel } from "@/lib/marketplace/categories";
 import { parseStorefrontSocialLinks, type StorefrontSocialLinks } from "@/lib/storefront/social-links";
@@ -8,6 +8,7 @@ import { applyTrustOnSoftwarePublish } from "@/lib/trust/publish-trust";
 import { formatFingerprintShort } from "@/lib/trust/fingerprint";
 import { licenseTierLabel, OPEN_SOURCE_LABELS } from "@/lib/trust/license-types";
 import { distributionTypeLabel } from "@/lib/trust/distribution-types";
+import { productKindLabel } from "@/lib/marketplace/product-types";
 
 function firstLine(text: string, maxLen: number): string {
   const line = text.split(/\r?\n/).find((l) => l.trim().length > 0) ?? text;
@@ -54,6 +55,8 @@ export function mapSoftwareToItem(
       : undefined,
     distributionType: row.distributionType,
     distributionTypeLabel: distributionTypeLabel(row.distributionType),
+    productKind: row.productKind,
+    productKindLabel: productKindLabel(row.productKind),
   };
   if (options?.includeStripe) {
     return { ...base, stripePriceId: row.stripePriceId };
@@ -127,6 +130,7 @@ export async function createSoftwareRecord(input: {
   licenseTier?: ProductLicenseTier;
   openSourceLicense?: OpenSourceLicense | null;
   distributionType?: DistributionType;
+  productKind?: ProductKind;
 }): Promise<SoftwareItem & { ownershipRecordNumber: string; contentFingerprint: string }> {
   const developer = await prisma.user.findUnique({
     where: { id: input.developerId },
@@ -148,6 +152,7 @@ export async function createSoftwareRecord(input: {
       licenseTier: input.licenseTier ?? "PERSONAL",
       openSourceLicense: input.openSourceLicense ?? null,
       distributionType: input.distributionType ?? "COMPILED",
+      productKind: input.productKind ?? "WEBSITE",
       thumbnailUrl:
         typeof input.thumbnailUrl === "string" && input.thumbnailUrl.trim()
           ? input.thumbnailUrl.trim()

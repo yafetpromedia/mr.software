@@ -11,6 +11,11 @@ import {
   parseOpenSourceLicense,
   parseProductLicenseTier,
 } from "@/lib/trust/license-types";
+import {
+  assertCanPublishProduct,
+  assertCanSellSourceCode,
+} from "@/lib/subscription/limits";
+import { parseProductKind } from "@/lib/marketplace/product-types";
 import { parseDistributionType } from "@/lib/trust/distribution-types";
 
 function parsePricingModel(v: unknown): PricingModel | undefined {
@@ -105,6 +110,33 @@ export async function POST(request: Request) {
     const openSourceLicense =
       licenseTier === "OPEN_SOURCE" ? parseOpenSourceLicense(b.openSourceLicense) ?? "MIT" : null;
     const distributionType = parseDistributionType(b.distributionType) ?? "COMPILED";
+    const productKind = parseProductKind(b.productKind) ?? "WEBSITE";
+
+    try {
+      await assertCanPublishProduct(session.id);
+    } catch (e) {
+      if (e instanceof Error && "code" in e && (e as Error & { code: string }).code === "LISTING_LIMIT") {
+        return NextResponse.json({ error: e.message, code: "LISTING_LIMIT" }, { status: 402 });
+      }
+      throw e;
+    }
+
+    try {
+      await assertCanSellSourceCode({
+        userId: session.id,
+        distributionType,
+        productKind,
+      });
+    } catch (e) {
+      if (
+        e instanceof Error &&
+        "code" in e &&
+        (e as Error & { code: string }).code === "SOURCE_UPGRADE_REQUIRED"
+      ) {
+        return NextResponse.json({ error: e.message, code: "SOURCE_UPGRADE_REQUIRED" }, { status: 402 });
+      }
+      throw e;
+    }
 
     const item = await createSoftwareRecord({
       name,
@@ -123,6 +155,7 @@ export async function POST(request: Request) {
       licenseTier,
       openSourceLicense,
       distributionType,
+      productKind,
     });
 
     return NextResponse.json(item, { status: 201 });

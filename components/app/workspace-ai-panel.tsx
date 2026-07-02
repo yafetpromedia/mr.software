@@ -1,5 +1,6 @@
 "use client";
 
+import { BRAND_AI_NAME } from "@/lib/branding/constants";
 import { useState } from "react";
 
 const SUGGESTIONS = [
@@ -35,7 +36,7 @@ export function WorkspaceAiPanel() {
           <p className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
             Copilot
           </p>
-          <p className="text-sm font-medium text-[var(--foreground)]">Mr.Software AI</p>
+          <p className="text-sm font-medium text-[var(--foreground)]">{BRAND_AI_NAME}</p>
         </div>
         <button
           type="button"

@@ -8,8 +8,9 @@ import { prisma } from "@/lib/prisma";
 
 const PRO_PERIOD_DAYS = 30;
 
-export async function activateWorkspacePro(input: {
+export async function activateWorkspacePlan(input: {
   userId: string;
+  plan: Plan;
   provider: PaymentProvider;
   currency: string;
   amountCents: number;
@@ -24,7 +25,7 @@ export async function activateWorkspacePro(input: {
     where: { userId: input.userId },
     create: {
       userId: input.userId,
-      plan: Plan.PRO,
+      plan: input.plan,
       status: SubscriptionStatus.ACTIVE,
       expiresAt,
       paymentProvider: input.provider,
@@ -33,7 +34,7 @@ export async function activateWorkspacePro(input: {
       stripeSubscriptionId: input.stripeSubscriptionId ?? null,
     },
     update: {
-      plan: Plan.PRO,
+      plan: input.plan,
       status: SubscriptionStatus.ACTIVE,
       expiresAt,
       paymentProvider: input.provider,
@@ -42,6 +43,18 @@ export async function activateWorkspacePro(input: {
       stripeSubscriptionId: input.stripeSubscriptionId ?? undefined,
     },
   });
+}
+
+/** @deprecated Use activateWorkspacePlan with plan: Plan.PRO */
+export async function activateWorkspacePro(input: {
+  userId: string;
+  provider: PaymentProvider;
+  currency: string;
+  amountCents: number;
+  expiresAt?: Date | null;
+  stripeSubscriptionId?: string | null;
+}): Promise<void> {
+  await activateWorkspacePlan({ ...input, plan: Plan.PRO });
 }
 
 export async function markWorkspaceCheckoutComplete(checkoutId: string): Promise<void> {
@@ -62,8 +75,9 @@ export async function syncWorkspaceStripeSubscription(
   if (!checkout) return;
 
   if (active) {
-    await activateWorkspacePro({
+    await activateWorkspacePlan({
       userId: checkout.userId,
+      plan: checkout.targetPlan,
       provider: PaymentProvider.STRIPE,
       currency: checkout.currency,
       amountCents: checkout.amountCents,

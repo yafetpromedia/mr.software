@@ -4,8 +4,9 @@ import { Plan, PurchaseStatus, SubscriptionStatus } from "@prisma/client";
 import { getSession } from "@/lib/auth/session";
 import { assertDeveloperPortalUser } from "@/lib/auth/developer-portal-access";
 import { prisma } from "@/lib/prisma";
-import { countQuotaDeployments, getUserPlan } from "@/lib/subscription/limits";
-import { WORKSPACE_PLANS } from "@/lib/subscription/plans";
+import { countQuotaDeployments, getUserPlan, isPaidWorkspacePlan } from "@/lib/subscription/limits";
+import { getPlanCapabilities } from "@/lib/subscription/capabilities";
+import { WORKSPACE_PLANS, workspacePlanIdFromDb } from "@/lib/subscription/plans";
 import { formatMoneyAmount } from "@/lib/portal/format-amount";
 import { isStripeConfigured } from "@/lib/monetization/stripe-server";
 import { isChapaConfigured, isTelebirrEnabled } from "@/lib/payments/chapa";
@@ -43,11 +44,12 @@ export default async function PayoutsPage() {
 
   const grossCents = gross._sum.amountCents ?? 0;
   const currency = "ETB";
-  const proActive =
-    plan === Plan.PRO &&
+  const paidActive =
+    isPaidWorkspacePlan(plan) &&
     sub?.status === SubscriptionStatus.ACTIVE &&
     (!sub.expiresAt || sub.expiresAt > new Date());
-  const currentPlanId = proActive ? "pro" : "free";
+  const currentPlanId = paidActive ? workspacePlanIdFromDb(plan) : "free";
+  const caps = getPlanCapabilities(plan);
 
   return (
     <div className="space-y-10">
@@ -66,7 +68,7 @@ export default async function PayoutsPage() {
           Workspace plans
         </h2>
         <p className="mt-1 text-sm text-stone-600 dark:text-[var(--muted)]">
-          Pro unlocks unlimited deployments. Prices shown in both dollars and birr.
+          Free: 5 products, no source ZIP. Pro from $9.99/mo or $99/yr. Studio for teams.
         </p>
         <div className="mt-5">
           <Suspense fallback={<p className="text-sm text-[var(--muted)]">Loading plans…</p>}>
@@ -79,6 +81,7 @@ export default async function PayoutsPage() {
               devUpgradeEnabled={devUpgradeEnabled()}
               expiresAt={sub?.expiresAt?.toISOString() ?? null}
               usedSlots={usedSlots}
+              maxSlots={caps.maxPublishedProducts}
             />
           </Suspense>
         </div>
@@ -108,7 +111,7 @@ export default async function PayoutsPage() {
             Current hosting plan
           </p>
           <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
-            {proActive ? "Pro" : "Free"}
+            {paidActive ? (currentPlanId === "studio" ? "Studio" : "Pro") : "Free"}
           </p>
           {sub?.billingCurrency && sub.amountCents ? (
             <p className="mt-1 text-xs text-[var(--muted)]">

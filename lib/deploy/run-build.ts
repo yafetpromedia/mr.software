@@ -1,33 +1,7 @@
 import { spawn } from "node:child_process";
-import { access, mkdir } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { DEPLOY_BUILD_TIMEOUT_MS } from "@/lib/deploy/constants";
-import { readJsonFile } from "@/lib/deploy/find-project-root";
-
-async function pathExists(path: string): Promise<boolean> {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** App Router-only Next projects: skip legacy pages /404 prerender (can fail on CI with Html errors). */
-async function nextBuildArgs(projectRoot: string): Promise<string[] | null> {
-  const pkg = await readJsonFile<{ dependencies?: Record<string, string>; devDependencies?: Record<string, string> }>(
-    join(projectRoot, "package.json"),
-  );
-  const deps = { ...pkg?.dependencies, ...pkg?.devDependencies };
-  if (!deps?.next) return null;
-
-  const hasApp = await pathExists(join(projectRoot, "app"));
-  const hasPages = await pathExists(join(projectRoot, "pages"));
-  if (hasApp && !hasPages) {
-    return ["next", "build", "--experimental-app-only"];
-  }
-  return null;
-}
 
 /** Writable HOME/cache for npm/pip when the app runs as a system user (e.g. HOME=/nonexistent in Docker). */
 async function deployCommandEnv(
@@ -49,7 +23,8 @@ async function deployCommandEnv(
     npm_config_cache: npmCache,
     PIP_CACHE_DIR: pipCache,
     npm_config_update_notifier: "false",
-    NODE_ENV: includeDev ? "development" : "production",
+    // next build must run with NODE_ENV=production — development mode breaks /404 prerender.
+    NODE_ENV: phase === "build" ? "production" : includeDev ? "development" : "production",
     npm_config_production: includeDev ? "false" : "true",
     CI: "true",
     npm_config_audit: "false",
@@ -107,19 +82,15 @@ export async function runNpmBuild(
     return { ok: false, log: `npm install failed:\n${install.log}` };
   }
 
-  const directNextBuild = await nextBuildArgs(projectRoot);
-  const build = directNextBuild
-    ? await runCommand(projectRoot, "npx", directNextBuild, DEPLOY_BUILD_TIMEOUT_MS, "build")
-    : await runCommand(
-        projectRoot,
-        "npm",
-        ["run", buildScript],
-        DEPLOY_BUILD_TIMEOUT_MS,
-        "build",
-      );
+  const build = await runCommand(
+    projectRoot,
+    "npm",
+    ["run", buildScript],
+    DEPLOY_BUILD_TIMEOUT_MS,
+    "build",
+  );
   if (build.code !== 0) {
-    const label = directNextBuild ? `npx ${directNextBuild.join(" ")}` : `npm run ${buildScript}`;
-    return { ok: false, log: `${label} failed:\n${build.log}` };
+    return { ok: false, log: `npm run ${buildScript} failed:\n${build.log}` };
   }
 
   return { ok: true, log: `${install.log}\n${build.log}`.slice(-12_000) };

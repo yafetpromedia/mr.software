@@ -18,5 +18,5 @@ export async function runCopilotTurn(
     { role: "user" as const, content: userMessage },
   ];
 
-  return completeText(messages, 0.65);
+  return completeText(messages, 0.5, { maxTokens: 400 });
 }

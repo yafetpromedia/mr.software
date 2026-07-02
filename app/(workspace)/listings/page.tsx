@@ -8,6 +8,8 @@ import { assertCanUploadSoftware } from "@/lib/auth/governance";
 import { categoryLabel } from "@/lib/marketplace/categories";
 import { prisma } from "@/lib/prisma";
 import { getOwnStorefront } from "@/lib/storefront/storefront";
+import { countPublishedProducts, getUserPlan } from "@/lib/subscription/limits";
+import { getPlanCapabilities } from "@/lib/subscription/capabilities";
 
 export const metadata = { title: "My listings" };
 
@@ -16,16 +18,20 @@ export default async function ListingsPage() {
   if (!session) return null;
   assertDeveloperPortalUser(session);
 
-  const [items, storefront, uploadGate] = await Promise.all([
+  const [items, storefront, uploadGate, plan, publishedCount] = await Promise.all([
     prisma.software.findMany({
       where: { developerId: session.id },
       orderBy: { createdAt: "desc" },
     }),
     getOwnStorefront(session.id),
     Promise.resolve(assertCanUploadSoftware(session)),
+    getUserPlan(session.id),
+    countPublishedProducts(session.id),
   ]);
 
+  const caps = getPlanCapabilities(plan);
   const canUpload = uploadGate.ok;
+  const canUploadSource = caps.sourceCodeListing;
 
   const serializedListings = items.map((s) => ({
     id: s.id,
@@ -148,7 +154,12 @@ export default async function ListingsPage() {
         </div>
 
         {canUpload ? (
-          <ListingCreateForm defaultCurrency="etb" />
+          <ListingCreateForm
+            defaultCurrency="etb"
+            canUploadSource={canUploadSource}
+            publishedCount={publishedCount}
+            maxPublishedProducts={caps.maxPublishedProducts}
+          />
         ) : (
           <p className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
             {uploadGate.message}. Contact an admin if you need upload access restored.

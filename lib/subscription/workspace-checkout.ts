@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import type Stripe from "stripe";
-import { PaymentProvider, PurchaseStatus } from "@prisma/client";
+import { PaymentProvider, Plan, PurchaseStatus } from "@prisma/client";
 import { oauthPublicOrigin } from "@/lib/auth/oauth-public-origin";
 import { prisma } from "@/lib/prisma";
 import { getStripe, isStripeConfigured } from "@/lib/monetization/stripe-server";
@@ -8,33 +8,65 @@ import {
   isChapaConfigured,
   verifyChapaTransaction,
 } from "@/lib/payments/chapa";
-import { activateWorkspacePro, markWorkspaceCheckoutComplete } from "@/lib/subscription/activate-pro";
-import { getWorkspacePlan } from "@/lib/subscription/plans";
+import { activateWorkspacePlan, markWorkspaceCheckoutComplete } from "@/lib/subscription/activate-pro";
+import {
+  getWorkspacePlan,
+  planPriceForInterval,
+  type BillingInterval,
+  type WorkspacePlanId,
+} from "@/lib/subscription/plans";
+import { BRAND_NAME } from "@/lib/branding/constants";
 
-export const WORKSPACE_CHECKOUT_META = "workspace_pro";
+export const WORKSPACE_CHECKOUT_META = "workspace_plan";
+
+function planFromWorkspaceId(id: WorkspacePlanId): Plan {
+  if (id === "studio") return Plan.STUDIO;
+  if (id === "pro") return Plan.PRO;
+  return Plan.FREE;
+}
 
 export async function createWorkspaceStripeCheckout(input: {
   request: Request;
   userId: string;
   email: string;
   stripeCustomerId?: string | null;
+  planId?: WorkspacePlanId;
+  interval?: BillingInterval;
 }): Promise<{ url: string }> {
   if (!isStripeConfigured()) {
     throw new Error("Stripe is not configured (STRIPE_SECRET_KEY)");
   }
 
-  const pro = getWorkspacePlan("pro");
+  const planId = input.planId ?? "pro";
+  const interval = input.interval ?? "month";
+  if (planId === "free") {
+    throw new Error("Free plan does not require checkout");
+  }
+
+  const selected = getWorkspacePlan(planId);
+  const targetPlan = planFromWorkspaceId(planId);
+  const amountCents = planPriceForInterval(selected, interval, "USD");
   const stripe = getStripe();
   const origin = oauthPublicOrigin(input.request);
-  const priceId = process.env.STRIPE_PRO_PRICE_ID?.trim();
+  const monthlyPriceId =
+    planId === "studio"
+      ? process.env.STRIPE_STUDIO_PRICE_ID?.trim()
+      : process.env.STRIPE_PRO_PRICE_ID?.trim();
+  const yearlyPriceId =
+    planId === "studio"
+      ? process.env.STRIPE_STUDIO_YEARLY_PRICE_ID?.trim()
+      : process.env.STRIPE_PRO_YEARLY_PRICE_ID?.trim();
+  const priceId = interval === "year" ? yearlyPriceId ?? monthlyPriceId : monthlyPriceId;
 
   const checkout = await prisma.workspacePlanCheckout.create({
     data: {
       userId: input.userId,
       provider: PaymentProvider.STRIPE,
       status: PurchaseStatus.PENDING,
+      targetPlan,
+      billingInterval: interval,
       currency: "usd",
-      amountCents: pro.usdCents,
+      amountCents,
     },
   });
 
@@ -47,11 +79,11 @@ export async function createWorkspaceStripeCheckout(input: {
             price_data: {
               currency: "usd",
               product_data: {
-                name: "Mr.Software Pro",
-                description: "Unlimited deployments and Pro workspace features",
+                name: `${BRAND_NAME} ${selected.name}`,
+                description: selected.tagline,
               },
-              unit_amount: pro.usdCents,
-              recurring: { interval: "month" },
+              unit_amount: amountCents,
+              recurring: { interval },
             },
             quantity: 1,
           },
@@ -63,12 +95,16 @@ export async function createWorkspaceStripeCheckout(input: {
       type: WORKSPACE_CHECKOUT_META,
       userId: input.userId,
       checkoutId: checkout.id,
+      workspacePlanId: planId,
+      billingInterval: interval,
     },
     subscription_data: {
       metadata: {
         type: WORKSPACE_CHECKOUT_META,
         userId: input.userId,
         checkoutId: checkout.id,
+        workspacePlanId: planId,
+        billingInterval: interval,
       },
     },
     ...(input.stripeCustomerId
@@ -96,14 +132,24 @@ export async function createWorkspaceChapaCheckout(input: {
   email: string;
   name: string;
   method?: Extract<PaymentProvider, "CHAPA" | "TELEBIRR">;
+  planId?: WorkspacePlanId;
+  interval?: BillingInterval;
 }): Promise<{ url: string }> {
   if (!isChapaConfigured()) {
     throw new Error("Chapa is not configured (CHAPA_SECRET_KEY)");
   }
 
-  const pro = getWorkspacePlan("pro");
-  const amountEtb = Math.max(1, Math.round(pro.etbCents / 100));
-  const txRef = `wspro-${input.userId.slice(0, 8)}-${randomBytes(6).toString("hex")}`;
+  const planId = input.planId ?? "pro";
+  const interval = input.interval ?? "month";
+  if (planId === "free") {
+    throw new Error("Free plan does not require checkout");
+  }
+
+  const selected = getWorkspacePlan(planId);
+  const targetPlan = planFromWorkspaceId(planId);
+  const amountCents = planPriceForInterval(selected, interval, "ETB");
+  const amountEtb = Math.max(1, Math.round(amountCents / 100));
+  const txRef = `ws${planId.slice(0, 2)}-${input.userId.slice(0, 8)}-${randomBytes(6).toString("hex")}`;
   const origin = oauthPublicOrigin(input.request);
   const provider = input.method ?? PaymentProvider.CHAPA;
   const secret = process.env.CHAPA_SECRET_KEY?.trim();
@@ -114,9 +160,11 @@ export async function createWorkspaceChapaCheckout(input: {
       userId: input.userId,
       provider,
       status: PurchaseStatus.PENDING,
+      targetPlan,
+      billingInterval: interval,
       chapaTxRef: txRef,
       currency: "etb",
-      amountCents: pro.etbCents,
+      amountCents,
     },
   });
 
@@ -130,14 +178,16 @@ export async function createWorkspaceChapaCheckout(input: {
     callback_url: `${origin}/api/webhooks/chapa`,
     return_url: `${origin}/payouts?upgrade=success&provider=chapa`,
     customization: {
-      title: "Mr.Software Pro",
-      description: "Workspace Pro — monthly plan (ETB)",
+      title: `${BRAND_NAME} ${selected.name}`,
+      description: `${selected.tagline} (${interval === "year" ? "yearly" : "monthly"})`,
     },
     meta: {
       type: WORKSPACE_CHECKOUT_META,
       checkoutId: checkout.id,
       userId: input.userId,
       provider,
+      workspacePlanId: planId,
+      billingInterval: interval,
     },
   };
 
@@ -166,7 +216,7 @@ export async function createWorkspaceChapaCheckout(input: {
 export async function fulfillWorkspaceStripeSession(
   session: Stripe.Checkout.Session,
 ): Promise<boolean> {
-  if (session.metadata?.type !== WORKSPACE_CHECKOUT_META) {
+  if (session.metadata?.type !== WORKSPACE_CHECKOUT_META && session.metadata?.type !== "workspace_pro") {
     return false;
   }
 
@@ -220,8 +270,9 @@ export async function fulfillWorkspaceStripeSession(
     },
   });
 
-  await activateWorkspacePro({
+  await activateWorkspacePlan({
     userId,
+    plan: checkout.targetPlan,
     provider: PaymentProvider.STRIPE,
     currency: checkout.currency,
     amountCents: checkout.amountCents,
@@ -243,8 +294,9 @@ export async function fulfillWorkspaceChapa(txRef: string): Promise<boolean> {
   if (!ok) return false;
 
   await markWorkspaceCheckoutComplete(checkout.id);
-  await activateWorkspacePro({
+  await activateWorkspacePlan({
     userId: checkout.userId,
+    plan: checkout.targetPlan,
     provider: checkout.provider,
     currency: checkout.currency,
     amountCents: checkout.amountCents,

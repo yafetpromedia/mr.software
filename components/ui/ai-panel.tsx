@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, History, Plus, Trash2 } from "lucide-react";
 import { CommandInput } from "@/components/ui/command-input";
 import { PanelSectionControls } from "@/components/ui/panel-section-controls";
+import { BRAND_AI_NAME } from "@/lib/branding/constants";
 
 const WORKFLOWS = [
   "Analyze a school management SaaS idea",
@@ -198,7 +199,7 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
     return (
       <aside
         className="flex w-10 shrink-0 flex-col border-l border-[var(--border)] bg-[var(--surface)]"
-        aria-label="Mr.Software AI Copilot"
+        aria-label={`${BRAND_AI_NAME} Copilot`}
       >
         <button
           type="button"
@@ -220,8 +221,8 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
 
   return (
     <aside
-      className="flex h-full w-80 shrink-0 flex-col border-l border-[var(--border)] bg-[var(--surface)]"
-      aria-label="Mr.Software AI Copilot"
+      className="flex h-full w-80 min-w-0 shrink-0 flex-col overflow-hidden border-l border-[var(--border)] bg-[var(--surface)]"
+      aria-label={`${BRAND_AI_NAME} Copilot`}
     >
       <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-[var(--border)] px-4">
         <div className="min-w-0">
@@ -229,7 +230,7 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
             Copilot
           </p>
           <p className="truncate text-sm font-medium text-[var(--foreground)]">
-            {showHistory ? "Chat history" : "Mr.Software AI"}
+            {showHistory ? "Chat history" : BRAND_AI_NAME}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -275,7 +276,7 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
         </div>
       </div>
 
-      <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+      <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto p-4">
         {showHistory ? (
           history.length === 0 ? (
             <p className="py-8 text-center text-xs text-[var(--muted)]">
@@ -335,7 +336,7 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
         ) : messages.length === 0 ? (
           <>
             <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
-              <p className="text-sm font-medium text-[var(--foreground)]">Mr.Software AI Engine</p>
+              <p className="text-sm font-medium text-[var(--foreground)]">{BRAND_AI_NAME} Engine</p>
               <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
                 Ask anything about startups, architecture, listings, or deployment. Chats are saved
                 automatically.
@@ -370,16 +371,16 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
             {messages.map((m) => (
               <li
                 key={m.id}
-                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex min-w-0 ${m.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[92%] rounded-2xl px-3 py-2 text-xs leading-relaxed ${
+                  className={`max-w-[92%] min-w-0 rounded-2xl px-3 py-2 text-xs leading-relaxed ${
                     m.role === "user"
                       ? "bg-[var(--accent)] text-white"
                       : "border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{m.content}</p>
+                  <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{m.content}</p>
                 </div>
               </li>
             ))}
@@ -388,7 +389,7 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
                 <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--muted)]">
                   <span className="inline-flex items-center gap-2">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" />
-                    Mr.Software AI is thinking…
+                    {BRAND_AI_NAME} is thinking…
                   </span>
                 </div>
               </li>
@@ -404,11 +405,11 @@ export function AiPanel({ minimized = false, onMinimize, onClose, onRestore }: P
       </div>
 
       {!showHistory ? (
-        <div className="shrink-0 border-t border-[var(--border)] p-3">
+        <div className="min-w-0 shrink-0 border-t border-[var(--border)] p-3">
           <CommandInput
             value={input}
             onChange={setInput}
-            placeholder="Ask Mr.Software AI…"
+            placeholder={`Ask ${BRAND_AI_NAME}…`}
             disabled={loading}
             onSubmit={() => void sendMessage(input)}
           />

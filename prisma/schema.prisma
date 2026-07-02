@@ -48,6 +48,7 @@ enum OpenSourceLicense {
 
 /** How buyers receive the product (developer choice at publish). */
 enum DistributionType {
+  DEMO
   SOURCE_CODE
   COMPILED
   HOSTED
@@ -67,10 +68,26 @@ enum PurchaseStatus {
   REFUNDED
 }
 
+/** Marketplace product kind (what the developer is selling). */
+enum ProductKind {
+  SAAS
+  WEBSITE
+  MOBILE_APP
+  DESKTOP_APP
+  UI_KIT
+  TEMPLATE
+  API
+  AI_MODEL
+  PLUGIN
+  EXTENSION
+  SOURCE_CODE
+}
+
 /** Workspace plan for deployment limits (not marketplace purchase) */
 enum Plan {
   FREE
   PRO
+  STUDIO
 }
 
 enum SubscriptionStatus {
@@ -433,6 +450,8 @@ model Software {
   /** Optional Apple App Store listing for mobile apps */
   appStoreUrl   String?
   category      SoftwareCategory @default(DEVELOPER_TOOLS)
+  /** Product kind — SaaS, template, source code, etc. */
+  productKind   ProductKind      @default(WEBSITE)
   licenseTier   ProductLicenseTier @default(PERSONAL)
   openSourceLicense OpenSourceLicense?
   /** How the product is delivered to buyers */
@@ -550,6 +569,8 @@ model WorkspacePlanCheckout {
   userId                  String
   provider                PaymentProvider
   status                  PurchaseStatus   @default(PENDING)
+  targetPlan              Plan             @default(PRO)
+  billingInterval         String           @default("month")
   chapaTxRef              String?          @unique
   stripeCheckoutSessionId String?          @unique
   stripeSubscriptionId    String?
