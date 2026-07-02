@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { DeployRuntime } from "@prisma/client";
 import type { FrameworkDetection } from "@/lib/deploy/detect-framework";
 import { ensureNextStandaloneConfig } from "@/lib/deploy/ensure-next-standalone-config";
+import { prepareNextAppForDeployBuild } from "@/lib/deploy/ensure-next-app-build";
 import { directoryHasIndexHtml, findIndexHtml } from "@/lib/deploy/find-project-root";
 import { runNpmBuild, runPipInstall } from "@/lib/deploy/run-build";
 
@@ -100,11 +101,14 @@ export async function prepareDeployArtifacts(
   let buildLog: string | undefined;
 
   if (detection.framework === "nextjs" && detection.needsBuild) {
+    await prepareNextAppForDeployBuild(extractRoot);
     await ensureNextStandaloneConfig(extractRoot);
   }
 
   if (detection.needsBuild && detection.buildScript) {
-    const built = await runNpmBuild(extractRoot, detection.buildScript);
+    const built = await runNpmBuild(extractRoot, detection.buildScript, {
+      useNextBuild: detection.framework === "nextjs",
+    });
     buildLog = built.log;
     if (!built.ok) {
       throw new Error(built.log || "Build failed");

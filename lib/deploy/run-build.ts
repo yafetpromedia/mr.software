@@ -70,6 +70,7 @@ async function runCommand(
 export async function runNpmBuild(
   projectRoot: string,
   buildScript = "build",
+  options?: { useNextBuild?: boolean },
 ): Promise<{ ok: boolean; log: string }> {
   const install = await runCommand(
     projectRoot,
@@ -82,15 +83,19 @@ export async function runNpmBuild(
     return { ok: false, log: `npm install failed:\n${install.log}` };
   }
 
-  const build = await runCommand(
-    projectRoot,
-    "npm",
-    ["run", buildScript],
-    DEPLOY_BUILD_TIMEOUT_MS,
-    "build",
-  );
+  const build = options?.useNextBuild
+    ? await runCommand(projectRoot, "npx", ["next", "build"], DEPLOY_BUILD_TIMEOUT_MS, "build")
+    : await runCommand(
+        projectRoot,
+        "npm",
+        ["run", buildScript],
+        DEPLOY_BUILD_TIMEOUT_MS,
+        "build",
+      );
+
   if (build.code !== 0) {
-    return { ok: false, log: `npm run ${buildScript} failed:\n${build.log}` };
+    const label = options?.useNextBuild ? "npx next build" : `npm run ${buildScript}`;
+    return { ok: false, log: `${label} failed:\n${build.log}` };
   }
 
   return { ok: true, log: `${install.log}\n${build.log}`.slice(-12_000) };

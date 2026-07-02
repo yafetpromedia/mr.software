@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { readJsonFile } from "@/lib/deploy/find-project-root";
 
 async function exists(path: string): Promise<boolean> {
   try {
@@ -17,8 +18,29 @@ function alreadyHasOutput(src: string): boolean {
   return /output\s*:\s*['"](standalone|export)['"]/.test(src);
 }
 
-/** Inject `output: "standalone"` when missing so deploy can run `.next/standalone/server.js`. */
+async function nextMajorVersion(projectRoot: string): Promise<number | null> {
+  const pkg = await readJsonFile<{ dependencies?: Record<string, string>; devDependencies?: Record<string, string> }>(
+    join(projectRoot, "package.json"),
+  );
+  if (!pkg) return null;
+  const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+  const raw = deps.next?.trim();
+  if (!raw) return null;
+  const cleaned = raw.replace(/^[^\d]*/, "");
+  const major = Number.parseInt(cleaned.split(".")[0] ?? "", 10);
+  return Number.isFinite(major) ? major : null;
+}
+
+/**
+ * Inject `output: "standalone"` when missing so deploy can run `.next/standalone/server.js`.
+ * Skipped on Next.js 15.x — standalone + App Router can fail /404 prerender on hosted builds.
+ */
 export async function ensureNextStandaloneConfig(projectRoot: string): Promise<boolean> {
+  const major = await nextMajorVersion(projectRoot);
+  if (major !== null && major < 16) {
+    return false;
+  }
+
   for (const file of CONFIG_FILES) {
     const path = join(projectRoot, file);
     if (!(await exists(path))) continue;

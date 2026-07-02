@@ -262,9 +262,9 @@ export function DeployProgressDialog({
                     </p>
                   </div>
                   <p className="text-center text-[0.65rem] text-[var(--muted)]">
-                    For Next.js apps, add{" "}
-                    <code className="text-[var(--foreground)]">output: &quot;standalone&quot;</code> to{" "}
-                    <code className="text-[var(--foreground)]">next.config</code> if builds keep failing.
+                    Next.js 15 App Router builds need <code className="text-[var(--foreground)]">NODE_ENV=production</code>{" "}
+                    and an <code className="text-[var(--foreground)]">app/not-found.tsx</code> file. Redeploy after
+                    updating MrSoftware ET, or add those fixes in your repo.
                   </p>
                   <div className="flex justify-center gap-2">
                     <button
