@@ -222,6 +222,7 @@ export const config = {
     "/earnings/:path*",
     "/payouts",
     "/payouts/:path*",
+    "/api/software",
     "/api/software/:path*",
     "/api/admin/:path*",
     "/admin",

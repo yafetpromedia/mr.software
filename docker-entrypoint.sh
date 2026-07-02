@@ -19,4 +19,11 @@ mkdir -p /app/public/brand/uploads/logo /app/public/brand/uploads/partners /app/
 # Docker volumes mount as root — allow the app user to read/write uploads.
 chown -R nextjs:nodejs /var/mr-software/site-uploads /var/mr-software/deployments /app/public/brand/uploads
 
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "Syncing database schema (prisma db push)..."
+  if ! gosu nextjs npx prisma db push --skip-generate; then
+    echo "Warning: prisma db push failed — listings/deploy may fail until schema is synced manually."
+  fi
+fi
+
 exec gosu nextjs "$@"

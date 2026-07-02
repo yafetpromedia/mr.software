@@ -14,6 +14,7 @@ import {
   DeliveryPackageFields,
 } from "@/components/trust/delivery-package-fields";
 import Link from "next/link";
+import { parseJsonResponse } from "@/lib/http/parse-json-response";
 
 type InitialValues = {
   name?: string;
@@ -135,7 +136,7 @@ export function ListingCreateForm({
         }),
       });
 
-      const data = (await res.json()) as { error?: string; id?: string; name?: string };
+      const data = await parseJsonResponse<{ error?: string; id?: string; name?: string }>(res);
       if (!res.ok) {
         throw new Error(data.error ?? "Failed to publish listing");
       }
@@ -178,7 +179,7 @@ export function ListingCreateForm({
         credentials: "include",
         body: formData,
       });
-      const data = (await res.json()) as { error?: string; url?: string };
+      const data = await parseJsonResponse<{ error?: string; url?: string }>(res);
       if (!res.ok || !data.url) {
         throw new Error(data.error ?? "Cover upload failed");
       }

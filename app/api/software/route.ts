@@ -17,6 +17,7 @@ import {
 } from "@/lib/subscription/limits";
 import { parseProductKind } from "@/lib/marketplace/product-types";
 import { parseDistributionType } from "@/lib/trust/distribution-types";
+import { apiErrorMessage } from "@/lib/http/api-error-message";
 
 function parsePricingModel(v: unknown): PricingModel | undefined {
   if (v === "FREE" || v === "ONE_TIME" || v === "SUBSCRIPTION") {
@@ -160,9 +161,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(item, { status: 201 });
   } catch (e) {
-    console.error(e);
+    console.error("POST /api/software", e);
     return NextResponse.json(
-      { error: "Failed to create software" },
+      { error: apiErrorMessage(e, "Failed to create software") },
       { status: 500 },
     );
   }
